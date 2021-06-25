@@ -8,8 +8,7 @@ public class SubmissionResult {
     
     private List<Problem> problems;
     
-    
-    public SubmissionResult(boolean accepted, List<Problem> problems) {
+    SubmissionResult(boolean accepted, List<Problem> problems) {
         this.accepted = accepted;
         this.problems = problems;
     }

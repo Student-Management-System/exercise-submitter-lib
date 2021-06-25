@@ -16,7 +16,7 @@ public class Assignment {
     
     private boolean isGroupWork;
 
-    public Assignment(String name, State state, boolean isGroupWork) {
+    Assignment(String name, State state, boolean isGroupWork) {
         this.name = name;
         this.state = state;
         this.isGroupWork = isGroupWork;

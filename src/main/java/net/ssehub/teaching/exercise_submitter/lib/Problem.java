@@ -5,6 +5,11 @@ import java.util.Optional;
 
 public class Problem {
     
+    public enum Severity {
+        WARNING,
+        ERROR;
+    }
+    
     private String checkName;
     
     private String message;
@@ -17,7 +22,7 @@ public class Problem {
     
     private Optional<Integer> column = Optional.empty();
     
-    public Problem(String checkName, String message, Severity severity) {
+    Problem(String checkName, String message, Severity severity) {
         this.checkName = checkName;
         this.message = message;
         this.severity = severity;
@@ -51,7 +56,7 @@ public class Problem {
     }
     
     
-    public void setFile(File file) {
+    void setFile(File file) {
         this.file = Optional.of(file);
     }
     
@@ -60,7 +65,7 @@ public class Problem {
     }
     
     
-    public void setLine(int line) {
+    void setLine(int line) {
         this.line = Optional.of(line);
     }
     
@@ -69,7 +74,7 @@ public class Problem {
     }
     
     
-    public void setColumn(int column) {
+    void setColumn(int column) {
         this.column = Optional.of(column);
     }
     

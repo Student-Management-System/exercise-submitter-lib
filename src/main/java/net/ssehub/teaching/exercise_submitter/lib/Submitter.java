@@ -8,53 +8,36 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import net.ssehub.teaching.exercise_submitter.lib.Assignment.State;
+import net.ssehub.teaching.exercise_submitter.lib.Problem.Severity;
 
 public class Submitter {
 
-    private static final List<Assignment> DUMMY_ASSIGNMENTS = Arrays.asList(
-            new Assignment("Homework01", State.REVIEWED, true),
-            new Assignment("Homework02", State.IN_REVIEW, true),
-            new Assignment("Test01", State.IN_REVIEW, false),
-            new Assignment("Test02", State.SUBMISSION, false),
-            new Assignment("Homework03", State.SUBMISSION, true)
-            );
+    private Assignment assignment;
     
-    public Submitter(String user, char[] password) {
-    }
-    
-    public List<Assignment> getAllAssignments() {
-        return DUMMY_ASSIGNMENTS;
-    }
-    
-    public List<Assignment> getAssignments(Assignment.State state) {
-        return DUMMY_ASSIGNMENTS.stream()
-                .filter(assignment -> assignment.getState() == state)
-                .collect(Collectors.toList());
+    Submitter(Assignment assignment) throws IllegalArgumentException {
+        if (assignment.getState() != State.SUBMISSION) {
+            throw new IllegalArgumentException("Assignment " + assignment.getName() + " is not in submission state");
+        }
+        this.assignment = assignment;
     }
     
     /**
-     * Submits the given directory to the given assignment.
+     * Submits the given directory.
      * 
      * @param directory The directory that contains the solution to be submitted.
-     * @param assignment The assignment for which the solution should be submitted.
      * 
      * @return The result of the submission.
      * 
      * @throws SubmissionException If the submission fails.
      * @throws IllegalArgumentException If the given directory is not a directory.
      */
-    public SubmissionResult submit(File directory, Assignment assignment)
+    public SubmissionResult submit(File directory)
             throws SubmissionException, IllegalArgumentException {
         
         if (!directory.isDirectory()) {
             throw new IllegalArgumentException(directory + " is not a directory");
-        }
-        
-        if (assignment.getState() != State.SUBMISSION) {
-            throw new SubmissionException("Assignment " + assignment.getName() + " is not in submission state");
         }
         
         try {
