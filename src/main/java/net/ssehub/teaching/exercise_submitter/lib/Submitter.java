@@ -64,7 +64,7 @@ public class Submitter {
             Problem p1 = new Problem("javac", "Missing ';'", Severity.ERROR);
             p1.setFile(randomJavaFile.get());
             p1.setLine(5);
-            p1.setLine(10);
+            p1.setColumn(10);
             
             Problem p2 = new Problem("checkstyle", "Some checkstyle message", Severity.WARNING);
             p2.setFile(randomJavaFile.get());
