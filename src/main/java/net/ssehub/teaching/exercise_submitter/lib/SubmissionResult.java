@@ -4,18 +4,18 @@ import java.util.List;
 
 public class SubmissionResult {
 
-    private boolean success;
+    private boolean accepted;
     
     private List<Problem> problems;
     
     
-    public SubmissionResult(boolean success, List<Problem> problems) {
-        this.success = success;
+    public SubmissionResult(boolean accepted, List<Problem> problems) {
+        this.accepted = accepted;
         this.problems = problems;
     }
     
-    public boolean isSuccess() {
-        return success;
+    public boolean isAccepted() {
+        return accepted;
     }
     
     public List<Problem> getProblems() {
