@@ -49,6 +49,7 @@ public class Submitter {
         try {
             randomJavaFile = Files.walk(directory.toPath())
                     .filter(Files::isRegularFile)
+                    .map(p -> directory.toPath().relativize(p))
                     .map(Path::toFile)
                     .filter(f -> f.getName().endsWith(".java"))
                     .findFirst();
