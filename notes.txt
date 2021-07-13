@@ -1,0 +1,37 @@
+Preparator:
+    - prepares a folder for submission
+    - copies the specified folder to a temporary location
+    - fixes possible encoding, so that all text files are in UTF-8 encoding
+    - if missing, adds .classpath and .project files
+    - make sure that temporary folder is deleted (we don't want to pollute the tmp folder) 
+
+IApiConnection:
+    - thin abstraction layer for the REST API of the student management system
+
+ExerciseSubmitterManager:
+    - main entry point held by the client
+    - provides access to
+        - the Submitter
+        - the Replayer
+        - Assignment data (via IApiConnection)
+    - constructor gets login data and logs in (exception if login fails)
+
+- Submitter:
+    - created by ExerciseSubmitterManager
+    - gets the URL in constructor (https://base-url/assignment-name/group-name/)
+    - SubmissionResult submit(File directory)
+    - uses Preparator
+    - commits to SVN repository (no need for IApiConnection)
+    - parses result data from SVN commit
+
+- Replayer:
+    - created by ExerciseSubmitterManager
+    - gets the URL in constructor (https://base-url/assignment-name/group-name/)
+    - getter for the version list
+    - replay(Version) -> checkout in a temporary directory
+        - alternatively: replay(version, File destination) (destination must be an empty directory)
+        - this would remove the need for the GUI code to copy the content of the temporary directory
+    - isSameContent(version, File directoryToCompare) -> checks if submitted version and local directory differ
+        - probably some kind of rich return value in the future  
+        - probably use a helper class SubmissionContentComparator for that, which can be also used independently of replayer
+
