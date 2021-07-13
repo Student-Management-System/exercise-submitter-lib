@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Test;
 
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
+import net.ssehub.teaching.exercise_submitter.lib.replay.Replayer;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.DummyApiConnection;
+import net.ssehub.teaching.exercise_submitter.lib.submission.Submitter;
 
 public class ExerciseSubmitterManagerTest {
 

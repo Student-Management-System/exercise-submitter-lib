@@ -1,4 +1,4 @@
-package net.ssehub.teaching.exercise_submitter.lib;
+package net.ssehub.teaching.exercise_submitter.lib.replay;
 
 import java.io.Closeable;
 import java.io.File;
@@ -7,13 +7,11 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
-
 public class Replayer implements Closeable {
     
     private String url;
 
-    Replayer(String url) throws IllegalArgumentException {
+    public Replayer(String url) throws IllegalArgumentException {
         this.url = url;
     }
     

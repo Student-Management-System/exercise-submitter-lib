@@ -1,4 +1,4 @@
-package net.ssehub.teaching.exercise_submitter.lib;
+package net.ssehub.teaching.exercise_submitter.lib.submission;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,14 +9,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
-import net.ssehub.teaching.exercise_submitter.lib.Problem.Severity;
-import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
+import net.ssehub.teaching.exercise_submitter.lib.submission.Problem.Severity;
 
 public class Submitter {
 
     private String url;
     
-    Submitter(String url) {
+    public Submitter(String url) {
         this.url = url;
     }
     

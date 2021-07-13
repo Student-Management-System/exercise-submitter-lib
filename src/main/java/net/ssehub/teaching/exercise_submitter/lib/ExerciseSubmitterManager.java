@@ -6,11 +6,13 @@ import java.util.stream.Collectors;
 
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
+import net.ssehub.teaching.exercise_submitter.lib.replay.Replayer;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.AuthenticationException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.DummyApiConnection;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.IApiConnection;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.NetworkException;
+import net.ssehub.teaching.exercise_submitter.lib.submission.Submitter;
 
 /**
  * Main class to work with the exercise submitter library. Provides access to all required client functionality.

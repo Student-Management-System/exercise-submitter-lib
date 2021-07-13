@@ -1,4 +1,4 @@
-package net.ssehub.teaching.exercise_submitter.lib;
+package net.ssehub.teaching.exercise_submitter.lib.submission;
 
 import java.util.List;
 
