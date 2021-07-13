@@ -9,18 +9,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
-import net.ssehub.teaching.exercise_submitter.lib.Assignment.State;
 import net.ssehub.teaching.exercise_submitter.lib.Problem.Severity;
+import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
 
 public class Submitter {
 
-    private Assignment assignment;
+    private String url;
     
-    Submitter(Assignment assignment) throws IllegalArgumentException {
-        if (assignment.getState() != State.SUBMISSION) {
-            throw new IllegalArgumentException("Assignment " + assignment.getName() + " is not in submission state");
-        }
-        this.assignment = assignment;
+    Submitter(String url) {
+        this.url = url;
     }
     
     /**

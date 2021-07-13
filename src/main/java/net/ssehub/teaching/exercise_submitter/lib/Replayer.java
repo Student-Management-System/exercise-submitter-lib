@@ -7,18 +7,14 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import net.ssehub.teaching.exercise_submitter.lib.Assignment.State;
+import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
 
 public class Replayer implements Closeable {
     
-    private Assignment assignment;
+    private String url;
 
-    Replayer(Assignment assignment) throws IllegalArgumentException {
-        if (assignment.getState() != State.SUBMISSION && assignment.getState() != State.REVIEWED) {
-            throw new IllegalArgumentException("Assignment " + assignment.getName()
-                    + " is not in submission or reviewed state");
-        }
-        this.assignment = assignment;
+    Replayer(String url) throws IllegalArgumentException {
+        this.url = url;
     }
     
     public static class Version {
