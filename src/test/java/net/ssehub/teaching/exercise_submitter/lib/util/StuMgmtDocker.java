@@ -23,6 +23,7 @@ import net.ssehub.studentmgmt.backend_api.model.PasswordDto;
 import net.ssehub.studentmgmt.sparkyservice_api.ApiClient;
 import net.ssehub.studentmgmt.sparkyservice_api.ApiException;
 import net.ssehub.studentmgmt.sparkyservice_api.api.AuthControllerApi;
+import net.ssehub.studentmgmt.sparkyservice_api.api.RoutingControllerApi;
 import net.ssehub.studentmgmt.sparkyservice_api.api.UserControllerApi;
 import net.ssehub.studentmgmt.sparkyservice_api.model.AuthenticationInfoDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.ChangePasswordDto;
@@ -39,9 +40,11 @@ import net.ssehub.studentmgmt.sparkyservice_api.model.UsernameDto;
 public class StuMgmtDocker implements AutoCloseable {
 
     /**
-     * Cache whether the docker images have been built.
+     * Cache whether the docker images have been built. We want to build the images, as we have our own build arguments
+     * (in args.properties). But if the same JVM runs this class multiple times, we can assume that nobody has
+     * overwritten the images in between; thus we don't re-build images in subsequent calls.
      */
-    private static boolean built = true;
+    private static boolean built = false;
     
     private File dockerDirectory;
     
@@ -70,7 +73,7 @@ public class StuMgmtDocker implements AutoCloseable {
         this.dockerDirectory = dockerDirectory;
 
         if (!built) {
-            buildDocker();
+            buildImages();
             built = true;
         }
         startDocker();
@@ -82,10 +85,7 @@ public class StuMgmtDocker implements AutoCloseable {
         this.teachersOfCourse = new HashMap<>();
         
         System.out.println("Waiting for services to be up...");
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-        }
+        waitUntilAuthReachable();
     }
     
     /**
@@ -295,7 +295,7 @@ public class StuMgmtDocker implements AutoCloseable {
         stopDocker();
     }
     
-    private void buildDocker() throws DockerException {
+    private void buildImages() throws DockerException {
         runProcess("docker", "compose", "-p", "stu-mgmt-test", "build");
     }
     
@@ -305,6 +305,26 @@ public class StuMgmtDocker implements AutoCloseable {
     
     private void stopDocker() throws DockerException {
         runProcess("docker", "compose", "-p", "stu-mgmt-test", "down");
+    }
+    
+    private void waitUntilAuthReachable() {
+        ApiClient client = new ApiClient();
+        client.setBasePath(getAuthUrl());
+        RoutingControllerApi api = new RoutingControllerApi(client);
+        
+        long tStart = System.currentTimeMillis();
+        boolean success;
+        do {
+            try {
+                api.isAlive();
+                success = true;
+            } catch (ApiException e) {
+                success = false;
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e1) {}
+            }
+        } while (!success && System.currentTimeMillis() - tStart < 20000 /* 20 seconds */);
     }
     
     private void runProcess(String... command) throws DockerException {
