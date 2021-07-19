@@ -83,6 +83,17 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>net.ssehub.studentmgmt</groupId>
+			<artifactId>sparkyservice_api</artifactId>
+			<version>1.1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>net.ssehub.studentmgmt</groupId>
+			<artifactId>backend_api</artifactId>
+			<version>1.1.1</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
 			<version>5.7.0-M1</version>
