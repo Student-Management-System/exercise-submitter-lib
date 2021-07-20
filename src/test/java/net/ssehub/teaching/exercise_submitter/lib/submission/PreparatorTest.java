@@ -100,7 +100,7 @@ public class PreparatorTest {
                 URI SourceDirPath = source.toURI();
                 URI ResultDirPath = result.toURI();
 
-                for (File file : source.listFiles()) {
+                for (File file : source.listFiles()) {//TODO: Change to filewalker
 
                     URI sourcePath = file.toURI();
                     URI relativeSourcePath = SourceDirPath.relativize(sourcePath);
