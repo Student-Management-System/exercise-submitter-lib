@@ -33,7 +33,7 @@ import net.ssehub.studentmgmt.sparkyservice_api.model.UsernameDto;
 
 /**
  * A utility class for integration tests that runs a fresh instance of the Student Management System in a Docker
- * container. Cannot be used concurrently (don't run more than one instance at the same time).
+ * container. Multiple instances can safely be used in parallel.
  * 
  * @author Adam
  */
@@ -46,7 +46,21 @@ public class StuMgmtDocker implements AutoCloseable {
      */
     private static boolean built = false;
     
+    /**
+     * An object used to guard the build-start path. This ensures that multiple parallel calls of the constructor
+     * don't interfere with each other.
+     */
+    private static final Object BUILD_LOCK = new Object();
+    
     private File dockerDirectory;
+    
+    private String dockerId;
+    
+    private int authPort;
+    
+    private int mgmtPort;
+    
+    private int webPort;
     
     private Map<String, String> userPasswords;
     
@@ -71,12 +85,19 @@ public class StuMgmtDocker implements AutoCloseable {
             throw new IllegalArgumentException(dockerDirectory + " does not contain a docker-compose.yml file");
         }
         this.dockerDirectory = dockerDirectory;
+        
+        this.dockerId = String.format("stu-mgmt-testing-%04d", (int) (Math.random() * 1024));
+        this.authPort = generateRandomPort();
+        this.mgmtPort = generateRandomPort();
+        this.webPort = generateRandomPort();
 
-        if (!built) {
-            buildImages();
-            built = true;
+        synchronized (BUILD_LOCK) {
+            if (!built) {
+                buildImages();
+                built = true;
+            }
+            startDocker();
         }
-        startDocker();
         
         this.userPasswords = new HashMap<>();
         this.userPasswords.put("admin_user", "admin_pw");
@@ -94,7 +115,7 @@ public class StuMgmtDocker implements AutoCloseable {
      * @return The URL of the auth system
      */
     public String getAuthUrl() {
-        return "http://localhost:8080";
+        return "http://localhost:" + authPort;
     }
     
     /**
@@ -103,7 +124,7 @@ public class StuMgmtDocker implements AutoCloseable {
      * @return The stu-mgmt URL.
      */
     public String getStuMgmtUrl() {
-        return "http://localhost:8080/stmgmt";
+        return "http://localhost:" + mgmtPort;
     }
     
     /**
@@ -112,7 +133,7 @@ public class StuMgmtDocker implements AutoCloseable {
      * @return The web client URL.
      */
     public String getWebUrl() {
-        return "http://localhost:8000/";
+        return "http://localhost:" + webPort + "/";
     }
     
     public void createUser(String name, String password) throws DockerException {
@@ -296,15 +317,15 @@ public class StuMgmtDocker implements AutoCloseable {
     }
     
     private void buildImages() throws DockerException {
-        runProcess("docker", "compose", "-p", "stu-mgmt-test", "build");
+        runProcess("docker", "compose", "--project-name", dockerId, "build");
     }
     
     private void startDocker() throws DockerException {
-        runProcess("docker", "compose", "-p", "stu-mgmt-test", "up", "-d");
+        runProcess("docker", "compose", "--project-name", dockerId, "up", "--detach");
     }
     
     private void stopDocker() throws DockerException {
-        runProcess("docker", "compose", "-p", "stu-mgmt-test", "down");
+        runProcess("docker", "compose", "--project-name", dockerId, "down");
     }
     
     private void waitUntilAuthReachable() {
@@ -344,6 +365,11 @@ public class StuMgmtDocker implements AutoCloseable {
             environment.put(entry.getKey().toString(), entry.getValue().toString());
         }
         
+        environment.put("FRONTEND_SPARKY_HOST", getAuthUrl());
+        environment.put("SPARKY_PORT", Integer.toString(authPort));
+        environment.put("BACKEND_PORT", Integer.toString(mgmtPort));
+        environment.put("FRONTEND_PORT", Integer.toString(webPort));
+        
         Process p;
         try {
             p = pb.start();
@@ -360,6 +386,10 @@ public class StuMgmtDocker implements AutoCloseable {
                 interrupted = true;
             }
         } while (interrupted);
+    }
+    
+    private int generateRandomPort() {
+        return  (int) (Math.random() * (65535 - 49152)) + 49152;
     }
     
     /**
