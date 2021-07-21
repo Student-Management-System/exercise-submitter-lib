@@ -39,19 +39,6 @@ import net.ssehub.studentmgmt.sparkyservice_api.model.UsernameDto;
  */
 public class StuMgmtDocker implements AutoCloseable {
 
-    /**
-     * Cache whether the docker images have been built. We want to build the images, as we have our own build arguments
-     * (in args.properties). But if the same JVM runs this class multiple times, we can assume that nobody has
-     * overwritten the images in between; thus we don't re-build images in subsequent calls.
-     */
-    private static boolean built = false;
-    
-    /**
-     * An object used to guard the build-start path. This ensures that multiple parallel calls of the constructor
-     * don't interfere with each other.
-     */
-    private static final Object BUILD_LOCK = new Object();
-    
     private File dockerDirectory;
     
     private String dockerId;
@@ -91,13 +78,7 @@ public class StuMgmtDocker implements AutoCloseable {
         this.mgmtPort = generateRandomPort();
         this.webPort = generateRandomPort();
 
-        synchronized (BUILD_LOCK) {
-            if (!built) {
-                buildImages();
-                built = true;
-            }
-            startDocker();
-        }
+        startDocker();
         
         this.userPasswords = new HashMap<>();
         this.userPasswords.put("admin_user", "admin_pw");
@@ -316,10 +297,6 @@ public class StuMgmtDocker implements AutoCloseable {
         stopDocker();
     }
     
-    private void buildImages() throws DockerException {
-        runProcess("docker", "compose", "--project-name", dockerId, "build");
-    }
-    
     private void startDocker() throws DockerException {
         runProcess("docker", "compose", "--project-name", dockerId, "up", "--detach");
     }
@@ -365,7 +342,7 @@ public class StuMgmtDocker implements AutoCloseable {
             environment.put(entry.getKey().toString(), entry.getValue().toString());
         }
         
-        environment.put("FRONTEND_SPARKY_HOST", getAuthUrl());
+        environment.put("FRONTEND_API_BASE_URL", getAuthUrl());
         environment.put("SPARKY_PORT", Integer.toString(authPort));
         environment.put("BACKEND_PORT", Integer.toString(mgmtPort));
         environment.put("FRONTEND_PORT", Integer.toString(webPort));
