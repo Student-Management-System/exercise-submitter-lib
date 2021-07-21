@@ -18,6 +18,12 @@
 		</license>
 	</licenses>
 
+	<scm>
+		<connection>scm:git:https://github.com/Student-Management-System/exercise-submitter-lib.git</connection>
+		<developerConnection>scm:git:https://github.com/Student-Management-System/exercise-submitter-lib.git</developerConnection>
+		<url>https://github.com/Student-Management-System/exercise-submitter-lib</url>
+	</scm>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -113,4 +119,11 @@
 		</dependency>
 	</dependencies>
 
+	<distributionManagement>
+		<repository>
+			<id>student-management-system-github</id>
+			<name>Student-Management-System GitHub Packages</name>
+			<url>https://maven.pkg.github.com/student-management-system/mavenpackages</url>
+		</repository>
+	</distributionManagement>
 </project>
