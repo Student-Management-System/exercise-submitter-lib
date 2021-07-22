@@ -129,8 +129,7 @@ public class PreparatorTest {
         URI relativefirstPath = firstMainPath.relativize(firstPathUri);
         URI relativeSecondPath = secondMainPath.relativize(secondPathUri);
 
-        if (relativefirstPath.toString().equals(relativeSecondPath.toString())
-                || relativefirstPath.toString().length() < 1) {
+        if (relativefirstPath.toString().equals(relativeSecondPath.toString())) {
             return true;
         }
         return false;
