@@ -131,12 +131,8 @@ public class PreparatorTest {
 
         if (relativefirstPath.toString().equals(relativeSecondPath.toString())
                 || relativefirstPath.toString().length() < 1) {
-            System.out.println("Vergleiche " + relativefirstPath.toString() + " und " + relativeSecondPath.toString()
-                    + " Erfolgreich");
             return true;
         }
-        System.out.println(
-                "Vergleiche " + relativefirstPath.toString() + " und " + relativeSecondPath.toString() + " Fehler");
         return false;
 
     }
