@@ -11,7 +11,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -100,28 +102,42 @@ public class PreparatorTest {
                 URI SourceDirPath = source.toURI();
                 URI ResultDirPath = result.toURI();
 
-                for (File file : source.listFiles()) {//TODO: Change to filewalker
+                Files.walk(Paths.get(source.getAbsolutePath())).forEach(file -> {
 
-                    URI sourcePath = file.toURI();
-                    URI relativeSourcePath = SourceDirPath.relativize(sourcePath);
+                    assertDoesNotThrow(() -> {
 
-                    Files.walk(Paths.get(result.getAbsolutePath())).forEach(otherfile -> {
-                        boolean first = false;
+                        Optional<Path> searchresult = Files.walk(Paths.get(result.getAbsolutePath())).filter(
+                                otherfile -> this.isRelativePathTheSame(SourceDirPath, file, ResultDirPath, otherfile))
+                                .findFirst();
 
-                        URI resultPath = otherfile.toUri();
-                        URI relativeResultPath = ResultDirPath.relativize(resultPath);
+                        assertTrue(searchresult.isPresent());
 
-                        if (relativeResultPath != relativeSourcePath && first != false) {
-                            assertTrue(false);
-                        }
-                        first = true;
                     });
 
-                }
+                });
 
             }
 
         });
+
+    }
+
+    private boolean isRelativePathTheSame(URI firstMainPath, Path firstPath, URI secondMainPath, Path secondPath) {
+        URI firstPathUri = firstPath.toUri();
+        URI secondPathUri = secondPath.toUri();
+
+        URI relativefirstPath = firstMainPath.relativize(firstPathUri);
+        URI relativeSecondPath = secondMainPath.relativize(secondPathUri);
+
+        if (relativefirstPath.toString().equals(relativeSecondPath.toString())
+                || relativefirstPath.toString().length() < 1) {
+            System.out.println("Vergleiche " + relativefirstPath.toString() + " und " + relativeSecondPath.toString()
+                    + " Erfolgreich");
+            return true;
+        }
+        System.out.println(
+                "Vergleiche " + relativefirstPath.toString() + " und " + relativeSecondPath.toString() + " Fehler");
+        return false;
 
     }
 
