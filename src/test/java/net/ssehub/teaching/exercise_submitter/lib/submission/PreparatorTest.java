@@ -9,11 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -72,7 +67,6 @@ public class PreparatorTest {
     @Test
     public void copiedFilesinEmptyDir() {
         File source = new File(TESTDATA, "notEmptyDir");
-        assertTrue(source.isDirectory(), "precondition: empty test directory exists");
 
         assertDoesNotThrow(() -> {
             File result;
@@ -80,9 +74,10 @@ public class PreparatorTest {
 
                 result = preparator.getResult();
                 assertTrue(result.isDirectory());
+                
+                assertTrue(new File(result, "file.txt").isFile());
+                assertEquals(1, result.listFiles().length);
             }
-
-            assertFalse(result.list() == null);
         });
 
     }
@@ -99,40 +94,17 @@ public class PreparatorTest {
                 result = preparator.getResult();
                 assertTrue(result.isDirectory());
 
-                URI SourceDirPath = source.toURI();
-                URI ResultDirPath = result.toURI();
-
-                Files.walk(Paths.get(source.getAbsolutePath())).forEach(file -> {
-
-                    assertDoesNotThrow(() -> {
-
-                        Optional<Path> searchresult = Files.walk(Paths.get(result.getAbsolutePath())).filter(
-                                otherfile -> this.isRelativePathTheSame(SourceDirPath, file, ResultDirPath, otherfile))
-                                .findFirst();
-
-                        assertTrue(searchresult.isPresent());
-
-                    });
-
-                });
-
+                // exactly one sub directory
+                File subDir = new File(result, "notEmptyDir");
+                assertTrue(subDir.isDirectory());
+                assertEquals(1, result.listFiles().length);
+                
+                // exactly one file in sub directory
+                assertTrue(new File(subDir, "file.txt").isFile());
+                assertEquals(1, subDir.listFiles().length);
             }
 
         });
-
-    }
-
-    private boolean isRelativePathTheSame(URI firstMainPath, Path firstPath, URI secondMainPath, Path secondPath) {
-        URI firstPathUri = firstPath.toUri();
-        URI secondPathUri = secondPath.toUri();
-
-        URI relativefirstPath = firstMainPath.relativize(firstPathUri);
-        URI relativeSecondPath = secondMainPath.relativize(secondPathUri);
-
-        if (relativefirstPath.toString().equals(relativeSecondPath.toString())) {
-            return true;
-        }
-        return false;
 
     }
 

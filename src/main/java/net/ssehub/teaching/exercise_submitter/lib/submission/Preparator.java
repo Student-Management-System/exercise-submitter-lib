@@ -3,9 +3,9 @@ package net.ssehub.teaching.exercise_submitter.lib.submission;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 
 /**
@@ -32,8 +32,7 @@ class Preparator implements Closeable {
 
         this.result = File.createTempFile("exercise_submission", null);
         this.result.delete();
-        this.result.mkdir();
-        Preparator.copyDirectory(directory.getAbsolutePath(), this.result.getAbsolutePath());
+        Preparator.copyDirectory(directory, this.result);
 
         this.result.deleteOnExit();
 
@@ -62,23 +61,28 @@ class Preparator implements Closeable {
     /**
      * Copy directory.
      *
-     * @param sourceDirectoryLocation the source directory location
-     * @param destinationDirectoryLocation the destination directory location
+     * @param sourceDirectory the source directory location
+     * @param destinationDirectory the destination directory location
+     * 
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    private static void copyDirectory(String sourceDirectoryLocation, String destinationDirectoryLocation)
+    private static void copyDirectory(File sourceDirectory, File destinationDirectory)
             throws IOException {
-        Files.walk(Paths.get(sourceDirectoryLocation)).forEach(source -> {
-            Path destination = Paths.get(destinationDirectoryLocation,
-                    source.toString().substring(sourceDirectoryLocation.length()));
-
-            try {
-                Files.copy(source, destination);
-            } catch (IOException e) {
-
-            }
-
-        });
+        try {
+            Path sourcePath = sourceDirectory.toPath();
+            Files.walk(sourcePath).forEach(toCopy -> {
+                
+                File destination = new File(destinationDirectory, sourcePath.relativize(toCopy).toString());
+                try {
+                    Files.copy(toCopy, destination.toPath());
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+                
+            });
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
+        }
     }
 
 }
