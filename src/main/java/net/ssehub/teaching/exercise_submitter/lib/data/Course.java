@@ -2,9 +2,13 @@ package net.ssehub.teaching.exercise_submitter.lib.data;
 
 
 
+/**
+ * The Class Course.
+ */
 public class Course {
 
   
+   
     private String name;
     
     /**
@@ -17,7 +21,7 @@ public class Course {
     }
     
     /**
-     * Gets the name.
+     * Gets the human-readable name of the course.
      *
      * @return the name
      */
@@ -26,9 +30,9 @@ public class Course {
     }
     
     /**
-     *Converts this Object to string.
+     * To string.
      *
-     * @return The String
+     * @return the string
      */
     @Override
     public String toString() {

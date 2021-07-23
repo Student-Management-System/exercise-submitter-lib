@@ -4,31 +4,46 @@ import java.util.Objects;
 
 
 
+
+/**
+ * Assignments for Students.
+ * 
+ */
 public class Assignment {
 
     
+    /**
+     * The state of an Assignment.
+     */
     public enum State {
         
        
+        /** The invisible. */
         INVISIBLE,
         
       
+        /** The submission. */
         SUBMISSION,
         
       
+        /** The in review. */
         IN_REVIEW,
         
        
+        /** The reviewed. */
         REVIEWED;
     }
     
    
+    
     private String name;
     
   
+   
     private State state;
     
     
+   
     private boolean isGroupWork;
 
     /**
@@ -36,7 +51,7 @@ public class Assignment {
      *
      * @param name The name of the assignment
      * @param state The State of the Assignment
-     * @param isGroupWork 
+     * @param isGroupWork the is group work
      */
     public Assignment(String name, State state, boolean isGroupWork) {
         this.name = name;
@@ -74,12 +89,23 @@ public class Assignment {
     }
 
    
+    /**
+     * Hash code.
+     *
+     * @return the int
+     */
     @Override
     public int hashCode() {
         return Objects.hash(isGroupWork, name, state);
     }
 
    
+    /**
+     * Equals.
+     *
+     * @param obj the obj
+     * @return true, if successful
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
