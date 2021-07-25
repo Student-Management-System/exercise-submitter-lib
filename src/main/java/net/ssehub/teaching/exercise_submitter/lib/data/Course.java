@@ -11,13 +11,16 @@ public class Course {
    
     private String name;
     
+    private String id;
+    
     /**
      * Instantiates a new course.
      *
      * @param name the name
      */
-    public Course(String name) {
+    public Course(String name, String id) {
         this.name = name;
+        this.id = id;
     }
     
     /**
@@ -29,6 +32,10 @@ public class Course {
         return name;
     }
     
+    public String getId() {
+        return id;
+    }
+
     /**
      * To string.
      *
