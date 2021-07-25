@@ -24,7 +24,7 @@ public class DummyApiConnection implements IApiConnection {
             new Assignment("Homework03", State.SUBMISSION, true)
             );
     
-    private Course course = new Course("Programmierpraktikum I: Java");
+    private Course course = new Course("Programmierpraktikum I: Java","java-wise2021");
     
     @Override
     public void login(String username, String password) throws NetworkException, AuthenticationException {
