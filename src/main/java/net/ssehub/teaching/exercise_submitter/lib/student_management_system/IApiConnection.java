@@ -52,5 +52,5 @@ public interface IApiConnection {
      */
     public List<Assignment> getAssignments(Course course)
             throws NetworkException, AuthenticationException, IllegalArgumentException;
-    
+        
 }
