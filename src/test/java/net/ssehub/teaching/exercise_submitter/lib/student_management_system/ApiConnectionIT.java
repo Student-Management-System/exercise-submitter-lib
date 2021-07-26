@@ -29,7 +29,7 @@ public class ApiConnectionIT {
         docker.createUser("student1", "Bunny123");
         
         String courseId = docker.createCourse("java", "wise2021", "Programmierpraktikum: Java", "adam");
-        docker.enrollStudentInCourse(courseId, "student1");
+        docker.enrollStudent(courseId, "student1");
         
         docker.createCourse("notenrolled", "wise2021", "Not Enrolled", "adam");
         docker.createAssignment(courseId, "exercise01" , AssignmentState.SUBMISSION, Collaboration.SINGLE);
