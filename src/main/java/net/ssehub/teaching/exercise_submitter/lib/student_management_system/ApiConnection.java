@@ -88,7 +88,7 @@ public class ApiConnection implements IApiConnection {
         
         try {
             CourseDto courseinfo = api.getCourseById(courseId);
-            course = new Course(courseinfo.getTitle(),courseinfo.getId());
+            course = new Course(courseinfo.getTitle(), courseinfo.getId());
         } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
 
             if (e.getCode() == 401) {
@@ -123,9 +123,9 @@ public class ApiConnection implements IApiConnection {
             List<AssignmentDto> assignmentinfo = api.getAssignmentsOfCourse(course.getId());
             assignmentinfo.forEach(oldassignment -> {
                 
-                Assignment.State state = Assignment.State.valueOf("SUBMISSION");//TODO: IN_PROGRESS OR SUBMISSION
+                Assignment.State state = Assignment.State.valueOf("SUBMISSION"); //TODO: IN_PROGRESS OR SUBMISSION
                 boolean groupwork = oldassignment.getCollaboration() != CollaborationEnum.SINGLE ? true : false;
-                assignments.add(new Assignment(oldassignment.getName(), state,groupwork));
+                assignments.add(new Assignment(oldassignment.getName(), state, groupwork));
                 
             });
             

@@ -18,105 +18,102 @@ import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 
 public class ApiConnectionIT {
-    
+
     private static StuMgmtDocker docker;
-    
+
     @BeforeAll
     public static void setupServers() {
         docker = new StuMgmtDocker();
         docker.createUser("adam", "123456");
-        
+
         docker.createUser("student1", "Bunny123");
-        
+
         String courseId = docker.createCourse("java", "wise2021", "Programmierpraktikum: Java", "adam");
         docker.enrollStudent(courseId, "student1");
-        
+
         docker.createCourse("notenrolled", "wise2021", "Not Enrolled", "adam");
-        docker.createAssignment(courseId, "exercise01" , AssignmentState.SUBMISSION, Collaboration.SINGLE);
-       
-        
+        docker.createAssignment(courseId, "exercise01", AssignmentState.SUBMISSION, Collaboration.SINGLE);
+
     }
-    
-   @AfterAll
+
+    @AfterAll
     public static void tearDownServers() {
         docker.close();
     }
-    
+
     @Test
     public void loginWithWrongUsername() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertThrows(AuthenticationException.class, () -> api.login("wronguser", "123456"));
     }
-    
+
     @Test
     public void loginWithWrongPassword() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertThrows(AuthenticationException.class, () -> api.login("student1", "123456"));
     }
-    
+
     @Test
     public void loginCorrect() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
     }
-    
+
     @Test
     public void getNotExistingCourse() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
         assertThrows(NoSuchElementException.class, () -> api.getCourse("wrongCourse", "wise2021"));
     }
-    
+
     @Test
     public void getCourseStudentNotEnrolled() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
-       
-        assertThrows(NoSuchElementException.class,() -> {
-            
-            Course course = api.getCourse("notenrolled", "wise2021"); 
-            
-        
-    });
+
+        assertThrows(NoSuchElementException.class, () -> {
+
+            Course course = api.getCourse("notenrolled", "wise2021");
+
+        });
     }
-    
+
     @Test
     public void getStudentEnrolledCourse() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
-       
+
         assertDoesNotThrow(() -> {
-            
-            Course course = api.getCourse("java", "wise2021"); 
+
+            Course course = api.getCourse("java", "wise2021");
             assertTrue(course.getId().equals("java-wise2021"));
-        
-    });
+
+        });
     }
-    
+
     @Test
     public void getAssignmentsFromNotExistingCourse() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
-        
-        assertThrows(NoSuchElementException.class,() -> {
-            
-           api.getAssignments(new Course("NotExisting","notexisting"));
-        
-    });
-        
+
+        assertThrows(NoSuchElementException.class, () -> {
+
+            api.getAssignments(new Course("NotExisting", "notexisting"));
+
+        });
+
     }
-    
+
     @Test
     public void getAssignmentsFromCorrectCourse() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
-       
-        assertDoesNotThrow(() -> {
-            
-         List<Assignment> assignments  = api.getAssignments(new Course("Java","java-wise2021"));
-         assertTrue(assignments.size() == 1 && assignments.get(0).getName().equals("exercise01"));
-    });
-    }
-    
-}
 
+        assertDoesNotThrow(() -> {
+
+            List<Assignment> assignments = api.getAssignments(new Course("Java", "java-wise2021"));
+            assertTrue(assignments.size() == 1 && assignments.get(0).getName().equals("exercise01"));
+        });
+    }
+
+}
