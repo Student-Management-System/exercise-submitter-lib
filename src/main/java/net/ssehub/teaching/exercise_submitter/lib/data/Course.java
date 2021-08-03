@@ -17,6 +17,7 @@ public class Course {
      * Instantiates a new course.
      *
      * @param name the name
+     * @param id the id
      */
     public Course(String name, String id) {
         this.name = name;

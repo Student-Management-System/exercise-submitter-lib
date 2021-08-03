@@ -61,7 +61,7 @@ public class Assignment {
     
     
     /**
-     * Gets the name.
+     * Gets the human-readable name.
      *
      * @return the name
      */
