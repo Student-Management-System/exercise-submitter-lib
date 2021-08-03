@@ -7,8 +7,15 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
 
@@ -93,7 +100,7 @@ public class PreparatorTest {
 
                 result = preparator.getResult();
                 assertTrue(result.isDirectory());
-
+               
                 // exactly one sub directory
                 File subDir = new File(result, "notEmptyDir");
                 assertTrue(subDir.isDirectory());
@@ -106,6 +113,35 @@ public class PreparatorTest {
 
         });
 
+    }
+    @Test
+    public void changeToUtf8() {
+        File source = new File(TESTDATA, "NotEmptyDirNotUtf8");
+       
+
+        assertDoesNotThrow(() -> {
+            File result;
+            try (Preparator preparator = new Preparator(source)) {
+
+                result = preparator.getResult();
+                
+                assertTrue(result.isDirectory());
+                
+
+                File utf8file = new File(result,"notUtf8.txt");
+                
+                try(FileInputStream fs = new FileInputStream(utf8file.getAbsolutePath().toString())) {
+                    
+                    
+                    byte[] bytes = fs.readAllBytes();
+                    
+                    //throws exception if charset is not utf-8
+                    StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(bytes));
+                }
+               
+            }
+
+        });
     }
 
 }
