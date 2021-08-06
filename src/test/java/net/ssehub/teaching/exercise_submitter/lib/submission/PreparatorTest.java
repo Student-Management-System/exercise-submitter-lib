@@ -1,5 +1,6 @@
 package net.ssehub.teaching.exercise_submitter.lib.submission;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -11,6 +12,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
@@ -84,6 +86,23 @@ public class PreparatorTest {
         });
 
     }
+    
+    @Test
+    public void clearsCopiedNotEmptyDir() {
+        File source = new File(TESTDATA, "notEmptyDir");
+
+        assertDoesNotThrow(() -> {
+            File result;
+            try (Preparator preparator = new Preparator(source)) {
+
+                result = preparator.getResult();
+                assertTrue(result.isDirectory());
+            }
+
+            assertFalse(result.exists());
+        });
+
+    }
 
     @Test
     public void copiedAllFilesAndSubDirsinEmptyDir() {
@@ -110,34 +129,75 @@ public class PreparatorTest {
         });
 
     }
+    
     @Test
-    public void changeToUtf8() {
-        File source = new File(TESTDATA, "NotEmptyDirNotUtf8");
-       
+    public void iso88591ToUtf8() {
+        File source = new File(TESTDATA, "encodings");
 
         assertDoesNotThrow(() -> {
             File result;
             try (Preparator preparator = new Preparator(source)) {
 
                 result = preparator.getResult();
-                
                 assertTrue(result.isDirectory());
-                
 
-                File utf8file = new File(result,"notUtf8.txt");
+                File utf8file = new File(result, "ISO-8859-1.txt");
                 
-                try(FileInputStream fs = new FileInputStream(utf8file.getAbsolutePath().toString())) {
-                    
-                    
+                try (FileInputStream fs = new FileInputStream(utf8file)) {
                     byte[] bytes = fs.readAllBytes();
                     
                     //throws exception if charset is not utf-8
-                    StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(bytes));
+                    String content = StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(bytes)).toString();
+                    assertEquals("ISO-8859-1\nöäüÖÄÜß", content);
                 }
                
             }
 
         });
+    }
+    
+    @Test
+    public void cp1252ToUtf8() {
+        File source = new File(TESTDATA, "encodings");
+        
+        assertDoesNotThrow(() -> {
+            File result;
+            try (Preparator preparator = new Preparator(source)) {
+                
+                result = preparator.getResult();
+                assertTrue(result.isDirectory());
+                
+                File utf8file = new File(result, "cp1252.txt");
+                
+                try (FileInputStream fs = new FileInputStream(utf8file)) {
+                    byte[] bytes = fs.readAllBytes();
+                    
+                    //throws exception if charset is not utf-8
+                    String content = StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(bytes)).toString();
+                    assertEquals("cp 1252\nöäüÖÄÜß", content);
+                }
+                
+            }
+            
+        });
+    }
+    
+    @Test
+    public void checkEncoding() throws IOException {
+        File encodingsDir = new File(TESTDATA, "encodings");
+        File utf8 = new File(encodingsDir, "utf-8.txt");
+        File cp1252 = new File(encodingsDir, "cp1252.txt");
+        File iso88591 = new File(encodingsDir, "ISO-8859-1.txt");
+        
+        assertAll(
+                () -> assertTrue(assertDoesNotThrow(() -> Preparator.checkEncoding(utf8.toPath(), StandardCharsets.UTF_8))),
+                () -> assertTrue(assertDoesNotThrow(() -> Preparator.checkEncoding(cp1252.toPath(), Charset.forName("cp1252")))),
+                () -> assertTrue(assertDoesNotThrow(() -> Preparator.checkEncoding(iso88591.toPath(), StandardCharsets.ISO_8859_1))),
+                
+                () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(cp1252.toPath(), StandardCharsets.UTF_8))),
+                () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(iso88591.toPath(), StandardCharsets.UTF_8)))
+        );
+        
     }
 
 }

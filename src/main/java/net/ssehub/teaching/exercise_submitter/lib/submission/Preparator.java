@@ -9,8 +9,11 @@ import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.channels.ByteChannel;
+import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -82,7 +85,7 @@ class Preparator implements Closeable {
                 File destination = new File(destinationDirectory, sourcePath.relativize(toCopy).toString());
                 if (toCopy.toFile().isFile()) {
                     try {
-                        boolean result = checkEncoding(toCopy);
+                        boolean result = checkEncoding(toCopy, StandardCharsets.UTF_8);
                         if (result) {
                             Files.copy(toCopy, destination.toPath());
 
@@ -124,30 +127,62 @@ class Preparator implements Closeable {
         }
     }
 
-    private static boolean checkEncoding(Path source) throws IOException {
-        try (InputStream in = Files.newInputStream(source)) {
+    /**
+     * Checks if the given file has the given encoding.
+     * <p>
+     * Package visibility for test cases.
+     * 
+     * @param file The file to check.
+     * @param encoding The encoding to check.
+     * 
+     * @return Whether the file has the given encoding.
+     * 
+     * @throws IOException If reading the file fails.
+     */
+    static boolean checkEncoding(Path file, Charset encoding) throws IOException {
+        
+        boolean foundError = false;
+        CharsetDecoder decoder = encoding.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
+        
+        try (ByteChannel stream = Files.newByteChannel(file)) {
 
-            int length = 0;
-            byte[] bytes = new byte[1024];
-
-            CharsetDecoder dec = StandardCharsets.UTF_8.newDecoder();
-            // TODO: do i need this ?
-            CharBuffer cb = CharBuffer.wrap("");
-            // copy data from input stream to output stream
-            while ((length = in.read(bytes)) != -1) {
-                dec.decode(ByteBuffer.wrap(bytes), cb, false);
+            ByteBuffer inBuffer = ByteBuffer.allocate(1024);
+            CharBuffer outBuffer = CharBuffer.allocate(1024);
+            
+            int numRead = 0;
+            int remaining = 0;
+            while ((numRead = stream.read(inBuffer)) != -1) {
+                inBuffer.position(0);
+                inBuffer.limit(numRead + remaining);
+                
+                CoderResult result = decoder.decode(inBuffer, outBuffer, false);
+                outBuffer.clear(); // discard characters, we are not interested in them
+                
+                if (result.isError()) {
+                    foundError = true;
+                    break;
+                }
+                
+                // copy the remaining bytes to the start of the buffer
+                // this may happen if we are, e.g., in the middle of an utf-8 character
+                remaining = inBuffer.remaining();
+                for (int i = 0; inBuffer.remaining() > 0; i++) {
+                    inBuffer.put(i, inBuffer.get());
+                }
+                inBuffer.position(remaining);
             }
-            CoderResult result = dec.decode(ByteBuffer.wrap(bytes), cb, true);
 
-            if (result.isError()) {
-
-                return false;
+            if (!foundError) {
+                // read the last remaining bytes
+                inBuffer.limit(remaining);
+                CoderResult result = decoder.decode(inBuffer, outBuffer, true);
+                foundError = result.isError();
             }
-
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
         }
-        return true;
+        
+        return !foundError;
     }
 
 }
