@@ -20,8 +20,11 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 /**
- * The Class Preparator prepares the files for Upload.
- *
+ * Prepares a folder for submission. Creates a copy of the folder in a temporary location, see {@link #getResult()}.
+ * This temporary folder can be submitted.
+ * 
+ * @author Adam
+ * @author Lukas
  */
 class Preparator implements Closeable {
 
@@ -30,8 +33,9 @@ class Preparator implements Closeable {
     /**
      * Instantiates a new preparator.
      *
-     * @param directory which one to prepare
-     * @throws IOException Signals that an I/O exception has occurred.
+     * @param directory The directory to prepare for submission.
+     * 
+     * @throws IOException If IO fails during preparation.
      */
     public Preparator(File directory) throws IOException {
 
@@ -42,31 +46,29 @@ class Preparator implements Closeable {
 
         this.result = File.createTempFile("exercise_submission", null);
         this.result.delete();
-        Preparator.copyDirectory(directory, this.result);
-        // this.result.mkdir();
+        copyAndPrepareDirectory(directory, this.result);
 
         this.result.deleteOnExit();
 
     }
 
     /**
-     * Gets the new created Temp Directory.
+     * Gets the temporary directory where the preparation result is located.
      *
-     * @return the Directory
+     * @return The prepared folder.
      */
     public File getResult() {
         return this.result;
     }
 
     /**
-     * Close.
+     * Removes the temporary copy created by this preparator.
      *
-     * @throws IOException Signals that an I/O exception has occurred.
+     * @throws IOException If deleting the temporary copy fails.
      */
     @Override
     public void close() throws IOException {
         this.result.delete();
-
     }
 
     /**
@@ -77,7 +79,7 @@ class Preparator implements Closeable {
      *
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    private static void copyDirectory(File sourceDirectory, File destinationDirectory) throws IOException {
+    private static void copyAndPrepareDirectory(File sourceDirectory, File destinationDirectory) throws IOException {
         try {
             Path sourcePath = sourceDirectory.toPath();
             Files.walk(sourcePath).forEach(toCopy -> {
