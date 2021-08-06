@@ -3,11 +3,9 @@ package net.ssehub.teaching.exercise_submitter.lib.data;
 
 
 /**
- * The Class Course.
+ * Represents a course.
  */
 public class Course {
-
-  
    
     private String name;
     
@@ -16,8 +14,9 @@ public class Course {
     /**
      * Instantiates a new course.
      *
-     * @param name the name
-     * @param id the id
+     * @param name The human-readable name of the course.
+     * @param id The student-management ID of the course. Typically in the format <code>shortname-semester</code>,
+     *      e.g. <code>java-wise2021</code>.
      */
     public Course(String name, String id) {
         this.name = name;
@@ -33,6 +32,12 @@ public class Course {
         return name;
     }
     
+    /**
+     * Returns the student-management ID of this course. Typically in the format <code>shortname-semester</code>,
+     * e.g. <code>java-wise2021</code>.
+     * 
+     * @return The ID of this course.
+     */
     public String getId() {
         return id;
     }

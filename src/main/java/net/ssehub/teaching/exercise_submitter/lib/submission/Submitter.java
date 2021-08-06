@@ -11,10 +11,20 @@ import java.util.Optional;
 
 import net.ssehub.teaching.exercise_submitter.lib.submission.Problem.Severity;
 
+/**
+ * Submits solutions to a given SVN exercise submission location.
+ * 
+ * @author Adam
+ */
 public class Submitter {
 
     private String url;
     
+    /**
+     * Creates a new submitter for the given SVN location.
+     * 
+     * @param url The URL of the homework folder that should be submitted to.
+     */
     public Submitter(String url) {
         this.url = url;
     }

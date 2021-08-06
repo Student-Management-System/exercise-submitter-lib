@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import net.ssehub.studentmgmt.backend_api.ApiClient;
-import net.ssehub.studentmgmt.backend_api.api.AssessmentApi;
 import net.ssehub.studentmgmt.backend_api.api.AssignmentApi;
 import net.ssehub.studentmgmt.backend_api.api.CourseApi;
 import net.ssehub.studentmgmt.backend_api.model.AssignmentDto;

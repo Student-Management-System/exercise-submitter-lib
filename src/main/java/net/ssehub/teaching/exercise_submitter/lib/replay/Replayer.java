@@ -7,29 +7,58 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Replays versions from the SVN version history of an exercise submission.
+ * 
+ * @author Adam
+ */
 public class Replayer implements Closeable {
     
     private String url;
 
-    public Replayer(String url) throws IllegalArgumentException {
+    /**
+     * Creates a new replayer for the given SVN URL.
+     * 
+     * @param url The URL to the homework submission folder.
+     */
+    public Replayer(String url) {
         this.url = url;
     }
     
+    /**
+     * Represents a version in the homework submission history.
+     */
     public static class Version {
         
         private String author;
         
         private LocalDateTime timestamp;
 
+        /**
+         * Creates a new version.
+         * 
+         * @param author The author that created this version.
+         * @param timestamp The timestamp of this version.
+         */
         Version(String author, LocalDateTime timestamp) {
             this.author = author;
             this.timestamp = timestamp;
         }
         
+        /**
+         * Returns the author that created this version (i.e. who committed this version).
+         * 
+         * @return The username of the author of this version.
+         */
         public String getAuthor() {
             return author;
         }
         
+        /**
+         * Returns the timestamp when this version was created.
+         * 
+         * @return The timestamp of this verison.
+         */
         public LocalDateTime getTimestamp() {
             return timestamp;
         }
