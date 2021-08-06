@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * Prepares a folder for submission. Creates a copy of the folder in a temporary location, see {@link #getResult()}.
@@ -68,7 +69,19 @@ class Preparator implements Closeable {
      */
     @Override
     public void close() throws IOException {
-        this.result.delete();
+        try {
+            Files.walk(this.result.toPath())
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(t -> {
+                        try {
+                            Files.delete(t);
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
+        }
     }
 
     /**
