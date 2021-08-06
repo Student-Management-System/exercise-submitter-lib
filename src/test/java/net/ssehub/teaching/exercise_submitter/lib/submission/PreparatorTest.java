@@ -188,11 +188,15 @@ public class PreparatorTest {
         File utf8 = new File(encodingsDir, "utf-8.txt");
         File cp1252 = new File(encodingsDir, "cp1252.txt");
         File iso88591 = new File(encodingsDir, "ISO-8859-1.txt");
+        // utf-8.long.txt has a three-byte UTF-8 character at the 1024 byte mark
+        // this covers the edge case, that the input buffer has remaining bytes after a decoding pass
+        File utf8Long = new File(encodingsDir, "utf-8.long.txt");
         
         assertAll(
                 () -> assertTrue(assertDoesNotThrow(() -> Preparator.checkEncoding(utf8.toPath(), StandardCharsets.UTF_8))),
                 () -> assertTrue(assertDoesNotThrow(() -> Preparator.checkEncoding(cp1252.toPath(), Charset.forName("cp1252")))),
                 () -> assertTrue(assertDoesNotThrow(() -> Preparator.checkEncoding(iso88591.toPath(), StandardCharsets.ISO_8859_1))),
+                () -> assertTrue(assertDoesNotThrow(() -> Preparator.checkEncoding(utf8Long.toPath(), StandardCharsets.UTF_8))),
                 
                 () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(cp1252.toPath(), StandardCharsets.UTF_8))),
                 () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(iso88591.toPath(), StandardCharsets.UTF_8)))
