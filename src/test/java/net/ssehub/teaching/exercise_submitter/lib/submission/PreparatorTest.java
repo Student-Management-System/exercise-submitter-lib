@@ -1,6 +1,7 @@
 package net.ssehub.teaching.exercise_submitter.lib.submission;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -179,6 +180,34 @@ public class PreparatorTest {
                 
             }
             
+        });
+    }
+    
+    @Test
+    public void notConvertingNonTextFile() {
+        File source = new File(TESTDATA, "nonText");
+        
+        File originalPicture = new File(source, "picture.png");
+        
+        assertDoesNotThrow(() -> {
+            File result;
+            try (Preparator preparator = new Preparator(source)) {
+                
+                result = preparator.getResult();
+                assertTrue(result.isDirectory());
+                
+                File copiedPicture = new File(result, "picture.png");
+                
+                byte[] originalBytes;
+                byte[] copiedBytes;
+                try (FileInputStream original = new FileInputStream(originalPicture);
+                        FileInputStream copied = new FileInputStream(copiedPicture)) {
+                    originalBytes = original.readAllBytes();
+                    copiedBytes = copied.readAllBytes();
+                }
+                
+                assertArrayEquals(originalBytes, copiedBytes);
+            }
         });
     }
     

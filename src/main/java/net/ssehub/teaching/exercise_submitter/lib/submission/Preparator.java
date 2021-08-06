@@ -23,12 +23,21 @@ import java.util.List;
 /**
  * Prepares a folder for submission. Creates a copy of the folder in a temporary location, see {@link #getResult()}.
  * This temporary folder can be submitted.
+ * <p>
+ * Preparation does the following tasks:
+ * <ul>
+ *      <li>Try to convert all text files to UTF-8, if they are not already UTF-8.</li>
+ * </ul>
  * 
  * @author Adam
  * @author Lukas
  */
 class Preparator implements Closeable {
 
+    /**
+     * List of {@link Charset}s to check when reading files that are not UTF-8. If a non-UTF-8 file is found, but can
+     * be read using any of these charsets, then we convert it to UTF-8.
+     */
     private static final Charset[] CHARSETS_TO_CHECK;
 
     static {
@@ -145,7 +154,9 @@ class Preparator implements Closeable {
      * @throws IOException If reading or writing the file fails.
      */
     private static void prepareFile(Path sourceFile, Path destinationFile) throws IOException {
-        if (checkEncoding(sourceFile, StandardCharsets.UTF_8)) {
+        String contentType = Files.probeContentType(sourceFile);
+        boolean isTextFile = contentType != null && contentType.startsWith("text");
+        if (!isTextFile || checkEncoding(sourceFile, StandardCharsets.UTF_8)) {
             Files.copy(sourceFile, destinationFile);
 
         } else {
