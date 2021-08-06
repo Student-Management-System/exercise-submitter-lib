@@ -148,7 +148,7 @@ public class PreparatorTest {
                     
                     //throws exception if charset is not utf-8
                     String content = StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(bytes)).toString();
-                    assertEquals("ISO-8859-1\nöäüÖÄÜß", content);
+                    assertEquals("ISO-8859-1\nöäüÖÄÜß\n", content);
                 }
                
             }
@@ -174,7 +174,7 @@ public class PreparatorTest {
                     
                     //throws exception if charset is not utf-8
                     String content = StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(bytes)).toString();
-                    assertEquals("cp 1252\nöäüÖÄÜß", content);
+                    assertEquals("cp 1252\nöäüÖÄÜß\n", content);
                 }
                 
             }

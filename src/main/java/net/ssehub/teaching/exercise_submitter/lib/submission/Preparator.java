@@ -2,10 +2,9 @@ package net.ssehub.teaching.exercise_submitter.lib.submission;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -17,8 +16,9 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Prepares a folder for submission. Creates a copy of the folder in a temporary location, see {@link #getResult()}.
@@ -29,8 +29,19 @@ import java.util.Comparator;
  */
 class Preparator implements Closeable {
 
-    private File result;
+    private static final Charset[] CHARSETS_TO_CHECK;
 
+    static {
+        List<Charset> charsets = new LinkedList<>();
+        charsets.add(StandardCharsets.ISO_8859_1);
+        if (Charset.isSupported("cp1252")) {
+            charsets.add(Charset.forName("cp1252"));
+        }
+        CHARSETS_TO_CHECK = charsets.toArray(new Charset[charsets.size()]);
+    }
+    
+    private File result;
+    
     /**
      * Instantiates a new preparator.
      *
@@ -47,7 +58,7 @@ class Preparator implements Closeable {
 
         this.result = File.createTempFile("exercise_submission", null);
         this.result.delete();
-        copyAndPrepareDirectory(directory, this.result);
+        copyAndPrepareDirectory(directory.toPath(), this.result.toPath());
 
         this.result.deleteOnExit();
 
@@ -85,60 +96,78 @@ class Preparator implements Closeable {
     }
 
     /**
-     * Copy directory.
+     * Copies and prepares the given source directory.
      *
-     * @param sourceDirectory      the source directory location
-     * @param destinationDirectory the destination directory location
+     * @param sourceDirectory The source directory to copy.
+     * @param destinationDirectory The destination where to put the prepared copy.
      *
-     * @throws IOException Signals that an I/O exception has occurred.
+     * @throws IOException If reading the source or writing the destination fails.
      */
-    private static void copyAndPrepareDirectory(File sourceDirectory, File destinationDirectory) throws IOException {
+    private static void copyAndPrepareDirectory(Path sourceDirectory, Path destinationDirectory) throws IOException {
         try {
-            Path sourcePath = sourceDirectory.toPath();
-            Files.walk(sourcePath).forEach(toCopy -> {
-
-                File destination = new File(destinationDirectory, sourcePath.relativize(toCopy).toString());
-                if (toCopy.toFile().isFile()) {
-                    try {
-                        boolean result = checkEncoding(toCopy, StandardCharsets.UTF_8);
-                        if (result) {
-                            Files.copy(toCopy, destination.toPath());
-
-                        } else {
-                            try (InputStream in = Files.newInputStream(toCopy);
-                                    OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(destination),
-                                            StandardCharsets.UTF_8)) {
-
-                                int length = 0;
-                                byte[] bytes = new byte[1024];
-
-                                // copy data from input stream to output stream
-                                while ((length = in.read(bytes)) != -1) {
-                                    String readable = Arrays.toString(bytes);
-                                    out.write(readable.toCharArray());
-
-                                }
-                                out.flush();
-
-                            }
-                        }
-                    } catch (IOException e) {
-
-                        throw new UncheckedIOException(e);
-                    }
-
-                } else {
-                    try {
-                        Files.copy(toCopy, destination.toPath());
-                    } catch (IOException e) {
-
-                        throw new UncheckedIOException(e);
-                    }
+            Files.walk(sourceDirectory).forEach(sourceFile -> {
+                Path destinationFile = destinationDirectory.resolve(sourceDirectory.relativize(sourceFile));
+                try {
+                    preparePath(sourceFile, destinationFile);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
                 }
-
             });
         } catch (UncheckedIOException e) {
             throw e.getCause();
+        }
+    }
+    
+    /**
+     * Copies and prepares a single element. If source is a directory, an empty directory is created at destination.
+     * If source is a file, a prepared file is created at destination.
+     * 
+     * @param sourceFile The source file to copy (may be a file or a directory).
+     * @param destinationFile The destination to copy to.
+     * 
+     * @throws IOException If reading or writing the files fails.
+     */
+    private static void preparePath(Path sourceFile, Path destinationFile) throws IOException {
+        if (Files.isRegularFile(sourceFile)) {
+            prepareFile(sourceFile, destinationFile);
+
+        } else {
+            Files.copy(sourceFile, destinationFile);
+        }
+    }
+    
+    /**
+     * Prepares a file. If the encoding is wrong, it is converted to UTF-8.
+     * 
+     * @param sourceFile The source file to prepare.
+     * @param destinationFile The location where to put the prepared copy.
+     * 
+     * @throws IOException If reading or writing the file fails.
+     */
+    private static void prepareFile(Path sourceFile, Path destinationFile) throws IOException {
+        if (checkEncoding(sourceFile, StandardCharsets.UTF_8)) {
+            Files.copy(sourceFile, destinationFile);
+
+        } else {
+            
+            boolean success = false;
+            for (Charset charset : CHARSETS_TO_CHECK) {
+                if (checkEncoding(sourceFile, charset)) {
+                    
+                    try (FileReader in = new FileReader(sourceFile.toFile(), charset);
+                            FileWriter out = new FileWriter(destinationFile.toFile(), StandardCharsets.UTF_8)) {
+                        in.transferTo(out);
+                    }
+                    
+                    success = true;
+                    break;
+                }
+            }
+            
+            if (!success) {
+                // TODO: some kind of warning message?
+                Files.copy(sourceFile, destinationFile);
+            }
         }
     }
 
