@@ -71,11 +71,7 @@ public class ApiConnectionIT {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
 
-        assertThrows(NoSuchElementException.class, () -> {
-
-            Course course = api.getCourse("notenrolled", "wise2021");
-
-        });
+        assertThrows(NoSuchElementException.class, () -> api.getCourse("notenrolled", "wise2021"));
     }
 
     @Test
