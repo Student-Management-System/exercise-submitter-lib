@@ -11,12 +11,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
+
+
 
 public class PreparatorTest {
 
@@ -45,7 +48,8 @@ public class PreparatorTest {
                 File result = preparator.getResult();
 
                 assertTrue(result.isDirectory());
-                assertEquals(0, result.listFiles().length);
+                //.classpath + .project generated if not available
+                assertEquals(2, result.listFiles().length);
                 assertNotEquals(result, source);
             }
         });
@@ -82,7 +86,11 @@ public class PreparatorTest {
                 assertTrue(result.isDirectory());
                 
                 assertTrue(new File(result, "file.txt").isFile());
-                assertEquals(1, result.listFiles().length);
+                // file + .project and .classpath 
+                assertTrue(new File(result, ".project").isFile());
+                assertTrue(new File(result, ".classpath").isFile());
+              
+                assertEquals(3, result.listFiles().length);
             }
         });
 
@@ -120,7 +128,14 @@ public class PreparatorTest {
                 // exactly one sub directory
                 File subDir = new File(result, "notEmptyDir");
                 assertTrue(subDir.isDirectory());
-                assertEquals(1, result.listFiles().length);
+                //.project and .classpath are autom. generated if not available
+                File classpath = new File(result, ".classpath");
+                File project = new File(result, ".project");
+                
+                assertTrue(classpath.exists());
+                assertTrue(project.exists());
+                
+                assertEquals(3, result.listFiles().length);
                 
                 // exactly one file in sub directory
                 assertTrue(new File(subDir, "file.txt").isFile());
@@ -231,6 +246,44 @@ public class PreparatorTest {
                 () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(iso88591.toPath(), StandardCharsets.UTF_8)))
         );
         
+    }
+    //TODO: Check if i need this testcase
+    @Test
+    public void createProjectAndClasspathFiles() {
+        File source = new File(TESTDATA, "emptyDir");
+        source.mkdir();
+        
+
+        assertDoesNotThrow(() -> {
+            try (Preparator preparator = new Preparator(source)) {
+                File result = preparator.getResult();
+
+                assertTrue(result.list(new FilenameFilter() {
+                    
+                    @Override
+                    public boolean accept(File dir, String name) {
+                        if(name.equals(".classpath")) {
+                            return true;
+                        }
+                        
+                        return false;
+                    }
+                }).length == 1);
+                
+                assertTrue(result.list(new FilenameFilter() {
+                    
+                    @Override
+                    public boolean accept(File dir, String name) {
+                        if(name.equals(".project")) {
+                            return true;
+                        }
+                        
+                        return false;
+                    }
+                }).length == 1);
+               
+            }
+        });
     }
 
 }
