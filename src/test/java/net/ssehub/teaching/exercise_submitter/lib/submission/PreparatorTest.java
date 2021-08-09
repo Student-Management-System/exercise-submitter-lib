@@ -11,11 +11,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import org.junit.jupiter.api.Test;
 
@@ -47,10 +47,15 @@ public class PreparatorTest {
             try (Preparator preparator = new Preparator(source)) {
                 File result = preparator.getResult();
 
-                assertTrue(result.isDirectory());
-                //.classpath + .project generated if not available
-                assertEquals(2, result.listFiles().length);
-                assertNotEquals(result, source);
+                assertAll(
+                        () -> assertTrue(result.isDirectory()),
+                        () -> assertNotEquals(result, source),
+                        
+                        //.classpath + .project generated
+                        () -> assertEquals(2, result.listFiles().length),
+                        () -> assertTrue(new File(result, ".classpath").isFile()),
+                        () -> assertTrue(new File(result, ".project").isFile())
+                );
             }
         });
     }
@@ -75,7 +80,7 @@ public class PreparatorTest {
     }
 
     @Test
-    public void copiedFilesinEmptyDir() {
+    public void copiesFiles() {
         File source = new File(TESTDATA, "notEmptyDir");
 
         assertDoesNotThrow(() -> {
@@ -83,14 +88,23 @@ public class PreparatorTest {
             try (Preparator preparator = new Preparator(source)) {
 
                 result = preparator.getResult();
-                assertTrue(result.isDirectory());
                 
-                assertTrue(new File(result, "file.txt").isFile());
-                // file + .project and .classpath 
-                assertTrue(new File(result, ".project").isFile());
-                assertTrue(new File(result, ".classpath").isFile());
-              
-                assertEquals(3, result.listFiles().length);
+                assertAll(
+                        () -> assertTrue(result.isDirectory()),
+                        // file + .project and .classpath 
+                        () -> assertTrue(new File(result, "file.txt").isFile()),
+                        () -> assertTrue(new File(result, ".project").isFile()),
+                        () -> assertTrue(new File(result, ".classpath").isFile()),
+                        
+                        () -> assertEquals(3, result.listFiles().length),
+                        
+                        // test that copied content is correct
+                        () -> {
+                            String fileContent = Files.readString(new File(result, "file.txt").toPath());
+                            assertEquals("This is a file.\n", fileContent);
+                        }
+                ); 
+                
             }
         });
 
@@ -114,34 +128,40 @@ public class PreparatorTest {
     }
 
     @Test
-    public void copiedAllFilesAndSubDirsinEmptyDir() {
+    public void copiesFileInSubDirectory() {
         File source = new File(TESTDATA, "notEmptyDirWithSubDir");
-        assertTrue(source.isDirectory(), "precondition: empty test directory exists");
 
         assertDoesNotThrow(() -> {
             File result;
             try (Preparator preparator = new Preparator(source)) {
 
                 result = preparator.getResult();
-                assertTrue(result.isDirectory());
-               
-                // exactly one sub directory
                 File subDir = new File(result, "notEmptyDir");
-                assertTrue(subDir.isDirectory());
-                //.project and .classpath are autom. generated if not available
                 File classpath = new File(result, ".classpath");
                 File project = new File(result, ".project");
                 
-                assertTrue(classpath.exists());
-                assertTrue(project.exists());
-                
-                assertEquals(3, result.listFiles().length);
-                
-                // exactly one file in sub directory
-                assertTrue(new File(subDir, "file.txt").isFile());
-                assertEquals(1, subDir.listFiles().length);
+                assertAll(
+                        () -> assertTrue(result.isDirectory()),
+                        () -> assertTrue(subDir.isDirectory()),
+                        
+                        //.project and .classpath are generated
+                        () -> assertTrue(classpath.exists()),
+                        () -> assertTrue(project.exists()),
+                        
+                        // plus one sub directory
+                        () -> assertEquals(3, result.listFiles().length),
+                        
+                        // exactly one file in sub directory
+                        () -> assertTrue(new File(subDir, "file.txt").isFile()),
+                        () -> assertEquals(1, subDir.listFiles().length),
+                        
+                        // test that copied content is correct
+                        () -> {
+                            String fileContent = Files.readString((new File(subDir, "file.txt").toPath()));
+                            assertEquals("This is a file.\n", fileContent);
+                        }
+                );
             }
-
         });
 
     }
@@ -247,41 +267,110 @@ public class PreparatorTest {
         );
         
     }
-    //TODO: Check if i need this testcase
+    
     @Test
-    public void createProjectAndClasspathFiles() {
+    public void createProjectAndClasspathFilesWithCorrectContent() {
         File source = new File(TESTDATA, "emptyDir");
         source.mkdir();
+        assertTrue(source.isDirectory(), "precondition: empty test directory exists");
         
-
         assertDoesNotThrow(() -> {
             try (Preparator preparator = new Preparator(source)) {
                 File result = preparator.getResult();
 
-                assertTrue(result.list(new FilenameFilter() {
-                    
-                    @Override
-                    public boolean accept(File dir, String name) {
-                        if(name.equals(".classpath")) {
-                            return true;
-                        }
-                        
-                        return false;
-                    }
-                }).length == 1);
+                File classpath = new File(result, ".classpath");
+                File project = new File(result, ".project");
                 
-                assertTrue(result.list(new FilenameFilter() {
-                    
-                    @Override
-                    public boolean accept(File dir, String name) {
-                        if(name.equals(".project")) {
-                            return true;
-                        }
+                assertAll(
+                        () -> assertTrue(classpath.isFile()),
+                        () -> assertTrue(project.isFile()),
+                        () -> assertEquals(2, result.listFiles().length),
                         
-                        return false;
-                    }
-                }).length == 1);
-               
+                        () -> {
+                            String content = Files.readString(classpath.toPath());
+                            assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                                    + "<classpath>\n"
+                                    + "    <classpathentry kind=\"src\" path=\"\"/>\n"
+                                    + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
+                                    + "    <classpathentry kind=\"output\" path=\"\"/>\n"
+                                    + "</classpath>\n", content);
+                        },
+                        () -> {
+                            String content = Files.readString(project.toPath());
+                            assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                                    + "<projectDescription>\n"
+                                    // replaces $projectName with the name of the folder
+                                    + "    <name>emptyDir</name>\n"
+                                    + "    <comment></comment>\n"
+                                    + "    <projects>\n"
+                                    + "    </projects>\n"
+                                    + "    <buildSpec>\n"
+                                    + "        <buildCommand>\n"
+                                    + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
+                                    + "            <arguments>\n"
+                                    + "            </arguments>\n"
+                                    + "        </buildCommand>\n"
+                                    + "    </buildSpec>\n"
+                                    + "    <natures>\n"
+                                    + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
+                                    + "    </natures>\n"
+                                    + "</projectDescription>\n", content);
+                        }
+                );
+            }
+        });
+    }
+    
+    @Test
+    public void doesNotOverrideExistingClasspathFile() {
+        File source = new File(TESTDATA, "existingClasspath");
+        
+        assertDoesNotThrow(() -> {
+            try (Preparator preparator = new Preparator(source)) {
+                File result = preparator.getResult();
+
+                // classpath should be copied
+                File classpath = new File(result, ".classpath");
+                // project is generated
+                File project = new File(result, ".project");
+                
+                assertAll(
+                        () -> assertTrue(classpath.isFile()),
+                        () -> assertTrue(project.isFile()),
+                        () -> assertEquals(2, result.listFiles().length),
+                        
+                        () -> {
+                            String content = Files.readString(classpath.toPath());
+                            assertEquals("existing classpath\n", content);
+                        }
+                );
+            }
+        });
+    }
+    
+    @Test
+    public void doesNotOverrideExistingProjectFile() {
+        File source = new File(TESTDATA, "existingProject");
+        
+        assertDoesNotThrow(() -> {
+            try (Preparator preparator = new Preparator(source)) {
+                File result = preparator.getResult();
+                
+                // classpath is generated
+                File classpath = new File(result, ".classpath");
+                // project should be copied
+                File project = new File(result, ".project");
+                
+                assertAll(
+                        () -> assertTrue(classpath.isFile()),
+                        () -> assertTrue(project.isFile()),
+                        () -> assertEquals(2, result.listFiles().length),
+                        
+                        () -> {
+                            String content = Files.readString(project.toPath());
+                            assertEquals("existing project\n", content);
+                        }
+                );
             }
         });
     }
