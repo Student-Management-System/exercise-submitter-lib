@@ -17,19 +17,19 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Prepares a folder for submission. Creates a copy of the folder in a temporary
- * location, see {@link #getResult()}. This temporary folder can be submitted.
+ * Prepares a folder for submission. Creates a copy of the folder in a temporary location, see {@link #getResult()}.
+ * This temporary folder can be submitted.
  * <p>
  * Preparation does the following tasks:
  * <ul>
- * <li>Try to convert all text files to UTF-8, if they are not already
- * UTF-8.</li>
+ *      <li>Try to convert all text files to UTF-8, if they are not already UTF-8.</li>
+ *      <li>Add <code>.classpath</code> and <code>.project</code> files, if they don't exist already. This ensures that
+ *      the submission is a valid eclipse project.</li>
  * </ul>
  *
  * @author Adam
@@ -38,9 +38,8 @@ import java.util.List;
 class Preparator implements Closeable {
 
     /**
-     * List of {@link Charset}s to check when reading files that are not UTF-8. If a
-     * non-UTF-8 file is found, but can be read using any of these charsets, then we
-     * convert it to UTF-8.
+     * List of {@link Charset}s to check when reading files that are not UTF-8. If a non-UTF-8 file is found, but can
+     * be read using any of these charsets, then we convert it to UTF-8.
      */
     private static final Charset[] CHARSETS_TO_CHECK;
 
@@ -52,6 +51,8 @@ class Preparator implements Closeable {
         }
         CHARSETS_TO_CHECK = charsets.toArray(new Charset[charsets.size()]);
     }
+    
+    private static final String RESOURCE_PATH = "net/ssehub/teaching/exercise_submitter/lib/submission/";
 
     private File result;
 
@@ -71,8 +72,8 @@ class Preparator implements Closeable {
 
         this.result = File.createTempFile("exercise_submission", null);
         this.result.delete();
-        copyAndPrepareDirectory(directory.toPath(), this.result.toPath());
-        this.createEclipseProjectFiles(this.result);
+        copyDirectoryWithCorrectEncoding(directory.toPath(), this.result.toPath());
+        createEclipseProjectFiles(this.result.toPath());
         this.result.deleteOnExit();
 
     }
@@ -107,19 +108,22 @@ class Preparator implements Closeable {
     }
 
     /**
-     * Copies and prepares the given source directory.
+     * Copies all files and sub-folders of the given source directory to the destination directory. If any text files
+     * have an encoding other than UTF-8, we try to convert them to UTF-8.
      *
-     * @param sourceDirectory      The source directory to copy.
-     * @param destinationDirectory The destination where to put the prepared copy.
+     * @param sourceDirectory The source directory to copy.
+     * @param destinationDirectory The destination where to put the copy.
      *
      * @throws IOException If reading the source or writing the destination fails.
      */
-    private static void copyAndPrepareDirectory(Path sourceDirectory, Path destinationDirectory) throws IOException {
+    private static void copyDirectoryWithCorrectEncoding(Path sourceDirectory, Path destinationDirectory)
+            throws IOException {
+        
         try {
             Files.walk(sourceDirectory).forEach(sourceFile -> {
                 Path destinationFile = destinationDirectory.resolve(sourceDirectory.relativize(sourceFile));
                 try {
-                    preparePath(sourceFile, destinationFile);
+                    copyPathWithCorrectEncoding(sourceFile, destinationFile);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -129,44 +133,18 @@ class Preparator implements Closeable {
         }
     }
 
-    private void createEclipseProjectFiles(File destination) throws IOException {
-        File classpath = new File(destination, ".classpath");
-        final String RESOURCE_PATH = "net/ssehub/teaching/exercise_submitter/lib/preparator";
-
-        if (!classpath.exists()) {
-            try (InputStream input = this.getClass().getClassLoader()
-                    .getResourceAsStream(RESOURCE_PATH + "/.classpath")) {
-                Files.copy(input, Path.of(destination.toString() + "/.classpath"), StandardCopyOption.REPLACE_EXISTING);
-
-            }
-
-        }
-
-        File projekt = new File(destination, ".project");
-        if (!projekt.exists()) {
-            try (InputStream input = this.getClass().getClassLoader()
-                    .getResourceAsStream(RESOURCE_PATH + "/.project")) {
-                Files.copy(input, Path.of(destination.toString() + "/.project"), StandardCopyOption.REPLACE_EXISTING);
-
-            }
-        }
-
-    }
-
     /**
-     * Copies and prepares a single element. If source is a directory, an empty
-     * directory is created at destination. If source is a file, a prepared file is
-     * created at destination.
+     * Copies a single element. If source is a directory, an empty directory is created at destination. If source is a
+     * file, it is copied to the destination (with possibly converting the encoding to UTF-8).
      *
-     * @param sourceFile      The source file to copy (may be a file or a
-     *                        directory).
+     * @param sourceFile The source file to copy (may be a file or a directory).
      * @param destinationFile The destination to copy to.
      *
      * @throws IOException If reading or writing the files fails.
      */
-    private static void preparePath(Path sourceFile, Path destinationFile) throws IOException {
+    private static void copyPathWithCorrectEncoding(Path sourceFile, Path destinationFile) throws IOException {
         if (Files.isRegularFile(sourceFile)) {
-            prepareFile(sourceFile, destinationFile);
+            copyFileWithCorrectEncoding(sourceFile, destinationFile);
 
         } else {
             Files.copy(sourceFile, destinationFile);
@@ -174,14 +152,14 @@ class Preparator implements Closeable {
     }
 
     /**
-     * Prepares a file. If the encoding is wrong, it is converted to UTF-8.
+     * Copies a file. If the encoding is wrong, it is converted to UTF-8.
      *
-     * @param sourceFile      The source file to prepare.
-     * @param destinationFile The location where to put the prepared copy.
+     * @param sourceFile The source file to copy.
+     * @param destinationFile The location where to put the copy.
      *
      * @throws IOException If reading or writing the file fails.
      */
-    private static void prepareFile(Path sourceFile, Path destinationFile) throws IOException {
+    private static void copyFileWithCorrectEncoding(Path sourceFile, Path destinationFile) throws IOException {
         String contentType = Files.probeContentType(sourceFile);
         boolean isTextFile = contentType != null && contentType.startsWith("text");
         if (!isTextFile || checkEncoding(sourceFile, StandardCharsets.UTF_8)) {
@@ -209,13 +187,32 @@ class Preparator implements Closeable {
             }
         }
     }
+    
+    private static void createEclipseProjectFiles(Path destination) throws IOException {
+        Path classpath = destination.resolve(".classpath");
+        
+        if (!Files.exists(classpath)) {
+            try (InputStream input = Preparator.class.getClassLoader()
+                    .getResourceAsStream(RESOURCE_PATH + ".classpath")) {
+                Files.copy(input, classpath);
+            }
+        }
+
+        Path project = destination.resolve(".project");
+        if (!Files.exists(project)) {
+            try (InputStream input = Preparator.class.getClassLoader()
+                    .getResourceAsStream(RESOURCE_PATH + ".project")) {
+                Files.copy(input, project);
+            }
+        }
+    }
 
     /**
      * Checks if the given file has the given encoding.
      * <p>
      * Package visibility for test cases.
      *
-     * @param file     The file to check.
+     * @param file The file to check.
      * @param encoding The encoding to check.
      *
      * @return Whether the file has the given encoding.
