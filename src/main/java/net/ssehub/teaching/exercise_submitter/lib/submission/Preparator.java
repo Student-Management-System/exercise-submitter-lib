@@ -188,6 +188,12 @@ class Preparator implements Closeable {
         }
     }
     
+    /**
+     * Creates the eclipse .project and .classpath file.
+     *
+     * @param destination Path where the files should be created
+     * @throws IOException Error, writting or reading
+     */
     private static void createEclipseProjectFiles(Path destination) throws IOException {
         Path classpath = destination.resolve(".classpath");
         
