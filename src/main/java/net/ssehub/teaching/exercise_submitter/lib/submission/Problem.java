@@ -4,39 +4,46 @@ import java.io.File;
 import java.util.Optional;
 
 /**
- * This class poses a problem that comes back from the stumgmt when uploading an
- * assignment.
+ * This class poses a problem that comes back from the stumgmt when uploading an assignment.
  */
 public class Problem {
-
+    
     /**
      * Indicates the severity of a problem.
      */
     public enum Severity {
-
+        
+      
         WARNING,
-
+        
+        
         ERROR;
     }
-
+    
+ 
     private String checkName;
+    
 
     private String message;
-
+    
+  
     private Severity severity;
 
+
     private Optional<File> file = Optional.empty();
+    
 
     private Optional<Integer> line = Optional.empty();
+    
 
     private Optional<Integer> column = Optional.empty();
-
+    
     /**
      * Instantiates a new problem.
      *
      * @param checkName the check name
-     * @param message   the message
-     * @param severity  the severity
+     * @param message the message
+     * @param severity the severity
      */
     Problem(String checkName, String message, Severity severity) {
         this.checkName = checkName;
@@ -46,40 +53,42 @@ public class Problem {
 
     /**
      * The name of the check that detected this problem.
-     *
+     * 
      * @return The name of the check.
      */
     public String getCheckName() {
-        return this.checkName;
+        return checkName;
     }
-
+    
+    
     /**
      * Gets the message.
      *
      * @return the message
      */
     public String getMessage() {
-        return this.message;
+        return message;
     }
-
+    
     /**
      * Gets the severity.
      *
      * @return the severity
      */
     public Severity getSeverity() {
-        return this.severity;
+        return severity;
     }
-
+    
     /**
      * The affected file in the submission. Relative to the submission directory.
-     *
+     * 
      * @return The affected file.
      */
     public Optional<File> getFile() {
-        return this.file;
+        return file;
     }
-
+    
+    
     /**
      * Sets the file.
      *
@@ -88,16 +97,17 @@ public class Problem {
     void setFile(File file) {
         this.file = Optional.of(file);
     }
-
+    
     /**
      * Gets the line.
      *
      * @return the line
      */
     public Optional<Integer> getLine() {
-        return this.line;
+        return line;
     }
-
+    
+    
     /**
      * Sets the line.
      *
@@ -106,16 +116,17 @@ public class Problem {
     void setLine(int line) {
         this.line = Optional.of(line);
     }
-
+    
     /**
      * Gets the column.
      *
      * @return the column
      */
     public Optional<Integer> getColumn() {
-        return this.column;
+        return column;
     }
-
+    
+    
     /**
      * Sets the column.
      *
@@ -124,5 +135,5 @@ public class Problem {
     void setColumn(int column) {
         this.column = Optional.of(column);
     }
-
+    
 }

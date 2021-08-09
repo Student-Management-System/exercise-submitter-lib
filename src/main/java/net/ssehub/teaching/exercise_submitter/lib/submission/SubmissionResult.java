@@ -10,7 +10,7 @@ import java.util.List;
 public class SubmissionResult {
 
     private boolean accepted;
-
+    
     private List<Problem> problems;
 
     /**
@@ -31,7 +31,7 @@ public class SubmissionResult {
      * @return Whether the submission was accepted.
      */
     public boolean isAccepted() {
-        return this.accepted;
+        return accepted;
     }
     
     /**
@@ -40,7 +40,7 @@ public class SubmissionResult {
      * @return The list of problems. Never <code>null</code>, but may be an empty list.
      */
     public List<Problem> getProblems() {
-        return this.problems;
+        return problems;
     }
-
+    
 }
