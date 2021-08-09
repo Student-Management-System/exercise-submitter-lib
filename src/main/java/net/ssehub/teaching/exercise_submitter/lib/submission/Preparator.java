@@ -1,11 +1,13 @@
 package net.ssehub.teaching.exercise_submitter.lib.submission;
 
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -20,6 +22,7 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Prepares a folder for submission. Creates a copy of the folder in a temporary location, see {@link #getResult()}.
@@ -73,7 +76,7 @@ class Preparator implements Closeable {
         this.result = File.createTempFile("exercise_submission", null);
         this.result.delete();
         copyDirectoryWithCorrectEncoding(directory.toPath(), this.result.toPath());
-        createEclipseProjectFiles(this.result.toPath());
+        createEclipseProjectFiles(this.result.toPath(), directory.getName());
         this.result.deleteOnExit();
 
     }
@@ -192,9 +195,10 @@ class Preparator implements Closeable {
      * Creates the eclipse .project and .classpath file.
      *
      * @param destination Path where the files should be created
+     * @param filename filename of the directory, which will be written in the .project file
      * @throws IOException Error, writting or reading
      */
-    private static void createEclipseProjectFiles(Path destination) throws IOException {
+    private static void createEclipseProjectFiles(Path destination, String filename) throws IOException {
         Path classpath = destination.resolve(".classpath");
         
         if (!Files.exists(classpath)) {
@@ -207,8 +211,14 @@ class Preparator implements Closeable {
         Path project = destination.resolve(".project");
         if (!Files.exists(project)) {
             try (InputStream input = Preparator.class.getClassLoader()
-                    .getResourceAsStream(RESOURCE_PATH + ".project")) {
-                Files.copy(input, project);
+                    .getResourceAsStream(RESOURCE_PATH + ".project");
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(input
+                            ))) {
+                
+                String data = reader.lines().map(line-> line.replace("$projectName", filename))
+                        .collect(Collectors.joining("\n"));
+                data += "\n";
+                Files.writeString(project, data);
             }
         }
     }
