@@ -237,9 +237,10 @@ class Preparator implements Closeable {
      * @throws IOException If reading the file fails.
      */
     static boolean checkEncoding(Path file, Charset encoding) throws IOException {
-
+        
         boolean foundError = false;
-        CharsetDecoder decoder = encoding.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
+        CharsetDecoder decoder = encoding.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
                 .onUnmappableCharacter(CodingErrorAction.REPORT);
 
         try (ByteChannel stream = Files.newByteChannel(file)) {

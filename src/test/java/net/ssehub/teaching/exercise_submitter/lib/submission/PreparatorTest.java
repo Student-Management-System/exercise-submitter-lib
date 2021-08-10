@@ -17,6 +17,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 
@@ -186,9 +187,7 @@ public class PreparatorTest {
                     String content = StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(bytes)).toString();
                     assertEquals("ISO-8859-1\nöäüÖÄÜß\n", content);
                 }
-               
             }
-
         });
     }
     
@@ -212,9 +211,7 @@ public class PreparatorTest {
                     String content = StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(bytes)).toString();
                     assertEquals("cp 1252\nöäüÖÄÜß\n", content);
                 }
-                
             }
-            
         });
     }
     
@@ -247,14 +244,59 @@ public class PreparatorTest {
     }
     
     @Test
+    @Disabled("There seems to be no way to create an invalid ISO 8859-1 file; thus the invalid file is always (wrongly) converted to UTF-8 instead of copying it over unchanged") // TODO
+    public void invalidEncodingNotConverted() {
+        File source = new File(TESTDATA, "encodings");
+        
+//        try (FileOutputStream out = new FileOutputStream(new File(source, "invalid.txt"))) {
+//            out.write("invalid UTF-8: ".getBytes(StandardCharsets.UTF_8));
+//            out.write(new byte[] {(byte) 0xe9, 0x00});
+//            out.write('\n');
+//            out.write("invalid CP-1252: ".getBytes(StandardCharsets.UTF_8));
+//            out.write(new byte[] {(byte) 0x81});
+//            out.write('\n');
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        
+        assertDoesNotThrow(() -> {
+            File result;
+            try (Preparator preparator = new Preparator(source)) {
+                
+                result = preparator.getResult();
+                assertTrue(result.isDirectory());
+                
+                File copied = new File(result, "invalid.txt");
+                
+                try (FileInputStream fs = new FileInputStream(copied)) {
+                    byte[] bytes = fs.readAllBytes();
+                    
+                    byte[] expected = {
+                            'i', 'n', 'v', 'a', 'l', 'i', 'd', ' ', 'U', 'T', 'F', '-', '8', ':', ' ',
+                            (byte) 0xe9, 0x00, '\n',
+                            'i', 'n', 'v', 'a', 'l', 'i', 'd', ' ', 'C', 'P', '-', '1', '2', '5', '2', ':', ' ',
+                            (byte) 0x81, '\n'
+                    };
+                    assertArrayEquals(expected, bytes);
+                }
+            }
+        });
+    }
+    
+    @Test
     public void checkEncoding() throws IOException {
         File encodingsDir = new File(TESTDATA, "encodings");
         File utf8 = new File(encodingsDir, "utf-8.txt");
         File cp1252 = new File(encodingsDir, "cp1252.txt");
         File iso88591 = new File(encodingsDir, "ISO-8859-1.txt");
+        
         // utf-8.long.txt has a three-byte UTF-8 character at the 1024 byte mark
         // this covers the edge case, that the input buffer has remaining bytes after a decoding pass
         File utf8Long = new File(encodingsDir, "utf-8.long.txt");
+        
+        // invalid starts as a text file, but then has random bytes that fit neither UTF-8 nor CP-1252
+        // there seems to be no way to create an invalid ISO 8859-1 file, though...
+        File invalid = new File(encodingsDir, "invalid.txt");
         
         assertAll(
                 () -> assertTrue(assertDoesNotThrow(() -> Preparator.checkEncoding(utf8.toPath(), StandardCharsets.UTF_8))),
@@ -263,7 +305,11 @@ public class PreparatorTest {
                 () -> assertTrue(assertDoesNotThrow(() -> Preparator.checkEncoding(utf8Long.toPath(), StandardCharsets.UTF_8))),
                 
                 () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(cp1252.toPath(), StandardCharsets.UTF_8))),
-                () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(iso88591.toPath(), StandardCharsets.UTF_8)))
+                () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(iso88591.toPath(), StandardCharsets.UTF_8))),
+                
+                () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(invalid.toPath(), StandardCharsets.UTF_8))),
+//                () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(invalid.toPath(), StandardCharsets.ISO_8859_1))),
+                () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(invalid.toPath(), Charset.forName("cp1252"))))
         );
         
     }
