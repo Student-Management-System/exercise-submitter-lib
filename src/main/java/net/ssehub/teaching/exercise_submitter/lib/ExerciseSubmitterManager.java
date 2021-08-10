@@ -1,17 +1,17 @@
 package net.ssehub.teaching.exercise_submitter.lib;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
-import net.ssehub.teaching.exercise_submitter.lib.replay.Replayer;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
+import net.ssehub.teaching.exercise_submitter.lib.replay.Replayer;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.AuthenticationException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.DummyApiConnection;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.IApiConnection;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.NetworkException;
+import net.ssehub.teaching.exercise_submitter.lib.student_management_system.UserNotInCourseException;
 import net.ssehub.teaching.exercise_submitter.lib.submission.Submitter;
 
 /**
@@ -39,10 +39,10 @@ public class ExerciseSubmitterManager {
      * 
      * @throws AuthenticationException If the authentication fails.
      * @throws NetworkException If the network communication fails.
-     * @throws NoSuchElementException If the course does not exist.
+     * @throws UserNotInCourseException If the user is not enrolled in the course or the course does not exist.
      */
     public ExerciseSubmitterManager(String username, String password, String courseName, String courseSemester)
-            throws NetworkException, AuthenticationException, NoSuchElementException {
+            throws NetworkException, AuthenticationException, UserNotInCourseException {
         this.username = username;
         
         mgmtConnection = new DummyApiConnection(); // TODO: factory

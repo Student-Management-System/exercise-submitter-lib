@@ -2,7 +2,6 @@ package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import net.ssehub.studentmgmt.backend_api.ApiClient;
 import net.ssehub.studentmgmt.backend_api.api.AssignmentApi;
@@ -18,8 +17,7 @@ import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 
 /**
- * This class provides the interface between the {@link net.ssehub.studentmgmt.sparkyservice_api.ApiClient}
- * and {@link ApiClient} and the library.
+ * Provides communication to the student-manamagement system.
  */
 public class ApiConnection implements IApiConnection {
 
@@ -30,10 +28,10 @@ public class ApiConnection implements IApiConnection {
     private ApiClient mgmtClient;
 
     /**
-     * Instantiates a new api connection.
+     * Instantiates a new API connection.
      *
-     * @param authUrl the auth url
-     * @param mgmtUrl the mgmt url
+     * @param authUrl The URL to the authentication sytem (sparky-service). Without a trailing slash.
+     * @param mgmtUrl the URL to the student management system. Without a trailing slash.
      */
     public ApiConnection(String authUrl, String mgmtUrl) {
         this.authClient = new net.ssehub.studentmgmt.sparkyservice_api.ApiClient();
@@ -43,14 +41,6 @@ public class ApiConnection implements IApiConnection {
         this.mgmtClient.setBasePath(mgmtUrl);
     }
 
-    /**
-     * Login a User.
-     *
-     * @param username the username
-     * @param password the password
-     * @throws NetworkException the network exception
-     * @throws AuthenticationException the authentication exception
-     */
     @Override
     public void login(String username, String password) throws NetworkException, AuthenticationException {
         AuthControllerApi api = new AuthControllerApi(this.authClient);
@@ -67,19 +57,10 @@ public class ApiConnection implements IApiConnection {
 
     }
 
-    /**
-     * Gets the course back if the user is enrolled in it.
-     *
-     * @param name the name
-     * @param semester the semester
-     * @return the course
-     * @throws NetworkException the network exception
-     * @throws AuthenticationException the authentication exception
-     * @throws NoSuchElementException the no such element exception
-     */
     @Override
     public Course getCourse(String name, String semester)
-            throws NetworkException, AuthenticationException, NoSuchElementException {
+            throws NetworkException, AuthenticationException, UserNotInCourseException {
+        
         String courseId = name + "-" + semester;
         CourseApi api = new CourseApi(this.mgmtClient);
         
@@ -89,28 +70,17 @@ public class ApiConnection implements IApiConnection {
             CourseDto courseinfo = api.getCourseById(courseId);
             course = new Course(courseinfo.getTitle(), courseinfo.getId());
         } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
-
             if (e.getCode() == 401) {
                 throw new AuthenticationException();
             }
             if (e.getCode() == 403) {
-                // code: 401 auth error
-                // code 403 Student not enrolled in course
-                throw new NoSuchElementException();
+                throw new UserNotInCourseException();
             }
+            // TODO: handle generic exception cases
         }
         return course;
     }
 
-    /**
-     * Gets the assignments from a specific course.
-     *
-     * @param course the course
-     * @return the assignments
-     * @throws NetworkException the network exception
-     * @throws AuthenticationException the authentication exception
-     * @throws IllegalArgumentException the illegal argument exception
-     */
     @Override
     public List<Assignment> getAssignments(Course course)
             throws NetworkException, AuthenticationException, IllegalArgumentException {
@@ -129,15 +99,13 @@ public class ApiConnection implements IApiConnection {
             });
             
         } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
-            
             if (e.getCode() == 401) {
                 throw new AuthenticationException();
             }
             if (e.getCode() == 403) {
-                // code: 401 auth error
-                // code 403 Student not enrolled in course
-                throw new NoSuchElementException();
+                throw new UserNotInCourseException();
             }
+            // TODO: handle generic exception cases
         }
         return assignments;
     }

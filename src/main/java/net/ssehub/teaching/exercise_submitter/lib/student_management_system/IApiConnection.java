@@ -1,7 +1,6 @@
 package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
@@ -34,10 +33,10 @@ public interface IApiConnection {
      * 
      * @throws NetworkException If the network communication fails.
      * @throws AuthenticationException If the authentication fails.
-     * @throws NoSuchElementException If the given course does not exist.
+     * @throws UserNotInCourseException If the user is not enrolled in the course or the course does not exist.
      */
     public Course getCourse(String name, String semester)
-            throws NetworkException, AuthenticationException, NoSuchElementException;
+            throws NetworkException, AuthenticationException, UserNotInCourseException;
     
     /**
      * Gets all {@link Assignment}s for the given {@link Course}.
@@ -48,9 +47,9 @@ public interface IApiConnection {
      * 
      * @throws NetworkException If the network communication fails.
      * @throws AuthenticationException If the authentication fails.
-     * @throws IllegalArgumentException If the {@link Course} does not exist.
+     * @throws UserNotInCourseException If the user is not enrolled in the course or the course does not exist.
      */
     public List<Assignment> getAssignments(Course course)
-            throws NetworkException, AuthenticationException, IllegalArgumentException;
+            throws NetworkException, AuthenticationException, UserNotInCourseException;
         
 }
