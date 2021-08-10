@@ -60,6 +60,12 @@ public class ApiConnectionIT {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
     }
+    
+    @Test
+    public void getCourseNotLoggedIn() {
+        ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+        assertThrows(AuthenticationException.class, () -> api.getCourse("java", "wise2021"));
+    }
 
     @Test
     public void getNotExistingCourse() {
@@ -77,7 +83,7 @@ public class ApiConnectionIT {
     }
 
     @Test
-    public void getStudentEnrolledCourse() {
+    public void getCourse() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
 
@@ -88,6 +94,12 @@ public class ApiConnectionIT {
                 () -> assertEquals("java-wise2021", course.getId()),
                 () -> assertEquals("Programmierpraktikum: Java", course.getName())
         );
+    }
+    
+    @Test
+    public void getAssignmentsNotLoggedIn() {
+        ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+        assertThrows(AuthenticationException.class, () -> api.getAssignments(new Course("Java", "java-wise2021")));
     }
 
     @Test
