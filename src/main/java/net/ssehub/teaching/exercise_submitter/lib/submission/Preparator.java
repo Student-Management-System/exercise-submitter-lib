@@ -192,13 +192,15 @@ class Preparator implements Closeable {
     }
     
     /**
-     * Creates the eclipse .project and .classpath file.
+     * Creates the eclipse <code>.project</code> and <code>.classpath</code> files, if they don't already exist.
      *
-     * @param destination Path where the files should be created
-     * @param filename filename of the directory, which will be written in the .project file
-     * @throws IOException Error, writting or reading
+     * @param destination Directory where the files should be created
+     * @param projectName The name of the eclipse project to use when creating the <code>.project</code> file. This is
+     *      usually the name of the source directory.
+     * 
+     * @throws IOException If writing the files fails.
      */
-    private static void createEclipseProjectFiles(Path destination, String filename) throws IOException {
+    private static void createEclipseProjectFiles(Path destination, String projectName) throws IOException {
         Path classpath = destination.resolve(".classpath");
         
         if (!Files.exists(classpath)) {
@@ -210,14 +212,13 @@ class Preparator implements Closeable {
 
         Path project = destination.resolve(".project");
         if (!Files.exists(project)) {
-            try (InputStream input = Preparator.class.getClassLoader()
-                    .getResourceAsStream(RESOURCE_PATH + ".project");
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(input
-                            ))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    Preparator.class.getClassLoader().getResourceAsStream(RESOURCE_PATH + ".project"),
+                    StandardCharsets.UTF_8))) {
                 
-                String data = reader.lines().map(line-> line.replace("$projectName", filename))
-                        .collect(Collectors.joining("\n"));
-                data += "\n";
+                String data = reader.lines()
+                        .map(line -> line.replace("$projectName", projectName))
+                        .collect(Collectors.joining("\n", "", "\n"));
                 Files.writeString(project, data);
             }
         }
