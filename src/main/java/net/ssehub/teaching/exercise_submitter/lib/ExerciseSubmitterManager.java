@@ -10,6 +10,7 @@ import net.ssehub.teaching.exercise_submitter.lib.replay.Replayer;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.AuthenticationException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.DummyApiConnection;
+import net.ssehub.teaching.exercise_submitter.lib.student_management_system.GroupNotFoundException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.IApiConnection;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.NetworkException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.UserNotInCourseException;
@@ -41,9 +42,10 @@ public class ExerciseSubmitterManager {
      * @throws AuthenticationException If the authentication fails.
      * @throws NetworkException If the network communication fails.
      * @throws UserNotInCourseException If the user is not enrolled in the course or the course does not exist.
+     * @throws ApiException If a generic API exception occurs.
      */
     public ExerciseSubmitterManager(String username, String password, String courseName, String courseSemester)
-            throws NetworkException, AuthenticationException, UserNotInCourseException {
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         this.username = username;
         
         mgmtConnection = new DummyApiConnection(); // TODO: factory
@@ -58,8 +60,9 @@ public class ExerciseSubmitterManager {
      * 
      * @throws AuthenticationException If the authentication fails.
      * @throws NetworkException If the network communication fails.
+     * @throws ApiException If a generic API exception occurs.
      */
-    public List<Assignment> getAllAssignments() throws NetworkException, AuthenticationException {
+    public List<Assignment> getAllAssignments() throws NetworkException, AuthenticationException, ApiException {
         return mgmtConnection.getAssignments(course);
     }
     
@@ -70,10 +73,13 @@ public class ExerciseSubmitterManager {
      * 
      * @throws AuthenticationException If the authentication fails.
      * @throws NetworkException If the network communication fails.
+     * @throws ApiException If a generic API exception occurs.
      * 
      * @see #isSubmittable(Assignment)
      */
-    public List<Assignment> getAllSubmittableAssignments() throws NetworkException, AuthenticationException {
+    public List<Assignment> getAllSubmittableAssignments()
+            throws NetworkException, AuthenticationException, ApiException {
+        
         return mgmtConnection.getAssignments(course).stream()
                 .filter(this::isSubmittable)
                 .collect(Collectors.toList());
@@ -86,10 +92,13 @@ public class ExerciseSubmitterManager {
      * 
      * @throws AuthenticationException If the authentication fails.
      * @throws NetworkException If the network communication fails.
+     * @throws ApiException If a generic API exception occurs.
      * 
      * @see #isReplayable(Assignment)
      */
-    public List<Assignment> getAllReplayableAssignments() throws NetworkException, AuthenticationException {
+    public List<Assignment> getAllReplayableAssignments()
+            throws NetworkException, AuthenticationException, ApiException {
+        
         return mgmtConnection.getAssignments(course).stream()
                 .filter(this::isReplayable)
                 .collect(Collectors.toList());
@@ -108,7 +117,9 @@ public class ExerciseSubmitterManager {
      * 
      * @see #isSubmittable(Assignment)
      */
-    public Submitter getSubmitter(Assignment assignment) throws IllegalArgumentException, ApiException {
+    public Submitter getSubmitter(Assignment assignment)
+            throws IllegalArgumentException, NetworkException, AuthenticationException, UserNotInCourseException,
+            GroupNotFoundException, ApiException {
         if (!isSubmittable(assignment)) {
             throw new IllegalArgumentException("Assignment " + assignment.getName() + " is not in submittable");
         }
@@ -129,7 +140,9 @@ public class ExerciseSubmitterManager {
      * 
      * @see #isReplayable(Assignment)
      */
-    public Replayer getReplayer(Assignment assignment) throws IllegalArgumentException, ApiException {
+    public Replayer getReplayer(Assignment assignment)
+            throws IllegalArgumentException, NetworkException, AuthenticationException, UserNotInCourseException,
+            GroupNotFoundException, ApiException {
         if (!isReplayable(assignment)) {
             throw new IllegalArgumentException("Assignment " + assignment.getName() + " is not replayable");
         }
@@ -186,7 +199,9 @@ public class ExerciseSubmitterManager {
      * 
      * @throws ApiException If the group name of a group assignment cannot be retrieved. 
      */
-    private String getGroupName(Assignment assignment) throws ApiException {
+    private String getGroupName(Assignment assignment)
+            throws NetworkException, AuthenticationException, UserNotInCourseException, GroupNotFoundException,
+            ApiException {
         String groupName;
         if (assignment.isGroupWork()) {
             groupName = mgmtConnection.getGroupName(course, assignment);

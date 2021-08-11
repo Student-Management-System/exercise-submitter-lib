@@ -16,17 +16,15 @@ public class Assignment {
      */
     public enum State {
         
-        /** The invisible. */
         INVISIBLE,
         
-        /** The submission. */
         SUBMISSION,
       
-        /** The in review. */
         IN_REVIEW,
        
-        /** The reviewed. */
-        REVIEWED;
+        REVIEWED,
+        
+        CLOSED;
     }
     
     private String managementId;

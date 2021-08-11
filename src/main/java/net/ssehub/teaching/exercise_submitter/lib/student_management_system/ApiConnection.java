@@ -1,19 +1,18 @@
 package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import net.ssehub.studentmgmt.backend_api.ApiClient;
 import net.ssehub.studentmgmt.backend_api.api.AssignmentApi;
 import net.ssehub.studentmgmt.backend_api.api.AssignmentRegistrationApi;
 import net.ssehub.studentmgmt.backend_api.api.AuthenticationApi;
 import net.ssehub.studentmgmt.backend_api.api.CourseApi;
-import net.ssehub.studentmgmt.backend_api.model.AssignmentDto;
 import net.ssehub.studentmgmt.backend_api.model.AssignmentDto.CollaborationEnum;
 import net.ssehub.studentmgmt.backend_api.model.CourseDto;
 import net.ssehub.studentmgmt.backend_api.model.GroupDto;
 import net.ssehub.studentmgmt.backend_api.model.UserDto;
-import net.ssehub.studentmgmt.sparkyservice_api.ApiException;
 import net.ssehub.studentmgmt.sparkyservice_api.api.AuthControllerApi;
 import net.ssehub.studentmgmt.sparkyservice_api.model.AuthenticationInfoDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.CredentialsDto;
@@ -47,103 +46,107 @@ public class ApiConnection implements IApiConnection {
     }
 
     @Override
-    public void login(String username, String password) throws NetworkException, AuthenticationException {
+    public void login(String username, String password) throws NetworkException, AuthenticationException, ApiException {
         AuthControllerApi api = new AuthControllerApi(this.authClient);
+        
         CredentialsDto credentials = new CredentialsDto();
         credentials.setUsername(username);
         credentials.setPassword(password);
+        
         try {
             AuthenticationInfoDto authinfo = api.authenticate(credentials);
             this.mgmtClient.setAccessToken(authinfo.getToken().getToken());
-        } catch (ApiException e) {
-            // TODO: use response body
-            throw new AuthenticationException();
+            
+        } catch (net.ssehub.studentmgmt.sparkyservice_api.ApiException e) {
+            if (e.getCode() == 401) {
+                throw new AuthenticationException("Invalid credentials");
+            }
+            throw handleAuthException(e);
         }
 
         AuthenticationApi mgmtAuth = new AuthenticationApi(mgmtClient);
         try {
             this.loggedInUser = mgmtAuth.whoAmI();
+            
         } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
-            // TODO: use response body
-            throw new AuthenticationException();
+            throw handleMgmtException(e);
         }
     }
 
     @Override
     public Course getCourse(String name, String semester)
-            throws NetworkException, AuthenticationException, UserNotInCourseException {
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         
         String courseId = name + "-" + semester;
         CourseApi api = new CourseApi(this.mgmtClient);
         
-        Course course = null;
+        Course course;
         
         try {
             CourseDto courseinfo = api.getCourseById(courseId);
             course = new Course(courseinfo.getTitle(), courseinfo.getId());
+            
         } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
-            if (e.getCode() == 401) {
-                throw new AuthenticationException();
-            }
             if (e.getCode() == 403) {
                 throw new UserNotInCourseException();
             }
-            // TODO: handle generic exception cases
+            throw handleMgmtException(e);
         }
+        
         return course;
     }
 
     @Override
     public List<Assignment> getAssignments(Course course)
-            throws NetworkException, AuthenticationException, IllegalArgumentException {
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         
         AssignmentApi api = new AssignmentApi(mgmtClient);
-        List<Assignment> assignments = new ArrayList<Assignment>();
+        List<Assignment> assignments;
         try {
             
-            List<AssignmentDto> assignmentinfo = api.getAssignmentsOfCourse(course.getId());
-            assignmentinfo.forEach(oldassignment -> {
-                
-                Assignment.State state;
-                switch (oldassignment.getState()) {
-                case EVALUATED:
-                    state = State.REVIEWED;
-                    break;
-                case INVISIBLE:
-                    state = State.INVISIBLE;
-                    break;
-                case IN_PROGRESS:
-                    state = State.SUBMISSION;
-                    break;
-                case IN_REVIEW:
-                    state = State.IN_REVIEW;
-                    break;
-                case CLOSED: // TODO: handle this case
-                default:
-                    state = State.INVISIBLE;
-                    break;
-                }
-                
-                boolean groupwork = oldassignment.getCollaboration() != CollaborationEnum.SINGLE ? true : false;
-                assignments.add(new Assignment(oldassignment.getId(), oldassignment.getName(), state, groupwork));
-                
-            });
+            assignments = api.getAssignmentsOfCourse(course.getId()).stream()
+                    .map((assignment) -> {
+                        Assignment.State state;
+                        switch (assignment.getState()) {
+                        case EVALUATED:
+                            state = State.REVIEWED;
+                            break;
+                        case INVISIBLE:
+                            state = State.INVISIBLE;
+                            break;
+                        case IN_PROGRESS:
+                            state = State.SUBMISSION;
+                            break;
+                        case IN_REVIEW:
+                            state = State.IN_REVIEW;
+                            break;
+                        case CLOSED:
+                            state = State.CLOSED;
+                            break;
+                        default:
+                            state = State.INVISIBLE;
+                            break;
+                        }
+                        
+                        boolean groupwork = assignment.getCollaboration() != CollaborationEnum.SINGLE ? true : false;
+                        
+                        return new Assignment(assignment.getId(), assignment.getName(), state, groupwork);
+                    })
+                    .collect(Collectors.toList());
             
         } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
-            if (e.getCode() == 401) {
-                throw new AuthenticationException();
-            }
             if (e.getCode() == 403) {
                 throw new UserNotInCourseException();
             }
-            // TODO: handle generic exception cases
+            throw handleMgmtException(e);
         }
         return assignments;
     }
 
     @Override
     public String getGroupName(Course course, Assignment assignment)
-            throws NetworkException, AuthenticationException, UserNotInCourseException, GroupNotFoundException {
+            throws NetworkException, AuthenticationException, UserNotInCourseException, GroupNotFoundException,
+            ApiException {
         
         if (this.loggedInUser == null) {
             throw new AuthenticationException("Not logged in");
@@ -151,7 +154,7 @@ public class ApiConnection implements IApiConnection {
         
         AssignmentRegistrationApi assignmentRegistrations = new AssignmentRegistrationApi(mgmtClient);
         
-        String groupName = "";
+        String groupName;
         
         try {
             GroupDto group = assignmentRegistrations.getRegisteredGroupOfUser(course.getId(),
@@ -160,9 +163,6 @@ public class ApiConnection implements IApiConnection {
             groupName = group.getName();
             
         } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
-            if (e.getCode() == 401) {
-                throw new AuthenticationException();
-            }
             if (e.getCode() == 403) {
                 throw new UserNotInCourseException();
             }
@@ -170,10 +170,66 @@ public class ApiConnection implements IApiConnection {
                 throw new GroupNotFoundException();
             }
             
-            // TODO: handle generic exception cases
+            throw handleMgmtException(e);
         }
         
         return groupName;
+    }
+    
+    /**
+     * Converts the given exception from the management API to a proper {@link ApiException}.
+     * <p>
+     * Handles:
+     * <ul>
+     *      <li>IOException: {@link NetworkException}</li>
+     *      <li>Code 401: {@link AuthenticationException} "Not logged in"</li>
+     *      <li>Fallback: {@link ApiException} "Unknown exception"</li>
+     * </ul>
+     * 
+     * @param exception The management exception.
+     * 
+     * @return An {@link ApiException}.
+     */
+    private ApiException handleMgmtException(net.ssehub.studentmgmt.backend_api.ApiException exception) {
+        ApiException result;
+        
+        if (exception.getCause() instanceof IOException) {
+            result = new NetworkException(exception.getCause());
+            
+        } else if (exception.getCode() == 401) {
+            result = new AuthenticationException("Not logged in");
+            
+        } else {
+            result = new ApiException("Unknown exception", exception);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Converts the given exception from the authentication API to a proper {@link ApiException}.
+     * <p>
+     * Handles:
+     * <ul>
+     *      <li>IOException: {@link NetworkException}</li>
+     *      <li>Fallback: {@link ApiException} "Unknown exception"</li>
+     * </ul>
+     * 
+     * @param exception The authentication exception.
+     * 
+     * @return An {@link ApiException}.
+     */
+    private ApiException handleAuthException(net.ssehub.studentmgmt.sparkyservice_api.ApiException exception) {
+        ApiException result;
+        
+        if (exception.getCause() instanceof IOException) {
+            result = new NetworkException(exception.getCause());
+            
+        } else {
+            result = new ApiException("Unknown exception", exception);
+        }
+        
+        return result;
     }
 
 }

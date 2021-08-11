@@ -20,8 +20,9 @@ public interface IApiConnection {
      * 
      * @throws NetworkException If the network communication fails.
      * @throws AuthenticationException If the authentication fails.
+     * @throws ApiException If a generic exception occurs.
      */
-    public void login(String username, String password) throws NetworkException, AuthenticationException;
+    public void login(String username, String password) throws NetworkException, AuthenticationException, ApiException;
     
     /**
      * Gets the given {@link Course}.
@@ -34,9 +35,10 @@ public interface IApiConnection {
      * @throws NetworkException If the network communication fails.
      * @throws AuthenticationException If the authentication fails.
      * @throws UserNotInCourseException If the user is not enrolled in the course or the course does not exist.
+     * @throws ApiException If a generic exception occurs.
      */
     public Course getCourse(String name, String semester)
-            throws NetworkException, AuthenticationException, UserNotInCourseException;
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException;
     
     /**
      * Gets all {@link Assignment}s for the given {@link Course}.
@@ -48,9 +50,10 @@ public interface IApiConnection {
      * @throws NetworkException If the network communication fails.
      * @throws AuthenticationException If the authentication fails.
      * @throws UserNotInCourseException If the user is not enrolled in the course or the course does not exist.
+     * @throws ApiException If a generic exception occurs.
      */
     public List<Assignment> getAssignments(Course course)
-            throws NetworkException, AuthenticationException, UserNotInCourseException;
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException;
     
     /**
      * Retrieves the group name that the currently logged-in user has for the given assignment.
@@ -64,8 +67,10 @@ public interface IApiConnection {
      * @throws AuthenticationException If the authentication fails.
      * @throws UserNotInCourseException If the user is not enrolled in the course or the course does not exist.
      * @throws GroupNotFoundException If the given assignment is not a group assignment.
+     * @throws ApiException If a generic exception occurs.
      */
     public String getGroupName(Course course, Assignment assignment)
-            throws NetworkException, AuthenticationException, UserNotInCourseException, GroupNotFoundException;
+            throws NetworkException, AuthenticationException, UserNotInCourseException, GroupNotFoundException,
+            ApiException;
         
 }
