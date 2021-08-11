@@ -27,8 +27,7 @@ public interface IApiConnection {
     /**
      * Gets the given {@link Course}.
      *
-     * @param name The name of the course, e.g. <code>java</code>.
-     * @param semester The semester of the course, e.g. <code>wise2021</code>.
+     * @param courseId The ID of the course, e.g. <code>java-wise2021</code>.
      * 
      * @return The list of all {@link Course}s.
      * 
@@ -37,7 +36,7 @@ public interface IApiConnection {
      * @throws UserNotInCourseException If the user is not enrolled in the course or the course does not exist.
      * @throws ApiException If a generic exception occurs.
      */
-    public Course getCourse(String name, String semester)
+    public Course getCourse(String courseId)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException;
     
     /**

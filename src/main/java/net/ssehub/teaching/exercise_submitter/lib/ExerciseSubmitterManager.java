@@ -9,7 +9,6 @@ import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 import net.ssehub.teaching.exercise_submitter.lib.replay.Replayer;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.AuthenticationException;
-import net.ssehub.teaching.exercise_submitter.lib.student_management_system.DummyApiConnection;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.GroupNotFoundException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.IApiConnection;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.NetworkException;
@@ -18,6 +17,8 @@ import net.ssehub.teaching.exercise_submitter.lib.submission.Submitter;
 
 /**
  * Main class to work with the exercise submitter library. Provides access to all required client functionality.
+ * <p>
+ * Use {@link ExerciseSubmitterFactory} to create instances.
  * 
  * @author Adam
  */
@@ -36,21 +37,21 @@ public class ExerciseSubmitterManager {
      * 
      * @param username The username.
      * @param password The password.
-     * @param courseName The name of the course, e.g. <code>java</code>.
-     * @param courseSemester The semester of the course, e.g. <code>wise20210</code>.
+     * @param courseId The ID of the course, e.g. <code>java-wise2021</code>.
+     * @param apiConnection The {@link IApiConnection} to use.
      * 
      * @throws AuthenticationException If the authentication fails.
      * @throws NetworkException If the network communication fails.
      * @throws UserNotInCourseException If the user is not enrolled in the course or the course does not exist.
      * @throws ApiException If a generic API exception occurs.
      */
-    public ExerciseSubmitterManager(String username, String password, String courseName, String courseSemester)
+    ExerciseSubmitterManager(String username, String password, String courseId, IApiConnection apiConnection)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         this.username = username;
         
-        mgmtConnection = new DummyApiConnection(); // TODO: factory
+        mgmtConnection = apiConnection;
         mgmtConnection.login(username, password);
-        course = mgmtConnection.getCourse(courseName, courseSemester);
+        course = mgmtConnection.getCourse(courseId);
     }
     
     /**

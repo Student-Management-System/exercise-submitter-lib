@@ -32,11 +32,11 @@ public class DummyApiConnection implements IApiConnection {
     }
 
     @Override
-    public Course getCourse(String name, String semester)
+    public Course getCourse(String courseId)
             throws NetworkException, AuthenticationException, NoSuchElementException {
         
-        if (!name.equals("java") || !semester.equals("wise2021")) {
-            throw new NoSuchElementException("No course " + name + " in semester " + semester);
+        if (!courseId.equals("java-wise2021")) {
+            throw new NoSuchElementException("No course " + courseId);
         }
         
         return course;

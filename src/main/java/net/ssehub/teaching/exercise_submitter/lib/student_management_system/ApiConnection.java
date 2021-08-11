@@ -86,10 +86,9 @@ public class ApiConnection implements IApiConnection {
     }
 
     @Override
-    public Course getCourse(String name, String semester)
+    public Course getCourse(String courseId)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         
-        String courseId = name + "-" + semester;
         CourseApi api = new CourseApi(this.mgmtClient);
         
         Course course;

@@ -75,14 +75,14 @@ public class ApiConnectionTest {
     @Test
     public void getCourseInvalidHost() {
         ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
-        NetworkException e = assertThrows(NetworkException.class, () -> api.getCourse("java", "wise2021"));
+        NetworkException e = assertThrows(NetworkException.class, () -> api.getCourse("java-ise2021"));
         assertTrue(e.getCause() instanceof IOException);
     }
     
     @Test
     public void getCourseNoServiceListening() {
         ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
-        NetworkException e = assertThrows(NetworkException.class, () -> api.getCourse("java", "wise2021"));
+        NetworkException e = assertThrows(NetworkException.class, () -> api.getCourse("java-wise2021"));
         assertTrue(e.getCause() instanceof IOException);
     }
     
@@ -93,7 +93,7 @@ public class ApiConnectionTest {
         
         ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
         
-        ApiException e = assertThrows(ApiException.class, () -> api.getCourse("java", "wise2021"));
+        ApiException e = assertThrows(ApiException.class, () -> api.getCourse("java-wise2021"));
         assertAll(
             () -> assertSame(ApiException.class, e.getClass()),
             () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
@@ -108,7 +108,7 @@ public class ApiConnectionTest {
         
         ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
         
-        ApiException e = assertThrows(ApiException.class, () -> api.getCourse("java", "wise2021"));
+        ApiException e = assertThrows(ApiException.class, () -> api.getCourse("java-wise2021"));
         assertAll(
             () -> assertSame(ApiException.class, e.getClass()),
             () -> assertEquals("Invalid JSON response", e.getMessage()),

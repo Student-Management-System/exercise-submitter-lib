@@ -129,7 +129,7 @@ public class ApiConnectionIT {
     @Test
     public void getCourseNotLoggedIn() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
-        AuthenticationException e = assertThrows(AuthenticationException.class, () -> api.getCourse("java", "wise2021"));
+        AuthenticationException e = assertThrows(AuthenticationException.class, () -> api.getCourse("java-wise2021"));
         assertEquals("Not logged in: Authorization header is missing.", e.getMessage());
     }
     
@@ -137,7 +137,7 @@ public class ApiConnectionIT {
     public void getNotExistingCourse() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
-        assertThrows(UserNotInCourseException.class, () -> api.getCourse("wrongCourse", "wise2021"));
+        assertThrows(UserNotInCourseException.class, () -> api.getCourse("wrongCourse-wise2021"));
     }
 
     @Test
@@ -145,7 +145,7 @@ public class ApiConnectionIT {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
 
-        assertThrows(UserNotInCourseException.class, () -> api.getCourse("notenrolled", "wise2021"));
+        assertThrows(UserNotInCourseException.class, () -> api.getCourse("notenrolled-wise2021"));
     }
 
     @Test
@@ -154,7 +154,7 @@ public class ApiConnectionIT {
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
 
         
-        Course course = assertDoesNotThrow(() -> api.getCourse("java", "wise2021"));
+        Course course = assertDoesNotThrow(() -> api.getCourse("java-wise2021"));
         
         assertAll(
                 () -> assertEquals("java-wise2021", course.getId()),
@@ -213,7 +213,7 @@ public class ApiConnectionIT {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("adam", "123456"));
         
-        Course course = assertDoesNotThrow(() -> api.getCourse("allstates", "wise2021"));
+        Course course = assertDoesNotThrow(() -> api.getCourse("allstates-wise2021"));
         
         assertAll(
                 () -> assertEquals(State.SUBMISSION, getAssignmentByName(api, course, "assignment01").getState()),
@@ -245,7 +245,7 @@ public class ApiConnectionIT {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
         
-        Course course = assertDoesNotThrow(() -> api.getCourse("java", "wise2021"));
+        Course course = assertDoesNotThrow(() -> api.getCourse("java-wise2021"));
         
         assertThrows(GroupNotFoundException.class, () -> api.getGroupName(course, new Assignment("12345678-1234-1234-1234-123456789abc", "doesntexist", State.SUBMISSION, false)));
     }
@@ -263,7 +263,7 @@ public class ApiConnectionIT {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
         
-        Course course = assertDoesNotThrow(() -> api.getCourse("java", "wise2021"));
+        Course course = assertDoesNotThrow(() -> api.getCourse("java-wise2021"));
         Assignment exercise01 = getAssignmentByName(api, course, "exercise01");
         
         assertThrows(GroupNotFoundException.class, () -> api.getGroupName(course, exercise01));
@@ -274,7 +274,7 @@ public class ApiConnectionIT {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
         
-        Course course = assertDoesNotThrow(() -> api.getCourse("java", "wise2021"));
+        Course course = assertDoesNotThrow(() -> api.getCourse("java-wise2021"));
         Assignment exercise02 = getAssignmentByName(api, course, "exercise02");
         
         String groupName = assertDoesNotThrow(() -> api.getGroupName(course, exercise02));
