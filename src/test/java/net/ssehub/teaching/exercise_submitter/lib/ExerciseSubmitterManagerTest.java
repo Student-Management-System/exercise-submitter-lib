@@ -19,30 +19,30 @@ public class ExerciseSubmitterManagerTest {
 
     @Test
     public void svnUrlGroupAssignment() {
-        Assignment assignment = new Assignment("001", "some-assignment", State.SUBMISSION, true);
+        Assignment assignment = DummyApiConnection.DUMMY_ASSIGNMENTS.get(4);
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
                 .withUsername("teststudent1")
-                .withPassword("pw")
+                .withPassword("teststudent1")
                 .withCourse("java-wise2021")
                 .withDummyApiConnection()
                 .build());
         
-        assertEquals("http://127.0.0.1/java/abgabe/some-assignment/Group01/", assertDoesNotThrow(() -> manager.getSvnUrl(assignment)));
+        assertEquals("http://127.0.0.1/java/abgabe/Homework03/Group01/", assertDoesNotThrow(() -> manager.getSvnUrl(assignment)));
     }
     
     @Test
     public void svnUrlSingleAssignment() {
-        Assignment assignment = new Assignment("001", "some-assignment", State.SUBMISSION, false);
+        Assignment assignment = DummyApiConnection.DUMMY_ASSIGNMENTS.get(3);
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
                 .withUsername("teststudent1")
-                .withPassword("pw")
+                .withPassword("teststudent1")
                 .withCourse("java-wise2021")
                 .withDummyApiConnection()
                 .build());
         
-        assertEquals("http://127.0.0.1/java/abgabe/some-assignment/teststudent1/", assertDoesNotThrow(() -> manager.getSvnUrl(assignment)));
+        assertEquals("http://127.0.0.1/java/abgabe/Test02/teststudent1/", assertDoesNotThrow(() -> manager.getSvnUrl(assignment)));
     }
     
     @Test
@@ -54,7 +54,7 @@ public class ExerciseSubmitterManagerTest {
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
                 .withUsername("teststudent1")
-                .withPassword("pw")
+                .withPassword("teststudent1")
                 .withCourse("java-wise2021")
                 .withDummyApiConnection()
                 .build());
@@ -74,7 +74,7 @@ public class ExerciseSubmitterManagerTest {
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
                 .withUsername("teststudent1")
-                .withPassword("pw")
+                .withPassword("teststudent1")
                 .withCourse("java-wise2021")
                 .withDummyApiConnection()
                 .build());
@@ -91,7 +91,7 @@ public class ExerciseSubmitterManagerTest {
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
                 .withUsername("teststudent1")
-                .withPassword("pw")
+                .withPassword("teststudent1")
                 .withCourse("java-wise2021")
                 .withDummyApiConnection()
                 .build());
@@ -101,11 +101,11 @@ public class ExerciseSubmitterManagerTest {
     
     @Test
     public void getSubmitterSubmittableDoesNotThrow() {
-        Assignment assignment = new Assignment("001", "some-assignment", State.SUBMISSION, true);
+        Assignment assignment = DummyApiConnection.DUMMY_ASSIGNMENTS.get(4);
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
                 .withUsername("teststudent1")
-                .withPassword("pw")
+                .withPassword("teststudent1")
                 .withCourse("java-wise2021")
                 .withDummyApiConnection()
                 .build());
@@ -120,7 +120,7 @@ public class ExerciseSubmitterManagerTest {
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
                 .withUsername("teststudent1")
-                .withPassword("pw")
+                .withPassword("teststudent1")
                 .withCourse("java-wise2021")
                 .withDummyApiConnection()
                 .build());
@@ -130,11 +130,11 @@ public class ExerciseSubmitterManagerTest {
     
     @Test
     public void getReplayerReplayableDoesNotThrow() {
-        Assignment assignment = new Assignment("001", "some-assignment", State.REVIEWED, true);
+        Assignment assignment = DummyApiConnection.DUMMY_ASSIGNMENTS.get(0);
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
                 .withUsername("teststudent1")
-                .withPassword("pw")
+                .withPassword("teststudent1")
                 .withCourse("java-wise2021")
                 .withDummyApiConnection()
                 .build());
@@ -147,7 +147,7 @@ public class ExerciseSubmitterManagerTest {
     public void getAllAssignmentsDummyData() {
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
                 .withUsername("teststudent1")
-                .withPassword("pw")
+                .withPassword("teststudent1")
                 .withCourse("java-wise2021")
                 .withDummyApiConnection()
                 .build());
@@ -159,7 +159,7 @@ public class ExerciseSubmitterManagerTest {
     public void getSubmittableAssignmentsDummyData() {
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
                 .withUsername("teststudent1")
-                .withPassword("pw")
+                .withPassword("teststudent1")
                 .withCourse("java-wise2021")
                 .withDummyApiConnection()
                 .build());
@@ -174,7 +174,7 @@ public class ExerciseSubmitterManagerTest {
     public void getReplayableAssignmentsDummyData() {
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
                 .withUsername("teststudent1")
-                .withPassword("pw")
+                .withPassword("teststudent1")
                 .withCourse("java-wise2021")
                 .withDummyApiConnection()
                 .build());
