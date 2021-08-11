@@ -17,11 +17,11 @@ import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
 public class DummyApiConnection implements IApiConnection {
 
     public static final List<Assignment> DUMMY_ASSIGNMENTS = Arrays.asList(
-            new Assignment("Homework01", State.REVIEWED, true),
-            new Assignment("Homework02", State.IN_REVIEW, true),
-            new Assignment("Test01", State.IN_REVIEW, false),
-            new Assignment("Test02", State.SUBMISSION, false),
-            new Assignment("Homework03", State.SUBMISSION, true)
+            new Assignment("001", "Homework01", State.REVIEWED, true),
+            new Assignment("002", "Homework02", State.IN_REVIEW, true),
+            new Assignment("003", "Test01", State.IN_REVIEW, false),
+            new Assignment("004", "Test02", State.SUBMISSION, false),
+            new Assignment("005", "Homework03", State.SUBMISSION, true)
             );
     
     private Course course = new Course("Programmierpraktikum I: Java", "java-wise2021");
@@ -48,6 +48,12 @@ public class DummyApiConnection implements IApiConnection {
             throw new IllegalArgumentException("Invalid course " + course);
         }
         return Collections.unmodifiableList(DUMMY_ASSIGNMENTS);
+    }
+    
+    @Override
+    public String getGroupName(Course course, Assignment assignment)
+            throws NetworkException, AuthenticationException, UserNotInCourseException {
+        return "Group01";
     }
 
 }

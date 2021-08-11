@@ -7,6 +7,7 @@ import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 import net.ssehub.teaching.exercise_submitter.lib.replay.Replayer;
+import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.AuthenticationException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.DummyApiConnection;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.IApiConnection;
@@ -103,9 +104,11 @@ public class ExerciseSubmitterManager {
      * 
      * @throws IllegalArgumentException If the given {@link Assignment} is not submittable.
      * 
+     * @throws ApiException If the group name of a group assignment cannot be retrieved. 
+     * 
      * @see #isSubmittable(Assignment)
      */
-    public Submitter getSubmitter(Assignment assignment) throws IllegalArgumentException {
+    public Submitter getSubmitter(Assignment assignment) throws IllegalArgumentException, ApiException {
         if (!isSubmittable(assignment)) {
             throw new IllegalArgumentException("Assignment " + assignment.getName() + " is not in submittable");
         }
@@ -122,9 +125,11 @@ public class ExerciseSubmitterManager {
      * 
      * @throws IllegalArgumentException If the given {@link Assignment} is not replayable.
      * 
+     * @throws ApiException If the group name of a group assignment cannot be retrieved. 
+     * 
      * @see #isReplayable(Assignment)
      */
-    public Replayer getReplayer(Assignment assignment) throws IllegalArgumentException {
+    public Replayer getReplayer(Assignment assignment) throws IllegalArgumentException, ApiException {
         if (!isReplayable(assignment)) {
             throw new IllegalArgumentException("Assignment " + assignment.getName() + " is not replayable");
         }
@@ -165,8 +170,10 @@ public class ExerciseSubmitterManager {
      * @param assignment The assignment.
      * 
      * @return The URL for the SVN location of the submission. Ends with a slash.
+     * 
+     * @throws ApiException If the group name of a group assignment cannot be retrieved. 
      */
-    String getSvnUrl(Assignment assignment) {
+    String getSvnUrl(Assignment assignment) throws ApiException {
         return svnBaseUrl + '/' + assignment.getName() + '/' + getGroupName(assignment) + '/';
     }
     
@@ -176,11 +183,13 @@ public class ExerciseSubmitterManager {
      * @param assignment The assignment.
      * 
      * @return The group name for the given assignment.
+     * 
+     * @throws ApiException If the group name of a group assignment cannot be retrieved. 
      */
-    private String getGroupName(Assignment assignment) {
+    private String getGroupName(Assignment assignment) throws ApiException {
         String groupName;
         if (assignment.isGroupWork()) {
-            groupName = "Group01"; // TODO: get group name from student management system
+            groupName = mgmtConnection.getGroupName(course, assignment);
         } else {
             groupName = username;
         }

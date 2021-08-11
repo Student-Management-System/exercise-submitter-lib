@@ -19,28 +19,28 @@ public class ExerciseSubmitterManagerTest {
 
     @Test
     public void svnUrlGroupAssignment() {
-        Assignment assignment = new Assignment("some-assignment", State.SUBMISSION, true);
+        Assignment assignment = new Assignment("001", "some-assignment", State.SUBMISSION, true);
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterManager("teststudent1", "pw", "java", "wise2021"));
         
-        assertEquals("http://127.0.0.1/java/abgabe/some-assignment/Group01/", manager.getSvnUrl(assignment));
+        assertEquals("http://127.0.0.1/java/abgabe/some-assignment/Group01/", assertDoesNotThrow(() -> manager.getSvnUrl(assignment)));
     }
     
     @Test
     public void svnUrlSingleAssignment() {
-        Assignment assignment = new Assignment("some-assignment", State.SUBMISSION, false);
+        Assignment assignment = new Assignment("001", "some-assignment", State.SUBMISSION, false);
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterManager("teststudent1", "pw", "java", "wise2021"));
         
-        assertEquals("http://127.0.0.1/java/abgabe/some-assignment/teststudent1/", manager.getSvnUrl(assignment));
+        assertEquals("http://127.0.0.1/java/abgabe/some-assignment/teststudent1/", assertDoesNotThrow(() -> manager.getSvnUrl(assignment)));
     }
     
     @Test
     public void isSubmittableSimpleStudent() {
-        Assignment as1 = new Assignment("some-assignment", State.SUBMISSION, true);
-        Assignment as2 = new Assignment("some-assignment", State.IN_REVIEW, true);
-        Assignment as3 = new Assignment("some-assignment", State.REVIEWED, true);
-        Assignment as4 = new Assignment("some-assignment", State.INVISIBLE, true);
+        Assignment as1 = new Assignment("001", "some-assignment", State.SUBMISSION, true);
+        Assignment as2 = new Assignment("001", "some-assignment", State.IN_REVIEW, true);
+        Assignment as3 = new Assignment("001", "some-assignment", State.REVIEWED, true);
+        Assignment as4 = new Assignment("001", "some-assignment", State.INVISIBLE, true);
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterManager("teststudent1", "pw", "java", "wise2021"));
         
@@ -52,10 +52,10 @@ public class ExerciseSubmitterManagerTest {
     
     @Test
     public void isReplayableSimpleStudent() {
-        Assignment as1 = new Assignment("some-assignment", State.SUBMISSION, true);
-        Assignment as2 = new Assignment("some-assignment", State.IN_REVIEW, true);
-        Assignment as3 = new Assignment("some-assignment", State.REVIEWED, true);
-        Assignment as4 = new Assignment("some-assignment", State.INVISIBLE, true);
+        Assignment as1 = new Assignment("001", "some-assignment", State.SUBMISSION, true);
+        Assignment as2 = new Assignment("001", "some-assignment", State.IN_REVIEW, true);
+        Assignment as3 = new Assignment("001", "some-assignment", State.REVIEWED, true);
+        Assignment as4 = new Assignment("001", "some-assignment", State.INVISIBLE, true);
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterManager("teststudent1", "pw", "java", "wise2021"));
         
@@ -67,7 +67,7 @@ public class ExerciseSubmitterManagerTest {
     
     @Test
     public void getSubmitterNonSubmittableThrows() {
-        Assignment assignment = new Assignment("some-assignment", State.INVISIBLE, true);
+        Assignment assignment = new Assignment("001", "some-assignment", State.INVISIBLE, true);
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterManager("teststudent1", "pw", "java", "wise2021"));
         
@@ -76,7 +76,7 @@ public class ExerciseSubmitterManagerTest {
     
     @Test
     public void getSubmitterSubmittableDoesNotThrow() {
-        Assignment assignment = new Assignment("some-assignment", State.SUBMISSION, true);
+        Assignment assignment = new Assignment("001", "some-assignment", State.SUBMISSION, true);
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterManager("teststudent1", "pw", "java", "wise2021"));
         
@@ -86,7 +86,7 @@ public class ExerciseSubmitterManagerTest {
     
     @Test
     public void getReplayerNonReplaybleThrows() {
-        Assignment assignment = new Assignment("some-assignment", State.INVISIBLE, true);
+        Assignment assignment = new Assignment("001", "some-assignment", State.INVISIBLE, true);
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterManager("teststudent1", "pw", "java", "wise2021"));
         
@@ -95,7 +95,7 @@ public class ExerciseSubmitterManagerTest {
     
     @Test
     public void getReplayerReplayableDoesNotThrow() {
-        Assignment assignment = new Assignment("some-assignment", State.REVIEWED, true);
+        Assignment assignment = new Assignment("001", "some-assignment", State.REVIEWED, true);
         
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterManager("teststudent1", "pw", "java", "wise2021"));
         
@@ -115,8 +115,8 @@ public class ExerciseSubmitterManagerTest {
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterManager("teststudent1", "pw", "java", "wise2021"));
         
         assertEquals(Arrays.asList(
-                new Assignment("Test02", State.SUBMISSION, false),
-                new Assignment("Homework03", State.SUBMISSION, true)
+                new Assignment("004", "Test02", State.SUBMISSION, false),
+                new Assignment("005", "Homework03", State.SUBMISSION, true)
         ), assertDoesNotThrow(() -> manager.getAllSubmittableAssignments()));
     }
     
@@ -125,9 +125,9 @@ public class ExerciseSubmitterManagerTest {
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterManager("teststudent1", "pw", "java", "wise2021"));
         
         assertEquals(Arrays.asList(
-                new Assignment("Homework01", State.REVIEWED, true),
-                new Assignment("Test02", State.SUBMISSION, false),
-                new Assignment("Homework03", State.SUBMISSION, true)
+                new Assignment("001", "Homework01", State.REVIEWED, true),
+                new Assignment("004", "Test02", State.SUBMISSION, false),
+                new Assignment("005", "Homework03", State.SUBMISSION, true)
                 ), assertDoesNotThrow(() -> manager.getAllReplayableAssignments()));
     }
     
