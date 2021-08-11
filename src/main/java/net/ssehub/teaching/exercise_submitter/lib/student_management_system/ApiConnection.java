@@ -1,7 +1,6 @@
 package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -211,7 +210,7 @@ public class ApiConnection implements IApiConnection {
     private ApiException handleMgmtException(net.ssehub.studentmgmt.backend_api.ApiException exception) {
         ApiException result;
         
-        if (exception.getCause() instanceof IOException || exception.getCause() instanceof SocketException) {
+        if (exception.getCause() instanceof IOException) {
             result = new NetworkException(exception.getCause());
             
         } else if (exception.getCode() == 401) {
@@ -240,7 +239,7 @@ public class ApiConnection implements IApiConnection {
     private ApiException handleAuthException(net.ssehub.studentmgmt.sparkyservice_api.ApiException exception) {
         ApiException result;
         
-        if (exception.getCause() instanceof IOException || exception.getCause() instanceof SocketException) {
+        if (exception.getCause() instanceof IOException) {
             result = new NetworkException(exception.getCause());
             
         } else {
