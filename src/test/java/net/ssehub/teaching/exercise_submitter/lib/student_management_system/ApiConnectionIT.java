@@ -66,14 +66,14 @@ public class ApiConnectionIT {
     public void loginWithWrongUsername() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         AuthenticationException e = assertThrows(AuthenticationException.class, () -> api.login("wronguser", "123456"));
-        assertEquals("Invalid credentials", e.getMessage());
+        assertEquals("Invalid credentials: Unauthorized", e.getMessage());
     }
 
     @Test
     public void loginWithWrongPassword() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         AuthenticationException e = assertThrows(AuthenticationException.class, () -> api.login("student1", "123456"));
-        assertEquals("Invalid credentials", e.getMessage());
+        assertEquals("Invalid credentials: Unauthorized", e.getMessage());
     }
     
     @Test
@@ -100,7 +100,7 @@ public class ApiConnectionIT {
         ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "Bunny123"));
         assertAll(
             () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Unknown exception", e.getMessage()),
+            () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
             () -> assertNotNull(e.getCause())
         );
     }
@@ -130,7 +130,7 @@ public class ApiConnectionIT {
     public void getCourseNotLoggedIn() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         AuthenticationException e = assertThrows(AuthenticationException.class, () -> api.getCourse("java", "wise2021"));
-        assertEquals("Not logged in", e.getMessage());
+        assertEquals("Not logged in: Authorization header is missing.", e.getMessage());
     }
     
     @Test
@@ -166,7 +166,7 @@ public class ApiConnectionIT {
     public void getAssignmentsNotLoggedIn() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
         AuthenticationException e = assertThrows(AuthenticationException.class, () -> api.getAssignments(new Course("Java", "java-wise2021")));
-        assertEquals("Not logged in", e.getMessage());
+        assertEquals("Not logged in: Authorization header is missing.", e.getMessage());
     }
     
     @Test

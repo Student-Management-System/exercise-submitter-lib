@@ -52,7 +52,7 @@ public class ApiConnectionTest {
         ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "123456"));
         assertAll(
             () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Unknown exception", e.getMessage()),
+            () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
             () -> assertNotNull(e.getCause())
         );
     }
@@ -96,7 +96,7 @@ public class ApiConnectionTest {
         ApiException e = assertThrows(ApiException.class, () -> api.getCourse("java", "wise2021"));
         assertAll(
             () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Unknown exception", e.getMessage()),
+            () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
             () -> assertNotNull(e.getCause())
         );
     }
@@ -140,7 +140,7 @@ public class ApiConnectionTest {
         ApiException e = assertThrows(ApiException.class, () -> api.getAssignments(new Course("", "java-wise2021")));
         assertAll(
             () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Unknown exception", e.getMessage()),
+            () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
             () -> assertNotNull(e.getCause())
         );
     }
@@ -189,7 +189,7 @@ public class ApiConnectionTest {
         ApiException e = assertThrows(ApiException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
         assertAll(
             () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Unknown exception", e.getMessage()),
+            () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
             () -> assertNotNull(e.getCause())
         );
     }

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
 import net.ssehub.studentmgmt.backend_api.ApiClient;
@@ -26,6 +28,8 @@ import net.ssehub.teaching.exercise_submitter.lib.data.Course;
  * Provides communication to the student-management system.
  */
 public class ApiConnection implements IApiConnection {
+    
+    private static final Gson GSON = new Gson();
 
     private net.ssehub.studentmgmt.sparkyservice_api.ApiClient authClient;
 
@@ -61,7 +65,7 @@ public class ApiConnection implements IApiConnection {
             
         } catch (net.ssehub.studentmgmt.sparkyservice_api.ApiException e) {
             if (e.getCode() == 401) {
-                throw new AuthenticationException("Invalid credentials");
+                throw new AuthenticationException("Invalid credentials: " + parseResponseMessage(e.getResponseBody()));
             }
             throw handleAuthException(e);
             
@@ -96,7 +100,7 @@ public class ApiConnection implements IApiConnection {
             
         } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
             if (e.getCode() == 403) {
-                throw new UserNotInCourseException();
+                throw new UserNotInCourseException(parseResponseMessage(e.getResponseBody()));
             }
             throw handleMgmtException(e);
             
@@ -147,7 +151,7 @@ public class ApiConnection implements IApiConnection {
             
         } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
             if (e.getCode() == 403) {
-                throw new UserNotInCourseException();
+                throw new UserNotInCourseException(parseResponseMessage(e.getResponseBody()));
             }
             throw handleMgmtException(e);
             
@@ -178,10 +182,10 @@ public class ApiConnection implements IApiConnection {
             
         } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
             if (e.getCode() == 403) {
-                throw new UserNotInCourseException();
+                throw new UserNotInCourseException(parseResponseMessage(e.getResponseBody()));
             }
             if (e.getCode() == 404) {
-                throw new GroupNotFoundException();
+                throw new GroupNotFoundException(parseResponseMessage(e.getResponseBody()));
             }
             
             throw handleMgmtException(e);
@@ -214,10 +218,11 @@ public class ApiConnection implements IApiConnection {
             result = new NetworkException(exception.getCause());
             
         } else if (exception.getCode() == 401) {
-            result = new AuthenticationException("Not logged in");
+            result = new AuthenticationException("Not logged in: " + parseResponseMessage(exception.getResponseBody()));
             
         } else {
-            result = new ApiException("Unknown exception", exception);
+            result = new ApiException("Unknown exception: " + parseResponseMessage(exception.getResponseBody()),
+                    exception);
         }
         
         return result;
@@ -243,7 +248,33 @@ public class ApiConnection implements IApiConnection {
             result = new NetworkException(exception.getCause());
             
         } else {
-            result = new ApiException("Unknown exception", exception);
+            result = new ApiException("Unknown exception: " + parseResponseMessage(exception.getResponseBody()),
+                    exception);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Converts the JSON response message object into a simple message string. Uses the <code>message</code> element
+     * in the given JSON object. As a fallback (e.g. if JSON is not parseable), returns the whole response body.
+     * 
+     * @param responseBody The response body of a failed API request.
+     * 
+     * @return The message of the JSON result, or the whole response body.
+     */
+    private String parseResponseMessage(String responseBody) {
+        String result = String.valueOf(responseBody);
+        
+        if (responseBody != null) {
+            try {
+                JsonObject obj = GSON.fromJson(responseBody, JsonObject.class);
+                if (obj.has("message")) {
+                    result = obj.get("message").getAsString();
+                }
+            } catch (JsonParseException e) {
+                // ignore
+            }
         }
         
         return result;
