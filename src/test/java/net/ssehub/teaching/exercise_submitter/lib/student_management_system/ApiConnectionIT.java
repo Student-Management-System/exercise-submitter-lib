@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import net.ssehub.studentmgmt.docker.StuMgmtDocker.AssignmentState;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker.Collaboration;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
+import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiConnectionTest.DummyHttpServer;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 
 public class ApiConnectionIT {
@@ -69,15 +71,37 @@ public class ApiConnectionIT {
     }
     
     @Test
-    public void loginWrongAuthUrl() {
-        ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", docker.getStuMgmtUrl());
+    public void loginMgmtUrlInvalidHost() {
+        ApiConnection api = new ApiConnection(docker.getAuthUrl(), "http://doesnt.exist.local:3000");
         assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
     }
     
     @Test
-    public void loginWrongMgmtUrl() {
-        ApiConnection api = new ApiConnection(docker.getAuthUrl(), "http://doesnt.exist.local:3000");
+    public void loginMgmtUrlNoServiceListening() {
+        ApiConnection api = new ApiConnection(docker.getAuthUrl(), "http://localhost:55555");
         assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
+    }
+    
+    @Test
+    public void loginMgmtResponseWrongContentType() {
+        DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
+        dummyServer.start();
+        
+        ApiConnection api = new ApiConnection(docker.getAuthUrl(), "http://localhost:" + dummyServer.getPort());
+        
+        ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "Bunny123"));
+        assertSame(ApiException.class, e.getClass());
+    }
+    
+    @Test
+    public void loginMgmtResponseInvalidJson() {
+        DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
+        dummyServer.start();
+        
+        ApiConnection api = new ApiConnection(docker.getAuthUrl(), "http://localhost:" + dummyServer.getPort());
+        
+        ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "Bunny123"));
+        assertSame(ApiException.class, e.getClass());
     }
 
     @Test

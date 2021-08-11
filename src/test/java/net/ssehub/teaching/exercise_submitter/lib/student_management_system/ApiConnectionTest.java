@@ -7,19 +7,47 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
 
+import net.ssehub.studentmgmt.backend_api.model.UserDto;
+import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
+import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 
 public class ApiConnectionTest {
     
     @Test
-    public void loginInvalidAuthResponse() {
+    public void loginAuthUrlInvalidHost() {
+        ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.matter.local");
+        assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
+    }
+    
+    @Test
+    public void loginAuthUrlNoServiceListening() {
+        ApiConnection api = new ApiConnection("http://localhost:55555", "http://doesnt.matter.local");
+        assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
+    }
+    
+    @Test
+    public void loginAuthResponseWrongContentType() {
         DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
+        dummyServer.start();
+        
+        ApiConnection api = new ApiConnection("http://localhost:" + dummyServer.getPort(), "http://doesnt.matter.local");
+        
+        ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "123456"));
+        assertSame(ApiException.class, e.getClass());
+    }
+    
+    @Test
+    public void loginAuthResponseInvalidJson() {
+        DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
         dummyServer.start();
         
         ApiConnection api = new ApiConnection("http://localhost:" + dummyServer.getPort(), "http://doesnt.matter.local");
@@ -29,13 +57,19 @@ public class ApiConnectionTest {
     }
 
     @Test
-    public void getCourseWrongUrl() {
+    public void getCourseInvalidHost() {
         ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
         assertThrows(NetworkException.class, () -> api.getCourse("java", "wise2021"));
     }
     
     @Test
-    public void getCourseInvalidResponse() {
+    public void getCourseNoServiceListening() {
+        ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
+        assertThrows(NetworkException.class, () -> api.getCourse("java", "wise2021"));
+    }
+    
+    @Test
+    public void getCourseWrongContentType() {
         DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
         dummyServer.start();
         
@@ -46,9 +80,98 @@ public class ApiConnectionTest {
     }
     
     @Test
-    public void getAssignmentsWrongUrl() {
+    public void getCourseInvalidJson() {
+        DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
+        dummyServer.start();
+        
+        ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        
+        ApiException e = assertThrows(ApiException.class, () -> api.getCourse("java", "wise2021"));
+        assertSame(ApiException.class, e.getClass());
+    }
+    
+    @Test
+    public void getAssignmentsInvalidHost() {
         ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
         assertThrows(NetworkException.class, () -> api.getAssignments(new Course("Java", "java-wise20210")));
+    }
+    
+    @Test
+    public void getAssignmentsNoServiceListening() {
+        ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
+        assertThrows(NetworkException.class, () -> api.getAssignments(new Course("Java", "java-wise20210")));
+    }
+    
+    @Test
+    public void getAssignmentsWrongContentType() {
+        DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
+        dummyServer.start();
+        
+        ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        
+        ApiException e = assertThrows(ApiException.class, () -> api.getAssignments(new Course("", "java-wise2021")));
+        assertSame(ApiException.class, e.getClass());
+    }
+    
+    @Test
+    public void getAssignmentsInvalidJson() {
+        DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
+        dummyServer.start();
+        
+        ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        
+        ApiException e = assertThrows(ApiException.class, () -> api.getAssignments(new Course("", "java-wise2021")));
+        assertSame(ApiException.class, e.getClass());
+    }
+    
+    @Test
+    public void getGroupNameInvalidHost() {
+        ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
+        fakeLogin(api);
+        
+        assertThrows(NetworkException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
+    }
+    
+    @Test
+    public void getGroupNameNoServiceListening() {
+        ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
+        fakeLogin(api);
+        
+        assertThrows(NetworkException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
+    }
+    
+    @Test
+    public void getGroupNameWrongContentType() {
+        DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
+        dummyServer.start();
+        
+        ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        fakeLogin(api);
+        
+        ApiException e = assertThrows(ApiException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
+        assertSame(ApiException.class, e.getClass());
+    }
+    
+    @Test
+    public void getGroupNameInvalidJson() {
+        DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
+        dummyServer.start();
+        
+        ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        fakeLogin(api);
+        
+        ApiException e = assertThrows(ApiException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
+        assertSame(ApiException.class, e.getClass());
+    }
+    
+    private void fakeLogin(ApiConnection api) {
+        UserDto user = new UserDto();
+        user.setId("123");
+        assertDoesNotThrow(() -> {
+            Field field = api.getClass().getDeclaredField("loggedInUser");
+            field.setAccessible(true);
+            field.set(api, user);
+        });
     }
     
     static class DummyHttpServer implements Runnable {
@@ -57,13 +180,13 @@ public class ApiConnectionTest {
         
         private String response;
         
-        public DummyHttpServer(String responseType, String response) {
+        public DummyHttpServer(String contentType, String response) {
             this.response = "HTTP/1.1 200 OK\r\n"
                     + "Content-Length: " + response.length() + "\r\n"
-                    + "Content-Type: " + responseType + "\r\n"
+                    + "Content-Type: " + contentType + "\r\n"
                     + "\r\n"
                     + response;
-            this.serverSocket = assertDoesNotThrow(() -> new ServerSocket(0));
+            this.serverSocket = assertDoesNotThrow(() -> new ServerSocket(0, 1, InetAddress.getLoopbackAddress()));
         }
         
         public int getPort() {
