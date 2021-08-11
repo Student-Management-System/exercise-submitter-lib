@@ -6,12 +6,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import com.google.gson.JsonSyntaxException;
 
 import net.ssehub.studentmgmt.docker.StuMgmtDocker;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker.AssignmentState;
@@ -61,25 +65,29 @@ public class ApiConnectionIT {
     @Test
     public void loginWithWrongUsername() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
-        assertThrows(AuthenticationException.class, () -> api.login("wronguser", "123456"));
+        AuthenticationException e = assertThrows(AuthenticationException.class, () -> api.login("wronguser", "123456"));
+        assertEquals("Invalid credentials", e.getMessage());
     }
 
     @Test
     public void loginWithWrongPassword() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
-        assertThrows(AuthenticationException.class, () -> api.login("student1", "123456"));
+        AuthenticationException e = assertThrows(AuthenticationException.class, () -> api.login("student1", "123456"));
+        assertEquals("Invalid credentials", e.getMessage());
     }
     
     @Test
     public void loginMgmtUrlInvalidHost() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), "http://doesnt.exist.local:3000");
-        assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
+        NetworkException e = assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
+        assertTrue(e.getCause() instanceof IOException);
     }
     
     @Test
     public void loginMgmtUrlNoServiceListening() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), "http://localhost:55555");
-        assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
+        NetworkException e = assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
+        assertTrue(e.getCause() instanceof IOException);
     }
     
     @Test
@@ -90,7 +98,11 @@ public class ApiConnectionIT {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), "http://localhost:" + dummyServer.getPort());
         
         ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "Bunny123"));
-        assertSame(ApiException.class, e.getClass());
+        assertAll(
+            () -> assertSame(ApiException.class, e.getClass()),
+            () -> assertEquals("Unknown exception", e.getMessage()),
+            () -> assertNotNull(e.getCause())
+        );
     }
     
     @Test
@@ -101,7 +113,11 @@ public class ApiConnectionIT {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), "http://localhost:" + dummyServer.getPort());
         
         ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "Bunny123"));
-        assertSame(ApiException.class, e.getClass());
+        assertAll(
+            () -> assertSame(ApiException.class, e.getClass()),
+            () -> assertEquals("Invalid JSON response", e.getMessage()),
+            () -> assertTrue(e.getCause() instanceof JsonSyntaxException)
+        );
     }
 
     @Test
@@ -113,7 +129,8 @@ public class ApiConnectionIT {
     @Test
     public void getCourseNotLoggedIn() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
-        assertThrows(AuthenticationException.class, () -> api.getCourse("java", "wise2021"));
+        AuthenticationException e = assertThrows(AuthenticationException.class, () -> api.getCourse("java", "wise2021"));
+        assertEquals("Not logged in", e.getMessage());
     }
     
     @Test
@@ -148,7 +165,8 @@ public class ApiConnectionIT {
     @Test
     public void getAssignmentsNotLoggedIn() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
-        assertThrows(AuthenticationException.class, () -> api.getAssignments(new Course("Java", "java-wise2021")));
+        AuthenticationException e = assertThrows(AuthenticationException.class, () -> api.getAssignments(new Course("Java", "java-wise2021")));
+        assertEquals("Not logged in", e.getMessage());
     }
     
     @Test
@@ -210,7 +228,8 @@ public class ApiConnectionIT {
     @Test
     public void getGroupNameNotLoggedIn() {
         ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
-        assertThrows(AuthenticationException.class, () -> api.getGroupName(new Course("Java", "java-wise2021"), new Assignment("001", "exercise01", State.SUBMISSION, false)));
+        AuthenticationException e = assertThrows(AuthenticationException.class, () -> api.getGroupName(new Course("Java", "java-wise2021"), new Assignment("001", "exercise01", State.SUBMISSION, false)));
+        assertEquals("Not logged in", e.getMessage());
     }
     
     @Test

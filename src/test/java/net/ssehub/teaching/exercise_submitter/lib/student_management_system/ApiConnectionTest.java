@@ -1,8 +1,12 @@
 package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +19,8 @@ import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
 
+import com.google.gson.JsonSyntaxException;
+
 import net.ssehub.studentmgmt.backend_api.model.UserDto;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
@@ -25,13 +31,15 @@ public class ApiConnectionTest {
     @Test
     public void loginAuthUrlInvalidHost() {
         ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.matter.local");
-        assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
+        NetworkException e = assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
+        assertTrue(e.getCause() instanceof IOException);
     }
     
     @Test
     public void loginAuthUrlNoServiceListening() {
         ApiConnection api = new ApiConnection("http://localhost:55555", "http://doesnt.matter.local");
-        assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
+        NetworkException e = assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
+        assertTrue(e.getCause() instanceof IOException);
     }
     
     @Test
@@ -42,7 +50,11 @@ public class ApiConnectionTest {
         ApiConnection api = new ApiConnection("http://localhost:" + dummyServer.getPort(), "http://doesnt.matter.local");
         
         ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "123456"));
-        assertSame(ApiException.class, e.getClass());
+        assertAll(
+            () -> assertSame(ApiException.class, e.getClass()),
+            () -> assertEquals("Unknown exception", e.getMessage()),
+            () -> assertNotNull(e.getCause())
+        );
     }
     
     @Test
@@ -53,19 +65,25 @@ public class ApiConnectionTest {
         ApiConnection api = new ApiConnection("http://localhost:" + dummyServer.getPort(), "http://doesnt.matter.local");
         
         ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "123456"));
-        assertSame(ApiException.class, e.getClass());
+        assertAll(
+            () -> assertSame(ApiException.class, e.getClass()),
+            () -> assertEquals("Invalid JSON response", e.getMessage()),
+            () -> assertTrue(e.getCause() instanceof JsonSyntaxException)
+        );
     }
 
     @Test
     public void getCourseInvalidHost() {
         ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
-        assertThrows(NetworkException.class, () -> api.getCourse("java", "wise2021"));
+        NetworkException e = assertThrows(NetworkException.class, () -> api.getCourse("java", "wise2021"));
+        assertTrue(e.getCause() instanceof IOException);
     }
     
     @Test
     public void getCourseNoServiceListening() {
         ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
-        assertThrows(NetworkException.class, () -> api.getCourse("java", "wise2021"));
+        NetworkException e = assertThrows(NetworkException.class, () -> api.getCourse("java", "wise2021"));
+        assertTrue(e.getCause() instanceof IOException);
     }
     
     @Test
@@ -76,7 +94,11 @@ public class ApiConnectionTest {
         ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
         
         ApiException e = assertThrows(ApiException.class, () -> api.getCourse("java", "wise2021"));
-        assertSame(ApiException.class, e.getClass());
+        assertAll(
+            () -> assertSame(ApiException.class, e.getClass()),
+            () -> assertEquals("Unknown exception", e.getMessage()),
+            () -> assertNotNull(e.getCause())
+        );
     }
     
     @Test
@@ -87,19 +109,25 @@ public class ApiConnectionTest {
         ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
         
         ApiException e = assertThrows(ApiException.class, () -> api.getCourse("java", "wise2021"));
-        assertSame(ApiException.class, e.getClass());
+        assertAll(
+            () -> assertSame(ApiException.class, e.getClass()),
+            () -> assertEquals("Invalid JSON response", e.getMessage()),
+            () -> assertTrue(e.getCause() instanceof JsonSyntaxException)
+        );
     }
     
     @Test
     public void getAssignmentsInvalidHost() {
         ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
-        assertThrows(NetworkException.class, () -> api.getAssignments(new Course("Java", "java-wise20210")));
+        NetworkException e = assertThrows(NetworkException.class, () -> api.getAssignments(new Course("Java", "java-wise20210")));
+        assertTrue(e.getCause() instanceof IOException);
     }
     
     @Test
     public void getAssignmentsNoServiceListening() {
         ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
-        assertThrows(NetworkException.class, () -> api.getAssignments(new Course("Java", "java-wise20210")));
+        NetworkException e = assertThrows(NetworkException.class, () -> api.getAssignments(new Course("Java", "java-wise20210")));
+        assertTrue(e.getCause() instanceof IOException);
     }
     
     @Test
@@ -110,7 +138,11 @@ public class ApiConnectionTest {
         ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
         
         ApiException e = assertThrows(ApiException.class, () -> api.getAssignments(new Course("", "java-wise2021")));
-        assertSame(ApiException.class, e.getClass());
+        assertAll(
+            () -> assertSame(ApiException.class, e.getClass()),
+            () -> assertEquals("Unknown exception", e.getMessage()),
+            () -> assertNotNull(e.getCause())
+        );
     }
     
     @Test
@@ -121,7 +153,11 @@ public class ApiConnectionTest {
         ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
         
         ApiException e = assertThrows(ApiException.class, () -> api.getAssignments(new Course("", "java-wise2021")));
-        assertSame(ApiException.class, e.getClass());
+        assertAll(
+            () -> assertSame(ApiException.class, e.getClass()),
+            () -> assertEquals("Invalid JSON response", e.getMessage()),
+            () -> assertTrue(e.getCause() instanceof JsonSyntaxException)
+        );
     }
     
     @Test
@@ -129,7 +165,8 @@ public class ApiConnectionTest {
         ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
         fakeLogin(api);
         
-        assertThrows(NetworkException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
+        NetworkException e = assertThrows(NetworkException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
+        assertTrue(e.getCause() instanceof IOException);
     }
     
     @Test
@@ -137,7 +174,8 @@ public class ApiConnectionTest {
         ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
         fakeLogin(api);
         
-        assertThrows(NetworkException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
+        NetworkException e = assertThrows(NetworkException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
+        assertTrue(e.getCause() instanceof IOException);
     }
     
     @Test
@@ -149,7 +187,11 @@ public class ApiConnectionTest {
         fakeLogin(api);
         
         ApiException e = assertThrows(ApiException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
-        assertSame(ApiException.class, e.getClass());
+        assertAll(
+            () -> assertSame(ApiException.class, e.getClass()),
+            () -> assertEquals("Unknown exception", e.getMessage()),
+            () -> assertNotNull(e.getCause())
+        );
     }
     
     @Test
@@ -161,7 +203,11 @@ public class ApiConnectionTest {
         fakeLogin(api);
         
         ApiException e = assertThrows(ApiException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
-        assertSame(ApiException.class, e.getClass());
+        assertAll(
+            () -> assertSame(ApiException.class, e.getClass()),
+            () -> assertEquals("Invalid JSON response", e.getMessage()),
+            () -> assertTrue(e.getCause() instanceof JsonSyntaxException)
+        );
     }
     
     private void fakeLogin(ApiConnection api) {
