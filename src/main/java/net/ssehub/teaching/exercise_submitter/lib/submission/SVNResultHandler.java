@@ -69,14 +69,20 @@ public class SVNResultHandler {
                 String file = eElement.getAttribute("file");
                 String line = eElement.getAttribute("line");
                 
+                
                 if (tool != null && type != null && message != null) {
                     if (file != null && line != null) {
                         Problem.Severity sev = type.equals("error") ? Problem.Severity.ERROR : Problem.Severity.WARNING;
                         Problem problem = new Problem(tool, message, sev);
                         problem.setFile(new File(file));
                         problem.setLine(Integer.parseInt(line));
+                        //column
+                        Element column = (Element) eElement.getElementsByTagName("example").item(0);
+                        if (column != null) {
+                            problem.setColumn(Integer.parseInt(column.getAttribute("position")));
+                        }
                         problems.add(problem);
-                        //TODO: column
+                       
                     } else {
                         Problem.Severity sev = type.equals("error") ? Problem.Severity.ERROR : Problem.Severity.WARNING;
                         Problem problem = new Problem(tool, message, sev);

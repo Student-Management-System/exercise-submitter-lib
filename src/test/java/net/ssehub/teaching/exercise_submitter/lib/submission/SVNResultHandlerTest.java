@@ -20,6 +20,7 @@ public class SVNResultHandlerTest {
                                  + "    <message tool=\"javac\" type=\"error\" message=\"';' expected\" file=\"Main.java\" line=\"20\">\n"
                                  + "    </message>\n"
                                  + "    <message tool=\"javac\" type=\"error\" message=\"not a statement\" file=\"Main.java\" line=\"20\">\n"
+                                 + "        <example position=\"8\"/>\n"
                                  + "    </message>\n"
                                  + "</submitResults>\n";
         SVNResultHandler handler = new SVNResultHandler(erromessage);
@@ -37,6 +38,7 @@ public class SVNResultHandlerTest {
             Problem problem2 = new Problem("javac","not a statement",Problem.Severity.ERROR);
             problem2.setFile(new File("Main.java"));
             problem2.setLine(20);
+            problem2.setColumn(8);
             assertTrue(problem2.equals(problems.get(1)));
             
             
