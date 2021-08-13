@@ -51,12 +51,12 @@ public class SVNResultHandler {
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
         Document doc = dBuilder.parse(new InputSource(new ByteArrayInputStream(xmlmessage.getBytes("utf-8"))));
         doc.getDocumentElement().normalize();
-        System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+        
         NodeList nList = doc.getElementsByTagName("message");
         
         for (int i = 0; i < nList.getLength(); i++) {
             Node nNode = nList.item(i);
-            System.out.println("\nCurrent Element :" + nNode.getNodeName());
+            
             
             if (nNode.getNodeType() == Node.ELEMENT_NODE) {
                 Element eElement = (Element) nNode;
