@@ -179,9 +179,7 @@ public class SvnResultHandlerIT {
        assertDoesNotThrow(()-> {
            Preparator prep = new Preparator(new File(TESTDATA,"notcompiling"));
            File testdir = prep.getResult();
-           System.out.println(docker.getSvnUrl());
-          
-          
+           
            String buildurl = docker.getSvnUrl() + "Homework02/JP001/";
            SVNURL url = SVNURL.parseURIEncoded(buildurl);
           
