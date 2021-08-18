@@ -26,13 +26,9 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
-import net.ssehub.studentmgmt.backend_api.ApiClient;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker.AssignmentState;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker.Collaboration;
-import net.ssehub.studentmgmt.sparkyservice_api.api.AuthControllerApi;
-import net.ssehub.studentmgmt.sparkyservice_api.model.AuthenticationInfoDto;
-import net.ssehub.studentmgmt.sparkyservice_api.model.CredentialsDto;
 import net.ssehub.teaching.exercise_submitter.lib.submission.Problem.Severity;
 
 public class SvnResultHandlerIT {
@@ -41,9 +37,6 @@ public class SvnResultHandlerIT {
     
     private final static File TESTDATA = new File("src/test/resources/SvnResultHandlerTest");
     
-    private static net.ssehub.studentmgmt.sparkyservice_api.ApiClient authClient;
-
-    private static ApiClient mgmtClient;
     
     @BeforeAll
     public static void setupServers() {
@@ -76,24 +69,7 @@ public class SvnResultHandlerIT {
     
         docker.changeAssignmentState(courseId, a2, AssignmentState.SUBMISSION);
         
-        assertDoesNotThrow(() -> {
-            
-            authClient = new net.ssehub.studentmgmt.sparkyservice_api.ApiClient();
-            authClient.setBasePath(docker.getAuthUrl());
-
-            mgmtClient = new ApiClient();
-            mgmtClient.setBasePath(docker.getStuMgmtUrl());
-            
-            CredentialsDto credentials = new CredentialsDto();
-            credentials.setUsername("student1");
-            credentials.setPassword("123456");
-            
-            AuthControllerApi api = new AuthControllerApi(authClient);
-            
-            AuthenticationInfoDto authinfo = api.authenticate(credentials);
-            mgmtClient.setAccessToken(authinfo.getToken().getToken());
-    
-        });
+        
     }
 
     @AfterAll
