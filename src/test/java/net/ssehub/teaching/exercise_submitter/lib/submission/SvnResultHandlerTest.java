@@ -8,6 +8,7 @@ import java.io.File;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 
@@ -46,8 +47,8 @@ public class SvnResultHandlerTest {
         });
         
         }
-    
-    @Test 
+   
+    @Disabled
     public void svnErrorMessageToStringTest() {
       //TODO: need to create Svn Example errors
         
