@@ -77,12 +77,15 @@ public class SvnResultHandlerIT {
     }
     
    @Test
-    public void convertErrorMessageToStringTest() {
+    public void convertPreErrorMessageToStringTest() {
     
        assertDoesNotThrow(()-> {
        Preparator prep = new Preparator(new File(TESTDATA,"notcompiling"));
        File testdir = prep.getResult();
-      
+       
+       File classpath = new File(testdir,".classpath");
+       classpath.delete();
+       
        String buildurl = docker.getSvnUrl() + "Homework02/JP001/";
        SVNURL url = SVNURL.parseURIEncoded(buildurl);
       
@@ -137,18 +140,85 @@ public class SvnResultHandlerIT {
        } 
        
        assertEquals(SvnResultHandler.svnErrorMessageToString(info.getErrorMessage()), 
-               "\n<submitResults>\n"
-               + "    <message file=\"Main.java\" line=\"3\" message=\"invalid method declaration;"
-               + " return type required\" tool=\"javac\" type=\"error\">\n"
-               + "        <example position=\"5\"/>\n"
-               + "    </message>\n"
-               + "    <message file=\"Main.java\" line=\"3\" message=\"';' expected\" tool=\"javac\" type=\"error\">\n"
-               + "        <example position=\"23\"/>\n"
-               + "    </message>\n"
-               + "</submitResults>\n\n");
+               "<submitResults>\n"
+               + "    <message message=\"Does not contain a valid eclipse project\" tool=\"eclipse-configuration\" type=\"error\"/>\n"
+               + "</submitResults>");
        
    });
     }
+   @Test
+   public void convertPostErrorMessageToStringTest() {
+   
+      assertDoesNotThrow(()-> {
+      Preparator prep = new Preparator(new File(TESTDATA,"notcompiling"));
+      File testdir = prep.getResult();
+     
+      String buildurl = docker.getSvnUrl() + "Homework02/JP001/";
+      SVNURL url = SVNURL.parseURIEncoded(buildurl);
+     
+      SVNClientManager clientManager = SVNClientManager.newInstance(null, 
+              BasicAuthenticationManager.newInstance("student1", "123456".toCharArray()));
+              
+      SVNCommitClient client = clientManager.getCommitClient();
+      client.setCommitParameters(new DefaultSVNCommitParameters() {
+          @Override
+          public Action onMissingFile(File file) {
+              return DELETE;
+          }
+
+          @Override
+          public Action onMissingDirectory(File file) {
+              return DELETE;
+          }
+      });
+      
+      SVNUpdateClient update = clientManager.getUpdateClient();
+      update.doCheckout(url, testdir, SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, true);
+    
+    
+      SVNWCClient wcClient = clientManager.getWCClient();
+      
+      clientManager.getStatusClient().doStatus(testdir, SVNRevision.HEAD, SVNDepth.INFINITY,
+              false, false, false, false,
+          (status) -> {
+              SVNStatusType type = status.getNodeStatus();
+              File file = status.getFile();
+
+              if (type == SVNStatusType.STATUS_UNVERSIONED) {
+                  wcClient.doAdd(file, true, false, false, SVNDepth.EMPTY, false, false);
+                  
+              } else if (type == SVNStatusType.STATUS_MISSING) {
+                  wcClient.doDelete(file, true, false, false);
+              }
+          }, null);
+      
+   
+      SVNCommitInfo info = null;
+      try {
+          info = client.doCommit(new File[] {testdir}, false, "Testcommit", null, null, false, false,
+                  SVNDepth.INFINITY);
+          
+       
+      } catch (SVNException e) {
+          SVNErrorMessage errorMsg = e.getErrorMessage();
+          if (errorMsg.hasChildWithErrorCode(SVNErrorCode.REPOS_HOOK_FAILURE)) {
+              info = new SVNCommitInfo(-1, "test", new Date(), errorMsg);
+          }
+      } 
+      
+      assertEquals(SvnResultHandler.svnErrorMessageToString(info.getErrorMessage()), 
+              "\n<submitResults>\n"
+              + "    <message file=\"Main.java\" line=\"3\" message=\"invalid method declaration;"
+              + " return type required\" tool=\"javac\" type=\"error\">\n"
+              + "        <example position=\"5\"/>\n"
+              + "    </message>\n"
+              + "    <message file=\"Main.java\" line=\"3\" message=\"';' expected\" tool=\"javac\" type=\"error\">\n"
+              + "        <example position=\"23\"/>\n"
+              + "    </message>\n"
+              + "</submitResults>\n\n");
+      
+  });
+   }
    @Test
    public void convertPostSvnErrorMessageToProblem() {
        assertDoesNotThrow(()-> {
