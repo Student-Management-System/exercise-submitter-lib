@@ -50,8 +50,6 @@ public class SvnResultHandlerIT {
         
         String courseId = docker.createCourse("java", "wise2021", "Programmierpraktikum: Java", "adam", "svn");
         
-        docker.startSvn(courseId, "svn");
-        
         docker.enrollStudent(courseId, "student1");
         docker.enrollStudent(courseId, "student2");
         docker.enrollStudent(courseId, "student3");
@@ -66,10 +64,11 @@ public class SvnResultHandlerIT {
         
         docker.changeAssignmentState(courseId, a1, AssignmentState.SUBMISSION);
         docker.changeAssignmentState(courseId, a1, AssignmentState.IN_REVIEW);
+
+        // start the SVN late, so that only one assignment change event triggers a full update
+        docker.startSvn(courseId, "svn");
     
         docker.changeAssignmentState(courseId, a2, AssignmentState.SUBMISSION);
-        
-        
     }
 
     @AfterAll
