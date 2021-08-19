@@ -139,11 +139,11 @@ public class SvnResultHandlerIT {
        
        assertEquals(SvnResultHandler.svnErrorMessageToString(info.getErrorMessage()), 
                "\n<submitResults>\n"
-               + "    <message file=\"main.java\" line=\"3\" message=\"invalid method declaration;"
+               + "    <message file=\"Main.java\" line=\"3\" message=\"invalid method declaration;"
                + " return type required\" tool=\"javac\" type=\"error\">\n"
                + "        <example position=\"5\"/>\n"
                + "    </message>\n"
-               + "    <message file=\"main.java\" line=\"3\" message=\"';' expected\" tool=\"javac\" type=\"error\">\n"
+               + "    <message file=\"Main.java\" line=\"3\" message=\"';' expected\" tool=\"javac\" type=\"error\">\n"
                + "        <example position=\"23\"/>\n"
                + "    </message>\n"
                + "</submitResults>\n\n");
@@ -153,7 +153,7 @@ public class SvnResultHandlerIT {
    @Test
    public void convertPostSvnErrorMessageToProblem() {
        assertDoesNotThrow(()-> {
-           Preparator prep = new Preparator(new File(TESTDATA,"notcompiling"));
+           Preparator prep = new Preparator(new File(TESTDATA,"checkstyleError"));
            File testdir = prep.getResult();
            
            String buildurl = docker.getSvnUrl() + "Homework02/JP001/";
@@ -211,14 +211,14 @@ public class SvnResultHandlerIT {
            } 
            SvnResultHandler handler = new SvnResultHandler(SvnResultHandler.svnErrorMessageToString(info.getErrorMessage()));
           
-           Problem problem1 = new Problem("javac","invalid method declaration; return type required",Severity.ERROR);
-                   problem1.setFile(new File("main.java"));
-                   problem1.setLine(3);
-                   problem1.setColumn(5);
-           Problem problem2 = new Problem("javac","';' expected",Severity.ERROR);
-                   problem2.setFile(new File("main.java"));
-                   problem2.setLine(3);
-                   problem2.setColumn(23);
+           Problem problem1 = new Problem("checkstyle","Empty if block",Severity.ERROR);
+                   problem1.setFile(new File("Main.java"));
+                   problem1.setLine(4);
+                   problem1.setColumn(27);
+           Problem problem2 = new Problem("checkstyle","'if rcurly' has incorrect indentation level 12, expected level should be 8",Severity.ERROR);
+                   problem2.setFile(new File("Main.java"));
+                   problem2.setLine(6);
+                   problem2.setColumn(13);
                    
            List<Problem> problems = handler.parseXmlToProblem();   
            
