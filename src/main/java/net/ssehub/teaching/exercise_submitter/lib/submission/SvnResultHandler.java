@@ -20,7 +20,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 
-// TODO: Auto-generated Javadoc
+
 /**
  * The Class SVNResultHandler converts the SVNCommitInfo from XML to Problem.   
  */
