@@ -95,7 +95,7 @@ public class SvnResultHandler {
                         problems.add(problem);
                     }
                 } else {
-                    //TODO: exception
+                    throw new ParserConfigurationException("Cant find needet data strukture");
                 }
                 
                
