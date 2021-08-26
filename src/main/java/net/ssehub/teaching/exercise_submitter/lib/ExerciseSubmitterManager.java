@@ -15,52 +15,102 @@ import net.ssehub.teaching.exercise_submitter.lib.student_management_system.Netw
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.UserNotInCourseException;
 import net.ssehub.teaching.exercise_submitter.lib.submission.Submitter;
 
+
 /**
  * Main class to work with the exercise submitter library. Provides access to all required client functionality.
  * <p>
  * Use {@link ExerciseSubmitterFactory} to create instances.
  * 
  * @author Adam
+ * @author Lukas
  */
 public class ExerciseSubmitterManager {
     
-    private String svnBaseUrl = "http://127.0.0.1/java/abgabe"; // TODO: read from config
+ 
+    private String svnBaseUrl; 
     
+  
     private Course course;
     
+
     private IApiConnection mgmtConnection;
     
-    private String username;
+   
+    private Credentials cred;
+    
+    
+    
+    /**
+     * The Class Credentials is for save the current username and password for communicating with the Svn server.
+     */
+    public class Credentials {
+        
+   
+        private String username;
+        
+        
+        private char[] password;
+        
+        /**
+         * Instantiates new Credentials which will contain username and password of the current user.
+         *
+         * @param username the username
+         * @param password the password
+         */
+        public Credentials(String username, char[] password) {
+            this.username = username;
+            this.password = password;
+        }
+        
+        /**
+         * Gets the username.
+         *
+         * @return the username
+         */
+        public String getUsername() {
+            return this.username;
+        }
+        
+        /**
+         * Gets the password.
+         *
+         * @return the password as char
+         */
+        public char[] getPassword() {
+            return this.password;
+        }
+    }
     
     /**
      * Creates a new connection to the student management system with the given username and password.
-     * 
+     *
      * @param username The username.
      * @param password The password.
      * @param courseId The ID of the course, e.g. <code>java-wise2021</code>.
      * @param apiConnection The {@link IApiConnection} to use.
-     * 
-     * @throws AuthenticationException If the authentication fails.
+     * @param svnBaseUrl the svn base url
      * @throws NetworkException If the network communication fails.
+     * @throws AuthenticationException If the authentication fails.
      * @throws UserNotInCourseException If the user is not enrolled in the course or the course does not exist.
      * @throws ApiException If a generic API exception occurs.
      */
-    ExerciseSubmitterManager(String username, String password, String courseId, IApiConnection apiConnection)
+    ExerciseSubmitterManager(String username, String password, String courseId, IApiConnection apiConnection,
+                String svnBaseUrl)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
-        this.username = username;
+        this.cred = new Credentials(username, password.toCharArray());
         
         mgmtConnection = apiConnection;
         mgmtConnection.login(username, password);
         course = mgmtConnection.getCourse(courseId);
+        this.svnBaseUrl = svnBaseUrl;
     }
     
     /**
      * Returns all assignments (all states).
-     * 
+     *
      * @return A list of all assignments.
-     * 
-     * @throws AuthenticationException If the authentication fails.
      * @throws NetworkException If the network communication fails.
+     * @throws AuthenticationException If the authentication fails.
      * @throws ApiException If a generic API exception occurs.
      */
     public List<Assignment> getAllAssignments() throws NetworkException, AuthenticationException, ApiException {
@@ -69,13 +119,11 @@ public class ExerciseSubmitterManager {
     
     /**
      * Returns all assignments that can be submitted.
-     * 
+     *
      * @return A list of all assignments that can be submitted.
-     * 
-     * @throws AuthenticationException If the authentication fails.
      * @throws NetworkException If the network communication fails.
+     * @throws AuthenticationException If the authentication fails.
      * @throws ApiException If a generic API exception occurs.
-     * 
      * @see #isSubmittable(Assignment)
      */
     public List<Assignment> getAllSubmittableAssignments()
@@ -88,13 +136,11 @@ public class ExerciseSubmitterManager {
     
     /**
      * Returns all assignments that can be replayed.
-     * 
+     *
      * @return A list of all assignments that can be replayed.
-     * 
-     * @throws AuthenticationException If the authentication fails.
      * @throws NetworkException If the network communication fails.
+     * @throws AuthenticationException If the authentication fails.
      * @throws ApiException If a generic API exception occurs.
-     * 
      * @see #isReplayable(Assignment)
      */
     public List<Assignment> getAllReplayableAssignments()
@@ -107,15 +153,15 @@ public class ExerciseSubmitterManager {
     
     /**
      * Creates a {@link Submitter} for the given assignment.
-     * 
+     *
      * @param assignment The assignment to submit to.
-     * 
      * @return A {@link Submitter} for the given {@link Assignment}.
-     * 
      * @throws IllegalArgumentException If the given {@link Assignment} is not submittable.
-     * 
-     * @throws ApiException If the group name of a group assignment cannot be retrieved. 
-     * 
+     * @throws NetworkException the network exception
+     * @throws AuthenticationException the authentication exception
+     * @throws UserNotInCourseException the user not in course exception
+     * @throws GroupNotFoundException the group not found exception
+     * @throws ApiException If the group name of a group assignment cannot be retrieved.
      * @see #isSubmittable(Assignment)
      */
     public Submitter getSubmitter(Assignment assignment)
@@ -125,20 +171,20 @@ public class ExerciseSubmitterManager {
             throw new IllegalArgumentException("Assignment " + assignment.getName() + " is not in submittable");
         }
         
-        return new Submitter(getSvnUrl(assignment));
+        return new Submitter(getSvnUrl(assignment), this.cred);
     }
     
     /**
      * Creates a {@link Replayer} for the given assignment.
-     * 
+     *
      * @param assignment The assignment to submit to.
-     * 
      * @return A {@link Replayer} for the given {@link Assignment}.
-     * 
      * @throws IllegalArgumentException If the given {@link Assignment} is not replayable.
-     * 
-     * @throws ApiException If the group name of a group assignment cannot be retrieved. 
-     * 
+     * @throws NetworkException the network exception
+     * @throws AuthenticationException the authentication exception
+     * @throws UserNotInCourseException the user not in course exception
+     * @throws GroupNotFoundException the group not found exception
+     * @throws ApiException If the group name of a group assignment cannot be retrieved.
      * @see #isReplayable(Assignment)
      */
     public Replayer getReplayer(Assignment assignment)
@@ -193,21 +239,24 @@ public class ExerciseSubmitterManager {
     
     /**
      * Return the group name for the given assignment. May be the username if this is not a group work.
-     * 
+     *
      * @param assignment The assignment.
-     * 
      * @return The group name for the given assignment.
-     * 
-     * @throws ApiException If the group name of a group assignment cannot be retrieved. 
+     * @throws NetworkException the network exception
+     * @throws AuthenticationException the authentication exception
+     * @throws UserNotInCourseException the user not in course exception
+     * @throws GroupNotFoundException the group not found exception
+     * @throws ApiException If the group name of a group assignment cannot be retrieved.
      */
     private String getGroupName(Assignment assignment)
             throws NetworkException, AuthenticationException, UserNotInCourseException, GroupNotFoundException,
             ApiException {
         String groupName;
         if (assignment.isGroupWork()) {
+            
             groupName = mgmtConnection.getGroupName(course, assignment);
         } else {
-            groupName = username;
+            groupName = this.cred.getUsername();
         }
         return groupName;
     }

@@ -25,6 +25,8 @@ public class ExerciseSubmitterFactory {
     
     private String mgmtUrl;
     
+    private String svnurl;
+    
     private boolean dummyApiConnection;
     
     /**
@@ -90,6 +92,17 @@ public class ExerciseSubmitterFactory {
     }
     
     /**
+     * Sets the URL of the svn system to use.
+     * 
+     * @param url The management URL to use. No traling slash.
+     * 
+     * @return This.
+     */
+    public ExerciseSubmitterFactory withSvnUrl(String url) {
+        this.svnurl = url;
+        return this;
+    }
+    /**
      * Uses the {@link DummyApiConnection} instead of a real one. Useful only for test cases.
      * 
      * @return This.
@@ -121,7 +134,7 @@ public class ExerciseSubmitterFactory {
             apiConnection = new DummyApiConnection();
         }
         
-        return new ExerciseSubmitterManager(username, password, courseId, apiConnection);
+        return new ExerciseSubmitterManager(username, password, courseId, apiConnection, svnurl);
     }
     
 
