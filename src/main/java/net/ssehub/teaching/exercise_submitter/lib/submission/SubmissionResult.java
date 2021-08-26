@@ -1,6 +1,7 @@
 package net.ssehub.teaching.exercise_submitter.lib.submission;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * The result of a submission to the SVN repository.
@@ -42,5 +43,31 @@ public class SubmissionResult {
     public List<Problem> getProblems() {
         return problems;
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.accepted, this.problems);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if ((obj == null) || (this.getClass() != obj.getClass())) {
+            return false;
+        }
+
+        SubmissionResult result = (SubmissionResult) obj;
+        if (!this.accepted == result.accepted) {
+            return false;
+        }
+        if (!this.problems.equals(result.problems)) {
+            return false;
+        }
+       
+        return true;
+    }
+
     
 }
