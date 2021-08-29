@@ -106,13 +106,18 @@ public class Submitter {
             }
 
             if (info.getErrorMessage() != null) {
-                SvnResultHandler handler = new SvnResultHandler(
-                        SvnResultHandler.svnErrorMessageToString(info.getErrorMessage()));
-                submissionresult = new SubmissionResult(true, handler.parseXmlToProblem());
+                if (info.getErrorMessage().getErrorCode().equals(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED)) {
+                    SvnResultHandler handler = new SvnResultHandler(
+                            SvnResultHandler.svnErrorMessageToString(info.getErrorMessage()));
+                    submissionresult = new SubmissionResult(true, handler.parseXmlToProblem());
+                } else {
+                    SvnResultHandler handler = new SvnResultHandler(
+                            SvnResultHandler.svnErrorMessageToString(info.getErrorMessage()));
+                    submissionresult = new SubmissionResult(false, handler.parseXmlToProblem());
+                }
             } else {
                 List<Problem> emptylist = new ArrayList<Problem>();
                 if (info.getNewRevision() == -1) {
-
                     submissionresult = new SubmissionResult(true, emptylist);
                 } else {
                     submissionresult = new SubmissionResult(true, emptylist);

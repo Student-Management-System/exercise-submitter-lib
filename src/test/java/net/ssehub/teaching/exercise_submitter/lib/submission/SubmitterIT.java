@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import net.ssehub.studentmgmt.docker.StuMgmtDocker;
@@ -17,6 +18,8 @@ import net.ssehub.studentmgmt.docker.StuMgmtDocker.Collaboration;
 import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterFactory;
 import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
+import net.ssehub.teaching.exercise_submitter.lib.submission.Problem.Severity;
+
 
 
 public class SubmitterIT {
@@ -93,6 +96,85 @@ public class SubmitterIT {
         SubmissionResult result = submitter.submit(dir);
         List<Problem> emptylist = new ArrayList<Problem>();
         SubmissionResult resultTest = new SubmissionResult(true,emptylist);
+        
+        assertEquals(result, resultTest);
+        
+        });
+        
+      
+        
+    }
+    //TODO: find a way to get a pre submit problem
+    @Disabled 
+    public void submitTestwithPreProblems() {
+        assertDoesNotThrow(() -> {
+            
+        Preparator prep = new Preparator(new File(TESTDATA, "error"));
+        
+        File dir = prep.getResult();
+        
+        
+        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
+        fackto.withAuthUrl(docker.getAuthUrl());
+        fackto.withMgmtUrl(docker.getStuMgmtUrl());
+        fackto.withSvnUrl(docker.getSvnUrl());
+        fackto.withUsername("student1");
+        fackto.withPassword("123456");
+        fackto.withCourse("java-wise2021");
+        
+        ExerciseSubmitterManager manager = fackto.build();
+        
+        
+        Assignment assignment = new Assignment(SubmitterIT.homework02id,"Homework02", Assignment.State.SUBMISSION, true);
+        Submitter submitter = manager.getSubmitter(assignment);
+        
+        SubmissionResult result = submitter.submit(dir);
+        List<Problem> list = new ArrayList<Problem>();
+        Problem problem = new Problem("eclipse-configuration","Does not contain a valid eclipse project",Severity.ERROR);
+        list.add(problem);
+        
+        SubmissionResult resultTest = new SubmissionResult(false,list);
+        
+        assertEquals(result, resultTest);
+        
+        });
+        
+      
+        
+    }
+    @Test 
+    public void submitTestwithPostProblems() {
+        assertDoesNotThrow(() -> {
+            
+        Preparator prep = new Preparator(new File(TESTDATA, "error"));
+        
+        File dir = prep.getResult();
+        
+        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
+        fackto.withAuthUrl(docker.getAuthUrl());
+        fackto.withMgmtUrl(docker.getStuMgmtUrl());
+        fackto.withSvnUrl(docker.getSvnUrl());
+        fackto.withUsername("student1");
+        fackto.withPassword("123456");
+        fackto.withCourse("java-wise2021");
+        
+        ExerciseSubmitterManager manager = fackto.build();
+        
+        
+        Assignment assignment = new Assignment(SubmitterIT.homework02id,"Homework02", Assignment.State.SUBMISSION, true);
+        Submitter submitter = manager.getSubmitter(assignment);
+        
+        SubmissionResult result = submitter.submit(dir);
+        List<Problem> list = new ArrayList<Problem>();
+        
+        Problem problem = new Problem("javac", "cannot find symbol", Severity.ERROR);
+        problem.setFile(new File("Main.java"));
+        problem.setLine(7);
+        problem.setColumn(9);
+        list.add(problem);
+        
+        
+        SubmissionResult resultTest = new SubmissionResult(true,list);
         
         assertEquals(result, resultTest);
         
