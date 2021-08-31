@@ -74,10 +74,8 @@ public class SubmitterIT {
     @Test 
     public void submitTest() {
         assertDoesNotThrow(() -> {
-            
-        Preparator prep = new Preparator(new File(TESTDATA, "Works"));
-        
-        File dir = prep.getResult();
+          
+        File dir = new File(TESTDATA, "error");
         
         ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
         fackto.withAuthUrl(docker.getAuthUrl());
@@ -109,9 +107,8 @@ public class SubmitterIT {
     public void submitTestwithPreProblems() {
         assertDoesNotThrow(() -> {
             
-        Preparator prep = new Preparator(new File(TESTDATA, "error"));
-        
-        File dir = prep.getResult();
+       
+        File dir = new File(TESTDATA, "error");
         
         
         ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
@@ -145,10 +142,8 @@ public class SubmitterIT {
     @Test 
     public void submitTestwithPostProblems() {
         assertDoesNotThrow(() -> {
-            
-        Preparator prep = new Preparator(new File(TESTDATA, "error"));
-        
-        File dir = prep.getResult();
+             
+        File dir = new File(TESTDATA, "error");
         
         ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
         fackto.withAuthUrl(docker.getAuthUrl());
