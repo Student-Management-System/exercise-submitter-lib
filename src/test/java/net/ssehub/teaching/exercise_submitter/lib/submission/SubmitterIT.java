@@ -75,7 +75,7 @@ public class SubmitterIT {
     public void submitTest() {
         assertDoesNotThrow(() -> {
           
-        File dir = new File(TESTDATA, "error");
+        File dir = new File(TESTDATA, "Works");
         
         ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
         fackto.withAuthUrl(docker.getAuthUrl());
