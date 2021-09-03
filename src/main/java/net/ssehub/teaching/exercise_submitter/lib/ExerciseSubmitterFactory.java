@@ -92,9 +92,9 @@ public class ExerciseSubmitterFactory {
     }
     
     /**
-     * Sets the URL of the svn system to use.
+     * Sets the URL of the SVN system to use.
      * 
-     * @param url The management URL to use. No traling slash.
+     * @param url The management URL to use. No trailing slash.
      * 
      * @return This.
      */

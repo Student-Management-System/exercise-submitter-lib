@@ -48,10 +48,10 @@ class Preparator implements Closeable {
 
     static {
         List<Charset> charsets = new LinkedList<>();
-        charsets.add(StandardCharsets.ISO_8859_1);
         if (Charset.isSupported("cp1252")) {
             charsets.add(Charset.forName("cp1252"));
         }
+        charsets.add(StandardCharsets.ISO_8859_1);
         CHARSETS_TO_CHECK = charsets.toArray(new Charset[charsets.size()]);
     }
     
@@ -248,11 +248,8 @@ class Preparator implements Closeable {
             ByteBuffer inBuffer = ByteBuffer.allocate(1024);
             CharBuffer outBuffer = CharBuffer.allocate(1024);
 
-            int numRead = 0;
-            int remaining = 0;
-            while ((numRead = stream.read(inBuffer)) != -1) {
-                inBuffer.position(0);
-                inBuffer.limit(numRead + remaining);
+            while (stream.read(inBuffer) != -1) {
+                inBuffer.flip();
 
                 CoderResult result = decoder.decode(inBuffer, outBuffer, false);
                 outBuffer.clear(); // discard characters, we are not interested in them
@@ -264,7 +261,7 @@ class Preparator implements Closeable {
 
                 // copy the remaining bytes to the start of the buffer
                 // this may happen if we are, e.g., in the middle of an utf-8 character
-                remaining = inBuffer.remaining();
+                int remaining = inBuffer.remaining();
                 for (int i = 0; inBuffer.remaining() > 0; i++) {
                     inBuffer.put(i, inBuffer.get());
                 }
@@ -273,7 +270,7 @@ class Preparator implements Closeable {
 
             if (!foundError) {
                 // read the last remaining bytes
-                inBuffer.limit(remaining);
+                inBuffer.flip();
                 CoderResult result = decoder.decode(inBuffer, outBuffer, true);
                 foundError = result.isError();
             }

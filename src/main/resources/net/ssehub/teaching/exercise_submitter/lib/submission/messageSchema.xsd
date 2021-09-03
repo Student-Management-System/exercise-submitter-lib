@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="submitResults">
+		<xs:complexType>
+			<xs:sequence minOccurs="0" maxOccurs="unbounded">
+				<xs:element ref="message" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="message">
+		<xs:complexType>
+			<xs:sequence minOccurs="0" maxOccurs="1">
+				<xs:element ref="example" />
+			</xs:sequence>
+			
+			<xs:attribute name="tool" type="xs:string" use="required" />
+			<xs:attribute name="type" type="severity" use="required" />
+			<xs:attribute name="message" type="xs:string" use="required" />
+			<xs:attribute name="file" type="xs:string" use="optional" />
+			<xs:attribute name="line" type="xs:int" use="optional" />
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:simpleType name="severity">
+	   <xs:restriction base="xs:string">
+	       <xs:enumeration value="error" />
+	       <xs:enumeration value="warning" />
+	   </xs:restriction>
+	</xs:simpleType>
+	
+	<xs:element name="example">
+		<xs:complexType>
+			<xs:attribute name="position" type="xs:int" use="required" />
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

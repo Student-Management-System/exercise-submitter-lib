@@ -46,7 +46,7 @@ public class SubmissionResult {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.accepted, this.problems);
+        return Objects.hash(accepted, problems);
     }
 
     @Override
@@ -54,20 +54,22 @@ public class SubmissionResult {
         if (this == obj) {
             return true;
         }
-        if ((obj == null) || (this.getClass() != obj.getClass())) {
+        if (!(obj instanceof SubmissionResult)) {
             return false;
         }
-
-        SubmissionResult result = (SubmissionResult) obj;
-        if (!this.accepted == result.accepted) {
-            return false;
-        }
-        if (!this.problems.equals(result.problems)) {
-            return false;
-        }
-       
-        return true;
+        SubmissionResult other = (SubmissionResult) obj;
+        return accepted == other.accepted && Objects.equals(problems, other.problems);
     }
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("SubmissionResult [accepted=");
+        builder.append(accepted);
+        builder.append(", problems=");
+        builder.append(problems);
+        builder.append("]");
+        return builder.toString();
+    }
     
 }

@@ -126,7 +126,7 @@ public class Problem {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.checkName, this.message, this.severity, this.column, this.line, this.file);
+        return Objects.hash(checkName, column, file, line, message, severity);
     }
 
     @Override
@@ -134,31 +134,32 @@ public class Problem {
         if (this == obj) {
             return true;
         }
-        if ((obj == null) || (this.getClass() != obj.getClass())) {
+        if (!(obj instanceof Problem)) {
             return false;
         }
+        Problem other = (Problem) obj;
+        return Objects.equals(checkName, other.checkName) && Objects.equals(column, other.column)
+                && Objects.equals(file, other.file) && Objects.equals(line, other.line)
+                && Objects.equals(message, other.message) && severity == other.severity;
+    }
 
-        Problem problem = (Problem) obj;
-        if (!this.checkName.equals(problem.checkName)) {
-            return false;
-        }
-        if (!this.message.equals(problem.message)) {
-            return false;
-        }
-        if (this.severity != problem.severity) {
-            return false;
-        }
-        if (!this.file.equals(problem.file)) {
-            return false;
-        }
-        if (!this.line.equals(problem.line)) {
-            return false;
-        }
-        if (!this.column.equals(problem.column)) {
-            return false;
-        }
-
-        return true;
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Problem [checkName=");
+        builder.append(checkName);
+        builder.append(", message=");
+        builder.append(message);
+        builder.append(", severity=");
+        builder.append(severity);
+        builder.append(", file=");
+        builder.append(file);
+        builder.append(", line=");
+        builder.append(line);
+        builder.append(", column=");
+        builder.append(column);
+        builder.append("]");
+        return builder.toString();
     }
 
 }

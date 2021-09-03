@@ -106,22 +106,18 @@ public class Submitter {
             }
 
             if (info.getErrorMessage() != null) {
-                if (info.getErrorMessage().getErrorCode().equals(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED)) {
-                    SvnResultHandler handler = new SvnResultHandler(
-                            SvnResultHandler.svnErrorMessageToString(info.getErrorMessage()));
-                    submissionresult = new SubmissionResult(true, handler.parseXmlToProblem());
-                } else {
-                    SvnResultHandler handler = new SvnResultHandler(
-                            SvnResultHandler.svnErrorMessageToString(info.getErrorMessage()));
-                    submissionresult = new SubmissionResult(false, handler.parseXmlToProblem());
-                }
+                SvnResultHandler handler = new SvnResultHandler(
+                        SvnResultHandler.svnErrorMessageToString(info.getErrorMessage()));
+                submissionresult = new SubmissionResult(
+                        info.getErrorMessage().getErrorCode().equals(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED),
+                        handler.parseXmlToProblem());
             } else {
                 List<Problem> emptylist = new ArrayList<Problem>();
-                if (info.getNewRevision() == -1) {
-                    submissionresult = new SubmissionResult(true, emptylist);
-                } else {
-                    submissionresult = new SubmissionResult(true, emptylist);
-                }
+//                if (info.getNewRevision() == -1) {
+                submissionresult = new SubmissionResult(true, emptylist);
+//                } else {
+//                    submissionresult = new SubmissionResult(true, emptylist);
+//                }
             }
 
         } catch (IOException e) {
@@ -137,22 +133,22 @@ public class Submitter {
      * Sets the commit parameters which are needed for the checkout.
      */
     private void setCommitParameters() {
-        this.commitclient.setCommitParameters(new DefaultSVNCommitParameters() {
-            @Override
-            public Action onMissingFile(File file) {
-                return DELETE;
-            }
-
-            @Override
-            public Action onMissingDirectory(File file) {
-                return DELETE;
-            }
-        });
+//        this.commitclient.setCommitParameters(new DefaultSVNCommitParameters() {
+//            @Override
+//            public Action onMissingFile(File file) {
+//                return DELETE;
+//            }
+//
+//            @Override
+//            public Action onMissingDirectory(File file) {
+//                return DELETE;
+//            }
+//        });
     }
 
     /**
-     * Does a Svn checkout for the projekt files in the directory from the
-     * repository behind the url.
+     * Does a SVN checkout for the project files in the directory from the
+     * repository behind the URL.
      *
      * @param dir    dir for the checkout
      * @param svnurl the svnurl where the repository is located
@@ -172,8 +168,8 @@ public class Submitter {
                 if (type == SVNStatusType.STATUS_UNVERSIONED) {
                     wcClient.doAdd(file, true, false, false, SVNDepth.EMPTY, false, false);
 
-                } else if (type == SVNStatusType.STATUS_MISSING) {
-                    wcClient.doDelete(file, true, false, false);
+//                } else if (type == SVNStatusType.STATUS_MISSING) {
+//                    wcClient.doDelete(file, true, false, false);
                 }
             }, null);
     }

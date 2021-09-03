@@ -57,8 +57,7 @@ public class SubmitterIT {
         docker.changeAssignmentState(courseId, a1, AssignmentState.SUBMISSION);
         docker.changeAssignmentState(courseId, a1, AssignmentState.IN_REVIEW);
 
-        // start the SVN late, so that only one assignment change event triggers a full
-        // update
+        // start the SVN late, so that only one assignment change event triggers a full update
         docker.startSvn(courseId, "svn");
 
         docker.changeAssignmentState(courseId, a2, AssignmentState.SUBMISSION);
@@ -99,9 +98,13 @@ public class SubmitterIT {
         
         });
         
-      
+        // TODO: check if correct content is on SVN server (create helper method in StuMgmtDocker.svnHttpRequest())
         
     }
+    
+    // TODO: create test cases for:
+    // - pre-existing files on server (overwritten, deleted)
+    
     //TODO: find a way to get a pre submit problem
     @Disabled 
     public void submitTestwithPreProblems() {

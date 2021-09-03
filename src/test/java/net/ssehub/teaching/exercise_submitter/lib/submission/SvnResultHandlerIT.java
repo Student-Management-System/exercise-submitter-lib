@@ -64,8 +64,7 @@ public class SvnResultHandlerIT {
         docker.changeAssignmentState(courseId, a1, AssignmentState.SUBMISSION);
         docker.changeAssignmentState(courseId, a1, AssignmentState.IN_REVIEW);
 
-        // start the SVN late, so that only one assignment change event triggers a full
-        // update
+        // start the SVN late, so that only one assignment change event triggers a full update
         docker.startSvn(courseId, "svn");
 
         docker.changeAssignmentState(courseId, a2, AssignmentState.SUBMISSION);

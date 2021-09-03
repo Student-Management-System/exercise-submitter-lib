@@ -36,7 +36,7 @@ public class ExerciseSubmitterManager {
     private IApiConnection mgmtConnection;
     
    
-    private Credentials cred;
+    private Credentials credentials;
     
     
     
@@ -88,7 +88,7 @@ public class ExerciseSubmitterManager {
      * @param password The password.
      * @param courseId The ID of the course, e.g. <code>java-wise2021</code>.
      * @param apiConnection The {@link IApiConnection} to use.
-     * @param svnBaseUrl the svn base url
+     * @param svnBaseUrl The SVN base URL.
      * @throws NetworkException If the network communication fails.
      * @throws AuthenticationException If the authentication fails.
      * @throws UserNotInCourseException If the user is not enrolled in the course or the course does not exist.
@@ -97,7 +97,7 @@ public class ExerciseSubmitterManager {
     ExerciseSubmitterManager(String username, String password, String courseId, IApiConnection apiConnection,
                 String svnBaseUrl)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
-        this.cred = new Credentials(username, password.toCharArray());
+        this.credentials = new Credentials(username, password.toCharArray());
         
         mgmtConnection = apiConnection;
         mgmtConnection.login(username, password);
@@ -171,7 +171,7 @@ public class ExerciseSubmitterManager {
             throw new IllegalArgumentException("Assignment " + assignment.getName() + " is not in submittable");
         }
         
-        return new Submitter(getSvnUrl(assignment), this.cred);
+        return new Submitter(getSvnUrl(assignment), this.credentials);
     }
     
     /**
@@ -256,7 +256,7 @@ public class ExerciseSubmitterManager {
             
             groupName = mgmtConnection.getGroupName(course, assignment);
         } else {
-            groupName = this.cred.getUsername();
+            groupName = this.credentials.getUsername();
         }
         return groupName;
     }
