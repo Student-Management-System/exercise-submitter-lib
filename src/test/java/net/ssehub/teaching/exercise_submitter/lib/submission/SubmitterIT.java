@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -93,16 +94,65 @@ public class SubmitterIT {
         
         Assignment assignment = new Assignment(SubmitterIT.homework02id,"Homework02", Assignment.State.SUBMISSION, true);
         Submitter submitter = manager.getSubmitter(assignment);
-        
+        //check result
         SubmissionResult result = submitter.submit(dir);
         List<Problem> emptylist = new ArrayList<Problem>();
         SubmissionResult resultTest = new SubmissionResult(true,emptylist);
         
         assertEquals(result, resultTest);
         
-        });
+       //check files on server
+        List<String> testFileList = new ArrayList<String>();
+        testFileList.add("..");
+        testFileList.add(".classpath");
+        testFileList.add(".project");
+        testFileList.add("Main.java");
         
-        // TODO: check if correct content is on SVN server (create helper method in StuMgmtDocker.svnHttpRequest())
+        
+        String responseFileList = SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.empty(), "student1");
+        List<String> reponselist = SubmitterIT.docker.handleHtmlResponseGetListElements(responseFileList);
+        
+        assertEquals(testFileList, reponselist);
+        assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable(".classpath"), "student1"), 
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<classpath>\n"
+                + "    <classpathentry kind=\"src\" path=\"\"/>\n"
+                + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
+                + "    <classpathentry kind=\"output\" path=\"\"/>\n"
+                + "</classpath>\n");
+               
+        assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable(".project"), "student1"),
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<projectDescription>\n"
+                + "    <name>Works</name>\n"
+                + "    <comment></comment>\n"
+                + "    <projects>\n"
+                + "    </projects>\n"
+                + "    <buildSpec>\n"
+                + "        <buildCommand>\n"
+                + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
+                + "            <arguments>\n"
+                + "            </arguments>\n"
+                + "        </buildCommand>\n"
+                + "    </buildSpec>\n"
+                + "    <natures>\n"
+                + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
+                + "    </natures>\n"
+                + "</projectDescription>\n");
+                
+        assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable("Main.java"), "student1"),
+                "\n"
+                + "public class Main {\n"
+                + "    \n"
+                + "    public static void main(String[] args) {\n"
+                + "        System.out.println(\"Hello world!\");\n"
+                + "    }\n"
+                + "}\n");
+                
+        
+        
+        });
+       
         
     }
     
