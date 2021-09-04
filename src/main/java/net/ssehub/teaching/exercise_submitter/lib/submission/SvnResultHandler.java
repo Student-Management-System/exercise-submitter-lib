@@ -61,7 +61,11 @@ public class SvnResultHandler {
     public SvnResultHandler(String xmlmessage) {
         this.xmlmessage = xmlmessage;
     }
-    
+    /**
+     * 
+     * Collects the errors thrown by the XML parser.
+     *
+     */
     private static class ErrorCollector implements ErrorHandler {
 
         private List<SAXParseException> exceptions = new LinkedList<>();
