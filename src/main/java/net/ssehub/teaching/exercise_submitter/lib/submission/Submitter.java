@@ -30,6 +30,7 @@ import net.ssehub.teaching.exercise_submitter.lib.student_management_system.Auth
 /**
  * Submits solutions to a given SVN exercise submission location.
  *
+ * @author Lukas
  * @author Adam
  */
 public class Submitter {

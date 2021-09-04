@@ -85,9 +85,49 @@ public class SvnResultHandlerTest {
             assertTrue(problem1.equals(problems.get(0)));
         });
     }
+    @Test
+    public void parseErrorMessageFileLineButNoColumn() {
+        final String erromessage = "<?xml version = \"1.0\"?>\n"
+                +  "<submitResults>\n" 
+                + "    <message tool=\"javac\" type=\"error\" message=\"';' expected\" file=\"Main.java\" line=\"20\"/>\n"
+                + "</submitResults>\n";
+        SvnResultHandler handler = new SvnResultHandler(erromessage);
+        
+        assertDoesNotThrow(() -> {
+            List<Problem> problems;
+            problems = handler.parseXmlToProblem();
+            
+            assertEquals(1, problems.size());
+            Problem problem1 = new Problem("javac","';' expected",Problem.Severity.ERROR);
+            problem1.setFile(new File("Main.java"));
+            problem1.setLine(20);
+            assertTrue(problem1.equals(problems.get(0)));
+        });
+    }
+    @Test
+    public void parseErrorMessageFileLineAndColumn() {
+        final String erromessage = "<?xml version = \"1.0\"?>\n"
+                +  "<submitResults>\n" 
+                + "    <message tool=\"javac\" type=\"error\" message=\"';' expected\" file=\"Main.java\" line=\"20\">\n"
+                + "        <example position=\"8\"/> \n"
+                + "    </message>\n "
+                + "</submitResults>\n";
+        SvnResultHandler handler = new SvnResultHandler(erromessage);
+        
+        assertDoesNotThrow(() -> {
+            List<Problem> problems;
+            problems = handler.parseXmlToProblem();
+            
+            assertEquals(1, problems.size());
+            Problem problem1 = new Problem("javac","';' expected",Problem.Severity.ERROR);
+            problem1.setFile(new File("Main.java"));
+            problem1.setLine(20);
+            problem1.setColumn(8);
+            assertTrue(problem1.equals(problems.get(0)));
+        });
+    }
     
-    // TODO: create two test cases with line number, and with line and column number
-    
+        
     @Test
     public void parseErrorMessageWithMultipleMessages() {
         final String erromessage = "<?xml version = \"1.0\"?>\n"
