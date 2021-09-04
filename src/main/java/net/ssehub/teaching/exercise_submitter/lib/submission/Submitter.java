@@ -105,26 +105,31 @@ public class Submitter {
                     throw new SubmissionException("Response parse Error");
                 }
             }
-
-            if (info.getErrorMessage() != null) {
-                SvnResultHandler handler = new SvnResultHandler(
-                        SvnResultHandler.svnErrorMessageToString(info.getErrorMessage()));
-                submissionresult = new SubmissionResult(
-                        info.getErrorMessage().getErrorCode().equals(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED),
-                        handler.parseXmlToProblem());
-            } else {
-                List<Problem> emptylist = new ArrayList<Problem>();
-//                if (info.getNewRevision() == -1) {
-                submissionresult = new SubmissionResult(true, emptylist);
-//                } else {
-//                    submissionresult = new SubmissionResult(true, emptylist);
-//                }
+            if (submissionresult == null) {  
+                if (info.getErrorMessage() != null) {
+                    SvnResultHandler handler = new SvnResultHandler(
+                            SvnResultHandler.svnErrorMessageToString(info.getErrorMessage()));
+                    submissionresult = new SubmissionResult(
+                            info.getErrorMessage().getErrorCode().equals(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED),
+                            handler.parseXmlToProblem());
+                } else {
+                    List<Problem> emptylist = new ArrayList<Problem>();
+    //                if (info.getNewRevision() == -1) {
+                    submissionresult = new SubmissionResult(true, emptylist);
+    //                } else {
+    //                    submissionresult = new SubmissionResult(true, emptylist);
+    //                }
+                }
             }
 
         } catch (IOException e) {
             throw new SubmissionException("cant create temp dir", e);
         } catch (SVNException | ParserConfigurationException | SAXException e) {
-            throw new SubmissionException("cant do checkout", e);
+            if (e instanceof SVNAuthenticationException) {
+                throw new AuthenticationException();
+            } else {
+                throw new SubmissionException("cant do checkout", e);
+            }
         }
         return submissionresult;
 

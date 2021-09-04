@@ -2,8 +2,10 @@ package net.ssehub.teaching.exercise_submitter.lib.submission;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +20,8 @@ import net.ssehub.studentmgmt.docker.StuMgmtDocker.Collaboration;
 import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterFactory;
 import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
+import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
+import net.ssehub.teaching.exercise_submitter.lib.student_management_system.AuthenticationException;
 import net.ssehub.teaching.exercise_submitter.lib.submission.Problem.Severity;
 
 
@@ -105,13 +109,26 @@ public class SubmitterIT {
     // TODO: create test cases for:
     // - pre-existing files on server (overwritten, deleted)
     
-    //TODO: find a way to get a pre submit problem
-    @Disabled 
+    @Test
     public void submitTestwithPreProblems() {
         assertDoesNotThrow(() -> {
             
        
         File dir = new File(TESTDATA, "error");
+        //create file above 10mb
+        Preparator prep = new Preparator(dir);
+        File fileresult = prep.getResult();
+        File bigFile = new File(fileresult,"bigfile.txt");
+        bigFile.createNewFile();
+        
+        FileWriter fw = new FileWriter(bigFile);
+        for(int i = 0; i < 11000; i++) {
+            for(int e = 0; e < 1000; e++) {
+                fw.write("W");
+            }
+            fw.write("\n");
+        }
+        fw.close();
         
         
         ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
@@ -128,21 +145,27 @@ public class SubmitterIT {
         Assignment assignment = new Assignment(SubmitterIT.homework02id,"Homework02", Assignment.State.SUBMISSION, true);
         Submitter submitter = manager.getSubmitter(assignment);
         
-        SubmissionResult result = submitter.submit(dir);
+        SubmissionResult result = submitter.submit(fileresult);
         List<Problem> list = new ArrayList<Problem>();
-        Problem problem = new Problem("eclipse-configuration","Does not contain a valid eclipse project",Severity.ERROR);
+        
+        Problem problem = new Problem("file-size","File is too large",Severity.ERROR);
+        problem.setFile(new File("bigfile.txt"));
+        
+        Problem problem1 = new Problem("file-size","Submission size is too large",Severity.ERROR);
         list.add(problem);
+        list.add(problem1);
         
         SubmissionResult resultTest = new SubmissionResult(false,list);
         
         assertEquals(result, resultTest);
         
+        prep.close();
         });
         
-      
+     
         
     }
-    @Test 
+    @Test
     public void submitTestwithPostProblems() {
         assertDoesNotThrow(() -> {
              
@@ -179,6 +202,33 @@ public class SubmitterIT {
         });
         
       
+        
+    }
+    @Test
+    public void submitTestWithAuthFailure() {
+            
+        File dir = new File(TESTDATA, "Works");
+        
+        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
+        fackto.withDummyApiConnection();
+        fackto.withAuthUrl(docker.getAuthUrl());
+        fackto.withMgmtUrl(docker.getStuMgmtUrl());
+        fackto.withSvnUrl(docker.getSvnUrl());
+        fackto.withUsername("student1");
+        fackto.withPassword("student1");
+        fackto.withCourse("java-wise2021");
+        
+        assertDoesNotThrow(() -> {
+        ExerciseSubmitterManager manager = fackto.build();
+        
+        Assignment assignment =  new Assignment("005", "Homework03", State.SUBMISSION, true);
+        
+        assertThrows(AuthenticationException.class, () -> {
+            Submitter submitter = manager.getSubmitter(assignment);
+            submitter.submit(dir);
+        });
+    
+        });
         
     }
 
