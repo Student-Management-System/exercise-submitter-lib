@@ -155,9 +155,167 @@ public class SubmitterIT {
        
         
     }
+    @Test
+    public void submitTestExistingFilesOverwritten() {
+        
+        assertDoesNotThrow(() -> {
+            
+            File dir = new File(TESTDATA, "Works");
+            File overwrite = new File(TESTDATA,"WorksOverwrite");
+            
+            ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
+            fackto.withAuthUrl(docker.getAuthUrl());
+            fackto.withMgmtUrl(docker.getStuMgmtUrl());
+            fackto.withSvnUrl(docker.getSvnUrl());
+            fackto.withUsername("student1");
+            fackto.withPassword("123456");
+            fackto.withCourse("java-wise2021");
+            
+            ExerciseSubmitterManager manager = fackto.build();
+            
+            Assignment assignment = new Assignment(SubmitterIT.homework02id,"Homework02", Assignment.State.SUBMISSION, true);
+            Submitter submitter = manager.getSubmitter(assignment);
+            //simul pre existing file
+            submitter.submit(overwrite);
+            //check result
+            SubmissionResult result = submitter.submit(dir);
+            List<Problem> emptylist = new ArrayList<Problem>();
+            SubmissionResult resultTest = new SubmissionResult(true,emptylist);
+            
+            assertEquals(result, resultTest);
+            
+           //check files on server
+            List<String> testFileList = new ArrayList<String>();
+            testFileList.add("..");
+            testFileList.add(".classpath");
+            testFileList.add(".project");
+            testFileList.add("Main.java");
+            
+            
+            String responseFileList = SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.empty(), "student1");
+            List<String> reponselist = SubmitterIT.docker.handleHtmlResponseGetListElements(responseFileList);
+            
+            assertEquals(testFileList, reponselist);
+            assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable(".classpath"), "student1"), 
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                    + "<classpath>\n"
+                    + "    <classpathentry kind=\"src\" path=\"\"/>\n"
+                    + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
+                    + "    <classpathentry kind=\"output\" path=\"\"/>\n"
+                    + "</classpath>\n");
+                   
+            assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable(".project"), "student1"),
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                    + "<projectDescription>\n"
+                    + "    <name>Works</name>\n"
+                    + "    <comment></comment>\n"
+                    + "    <projects>\n"
+                    + "    </projects>\n"
+                    + "    <buildSpec>\n"
+                    + "        <buildCommand>\n"
+                    + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
+                    + "            <arguments>\n"
+                    + "            </arguments>\n"
+                    + "        </buildCommand>\n"
+                    + "    </buildSpec>\n"
+                    + "    <natures>\n"
+                    + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
+                    + "    </natures>\n"
+                    + "</projectDescription>\n");
+                    
+            assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable("Main.java"), "student1"),
+                    "\n"
+                    + "public class Main {\n"
+                    + "    \n"
+                    + "    public static void main(String[] args) {\n"
+                    + "        System.out.println(\"Hello world!\");\n"
+                    + "    }\n"
+                    + "}\n");
+                    
+            
+            
+            });
+    }
+    @Test
+    public void submitTestExistingFilesDeleted() {
+            assertDoesNotThrow(() -> {
+            
+            File dir = new File(TESTDATA, "Works");
+            File delete = new File(TESTDATA,"WorksDelete");
+            
+            ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
+            fackto.withAuthUrl(docker.getAuthUrl());
+            fackto.withMgmtUrl(docker.getStuMgmtUrl());
+            fackto.withSvnUrl(docker.getSvnUrl());
+            fackto.withUsername("student1");
+            fackto.withPassword("123456");
+            fackto.withCourse("java-wise2021");
+            
+            ExerciseSubmitterManager manager = fackto.build();
+            
+            Assignment assignment = new Assignment(SubmitterIT.homework02id,"Homework02", Assignment.State.SUBMISSION, true);
+            Submitter submitter = manager.getSubmitter(assignment);
+            //simul pre existing file
+            submitter.submit(delete);
+            //check result
+            SubmissionResult result = submitter.submit(dir);
+            List<Problem> emptylist = new ArrayList<Problem>();
+            SubmissionResult resultTest = new SubmissionResult(true,emptylist);
+            
+            assertEquals(result, resultTest);
+            
+           //check files on server
+            List<String> testFileList = new ArrayList<String>();
+            testFileList.add("..");
+            testFileList.add(".classpath");
+            testFileList.add(".project");
+            testFileList.add("Main.java");
+            
+            
+            String responseFileList = SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.empty(), "student1");
+            List<String> reponselist = SubmitterIT.docker.handleHtmlResponseGetListElements(responseFileList);
+            
+            assertEquals(testFileList, reponselist);
+            assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable(".classpath"), "student1"), 
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                    + "<classpath>\n"
+                    + "    <classpathentry kind=\"src\" path=\"\"/>\n"
+                    + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
+                    + "    <classpathentry kind=\"output\" path=\"\"/>\n"
+                    + "</classpath>\n");
+                   
+            assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable(".project"), "student1"),
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                    + "<projectDescription>\n"
+                    + "    <name>Works</name>\n"
+                    + "    <comment></comment>\n"
+                    + "    <projects>\n"
+                    + "    </projects>\n"
+                    + "    <buildSpec>\n"
+                    + "        <buildCommand>\n"
+                    + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
+                    + "            <arguments>\n"
+                    + "            </arguments>\n"
+                    + "        </buildCommand>\n"
+                    + "    </buildSpec>\n"
+                    + "    <natures>\n"
+                    + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
+                    + "    </natures>\n"
+                    + "</projectDescription>\n");
+                    
+            assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable("Main.java"), "student1"),
+                    "\n"
+                    + "public class Main {\n"
+                    + "    \n"
+                    + "    public static void main(String[] args) {\n"
+                    + "        System.out.println(\"Hello world!\");\n"
+                    + "    }\n"
+                    + "}\n");
+                    
+            
+            });
+    }
     
-    // TODO: create test cases for:
-    // - pre-existing files on server (overwritten, deleted)
     
     @Test
     public void submitTestwithPreProblems() {
