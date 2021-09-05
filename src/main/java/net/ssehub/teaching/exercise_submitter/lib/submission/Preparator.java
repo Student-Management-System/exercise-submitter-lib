@@ -66,6 +66,7 @@ class Preparator implements Closeable {
      *
      * @throws IOException If IO fails during preparation.
      */
+    @Deprecated
     public Preparator(File directory) throws IOException {
 
         if (!directory.isDirectory()) {
@@ -80,7 +81,34 @@ class Preparator implements Closeable {
         this.result.deleteOnExit();
 
     }
+    /**
+     * Instantiates a new Preparator which creates a empty temp dir.
+     * @throws IOException
+     */
+    public Preparator() throws IOException {
 
+        this.result = File.createTempFile("exercise_submission", null);
+        this.result.delete();
+        
+        this.result.deleteOnExit();
+
+    }
+    
+    /**
+     * Prepares a dir. Creating .classpath .project and copying the files int the temp submissionfolder and 
+     * checking the encoding
+     * @param directory
+     * @throws IOException
+     */
+    public void prepareDir(File directory) throws IOException {
+        if (!directory.isDirectory()) {
+            throw new IOException(directory.getName() + " is not a directory");
+            
+        }
+        copyDirectoryWithCorrectEncoding(directory.toPath(), this.result.toPath());
+        createEclipseProjectFiles(this.result.toPath(), directory.getName());
+    }
+    
     /**
      * Gets the temporary directory where the preparation result is located.
      *
@@ -109,7 +137,23 @@ class Preparator implements Closeable {
             throw e.getCause();
         }
     }
-
+    
+    /**
+     * Delete all files in the temp dir except the .svn folder.
+     * @throws IOException
+     */
+    public void deleteOldFiles() throws IOException {
+      
+        File[] oldFiles = result.listFiles((pathname)
+            -> !(pathname.isDirectory() && pathname.getName().equalsIgnoreCase(".svn")));
+        if (oldFiles != null) {
+            for (int i = 0; i < oldFiles.length; i++) {
+                Files.delete(oldFiles[i].toPath());
+            }
+        }
+            
+    }
+    
     /**
      * Copies all files and sub-folders of the given source directory to the destination directory. If any text files
      * have an encoding other than UTF-8, we try to convert them to UTF-8.
@@ -121,12 +165,15 @@ class Preparator implements Closeable {
      */
     private static void copyDirectoryWithCorrectEncoding(Path sourceDirectory, Path destinationDirectory)
             throws IOException {
-        
+       
         try {
             Files.walk(sourceDirectory).forEach(sourceFile -> {
                 Path destinationFile = destinationDirectory.resolve(sourceDirectory.relativize(sourceFile));
+                
                 try {
+                
                     copyPathWithCorrectEncoding(sourceFile, destinationFile);
+                    
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -150,7 +197,14 @@ class Preparator implements Closeable {
             copyFileWithCorrectEncoding(sourceFile, destinationFile);
 
         } else {
-            Files.copy(sourceFile, destinationFile);
+            //check if folder in destinationfolder is empty
+            if (destinationFile.toFile().list() != null) {
+                if (destinationFile.toFile().list().length == 0) {
+                    Files.copy(sourceFile, destinationFile);
+                }
+            } else {
+                Files.copy(sourceFile, destinationFile);
+            }
         }
     }
 

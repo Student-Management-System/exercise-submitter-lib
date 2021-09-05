@@ -72,7 +72,7 @@ public class Submitter {
         }
         SubmissionResult submissionresult = null;
 
-        try (Preparator preparator = new Preparator(directory)) {
+        try (Preparator preparator = new Preparator()) {
 
             File result = preparator.getResult();
 
@@ -85,7 +85,7 @@ public class Submitter {
 
             SVNURL svnurl = SVNURL.parseURIEncoded(this.url);
 
-            this.doCheckout(result, svnurl);
+            this.doCheckout(directory, svnurl, preparator);
 
             SVNCommitInfo info = null;
 
@@ -139,44 +139,66 @@ public class Submitter {
      * Sets the commit parameters which are needed for the checkout.
      */
     private void setCommitParameters() {
-//        this.commitclient.setCommitParameters(new DefaultSVNCommitParameters() {
-//            @Override
-//            public Action onMissingFile(File file) {
-//                return DELETE;
-//            }
-//
-//            @Override
-//            public Action onMissingDirectory(File file) {
-//                return DELETE;
-//            }
-//        });
+        this.commitclient.setCommitParameters(new DefaultSVNCommitParameters() {
+            @Override
+            public Action onMissingFile(File file) {
+                return DELETE;
+            }
+
+            @Override
+            public Action onMissingDirectory(File file) {
+                return DELETE;
+            }
+        });
     }
 
     /**
      * Does a SVN checkout for the project files in the directory from the
      * repository behind the URL.
      *
-     * @param dir    dir for the checkout
+     * @param directory the directory
      * @param svnurl the svnurl where the repository is located
+     * @param checkoutprep the checkoutprep
      * @throws SVNException the SVN exception
+     * @throws SubmissionException the submission exception
      */
-    private void doCheckout(File dir, SVNURL svnurl) throws SVNException {
+    private void doCheckout(File directory, SVNURL svnurl, Preparator checkoutprep)
+            throws SVNException, SubmissionException {
         SVNUpdateClient update = this.clientmanager.getUpdateClient();
-        update.doCheckout(svnurl, dir, SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, true);
+        update.doCheckout(svnurl, checkoutprep.getResult(),
+                SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, true);
 
+        prepareFilesForCommit(directory, checkoutprep);
+        
         SVNWCClient wcClient = this.clientmanager.getWCClient();
 
-        this.clientmanager.getStatusClient().doStatus(dir, SVNRevision.HEAD, SVNDepth.INFINITY, false, false, false,
-                false, status -> {
+        this.clientmanager.getStatusClient().doStatus(checkoutprep.getResult(), SVNRevision.HEAD, SVNDepth.INFINITY,
+                false, false, false, false, status -> {
                 SVNStatusType type = status.getNodeStatus();
                 File file = status.getFile();
 
                 if (type == SVNStatusType.STATUS_UNVERSIONED) {
                     wcClient.doAdd(file, true, false, false, SVNDepth.EMPTY, false, false);
 
-//                } else if (type == SVNStatusType.STATUS_MISSING) {
-//                    wcClient.doDelete(file, true, false, false);
+                } else if (type == SVNStatusType.STATUS_MISSING) {
+                    wcClient.doDelete(file, true, false, false);
                 }
             }, null);
+    }
+    /**
+     * Prepare the files for commit.
+     * 
+     * @param directory the source directory
+     * @param checkoutprep the current temp preparator
+     * @throws SubmissionException
+     */
+    private void prepareFilesForCommit(File directory, Preparator checkoutprep) throws SubmissionException {
+        try {
+            checkoutprep.deleteOldFiles();
+            checkoutprep.prepareDir(directory);
+        } catch (IOException e) {
+            throw new SubmissionException(e);
+        }
+        
     }
 }
