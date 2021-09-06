@@ -144,14 +144,32 @@ class Preparator implements Closeable {
      */
     public void deleteOldFiles() throws IOException {
       
-        File[] oldFiles = result.listFiles((pathname)
-            -> !(pathname.isDirectory() && pathname.getName().equalsIgnoreCase(".svn")));
-        if (oldFiles != null) {
-            for (int i = 0; i < oldFiles.length; i++) {
-                Files.delete(oldFiles[i].toPath());
+        deleteFileOrDir(result);
+            
+    }
+    /**
+     * Recursive Method which deletes all content of a dir including subdirs except .svn dirs.
+     * @param fileToDelete
+     * @throws IOException
+     */
+    private void deleteFileOrDir(File fileToDelete) throws IOException {
+        if (fileToDelete.isFile()) {
+            Files.delete(fileToDelete.toPath());
+        } else if (fileToDelete.list().length == 0) {
+            Files.delete(fileToDelete.toPath());
+        } else {
+            File[] oldFiles = fileToDelete.listFiles((pathname)
+                -> !(pathname.isDirectory() && pathname.getName().equalsIgnoreCase(".svn")));
+            if (oldFiles != null) {
+                for (int i = 0; i < oldFiles.length; i++) {
+                    deleteFileOrDir(oldFiles[i]);
+                    if (oldFiles[i].exists()) {
+                        deleteFileOrDir(fileToDelete);
+                    }
+                }
+                
             }
         }
-            
     }
     
     /**

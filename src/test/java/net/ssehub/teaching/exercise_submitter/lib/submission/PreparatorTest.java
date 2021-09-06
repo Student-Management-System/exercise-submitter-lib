@@ -432,5 +432,43 @@ public class PreparatorTest {
             }
         });
     }
+    
+    @Test
+    public void deletesOldFiles() {
+       File source = new File(TESTDATA, "notEmptyDirWithSubDir");
+        
+        assertDoesNotThrow(() -> {
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(source);
+                preparator.deleteOldFiles();
+                File result = preparator.getResult();
+                assertTrue(result.list().length == 0);
+                
+            }
+        });
+        
+        
+    }
+    @Test
+    public void deletesOldFilesExceptSvn() {
+       File source = new File(TESTDATA, "notEmptyDirWithSubDir");
+        
+        assertDoesNotThrow(() -> {
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(source);
+                File result = preparator.getResult();
+                File svn = new File(result,".svn");
+                svn.mkdir();
+                
+                preparator.deleteOldFiles();
+             
+                assertTrue(result.list().length == 1);
+                assertTrue(svn.exists());
+                
+            }
+        });
+        
+        
+    }
 
 }
