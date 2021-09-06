@@ -28,13 +28,21 @@ public class PreparatorTest {
 
     @Test
     public void throwsIfDirDoesntExist() {
-        IOException ex = assertThrows(IOException.class, () -> new Preparator(new File("doesnt_exist")));
+        IOException ex = assertThrows(IOException.class, () -> {
+            try(Preparator preparator = new Preparator()) {
+            preparator.prepareDir(new File("doesnt_exist"));
+            }
+    });
         assertEquals("doesnt_exist is not a directory", ex.getMessage());
     }
 
     @Test
     public void throwsIfDirIsFile() {
-        IOException ex = assertThrows(IOException.class, () -> new Preparator(new File(TESTDATA, "file.txt")));
+        IOException ex = assertThrows(IOException.class, () -> {
+            try(Preparator preparator = new Preparator()) {
+            preparator.prepareDir(new File(TESTDATA, "file.txt"));
+            }
+    });
         assertEquals("file.txt is not a directory", ex.getMessage());
     }
 
@@ -45,8 +53,9 @@ public class PreparatorTest {
         assertTrue(source.isDirectory(), "precondition: empty test directory exists");
 
         assertDoesNotThrow(() -> {
-            try (Preparator preparator = new Preparator(source)) {
+            try (Preparator preparator = new Preparator()) {
                 File result = preparator.getResult();
+                preparator.prepareDir(source);
 
                 assertAll(
                         () -> assertTrue(result.isDirectory()),
@@ -69,8 +78,8 @@ public class PreparatorTest {
 
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator(source)) {
-
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(source);
                 result = preparator.getResult();
                 assertTrue(result.isDirectory());
             }
@@ -86,8 +95,8 @@ public class PreparatorTest {
 
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator(source)) {
-
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(source);
                 result = preparator.getResult();
                 
                 assertAll(
@@ -117,8 +126,8 @@ public class PreparatorTest {
 
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator(source)) {
-
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(source);
                 result = preparator.getResult();
                 assertTrue(result.isDirectory());
             }
@@ -134,8 +143,8 @@ public class PreparatorTest {
 
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator(source)) {
-
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(source);
                 result = preparator.getResult();
                 File subDir = new File(result, "notEmptyDir");
                 File classpath = new File(result, ".classpath");
@@ -173,8 +182,8 @@ public class PreparatorTest {
 
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator(source)) {
-
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(source);
                 result = preparator.getResult();
                 assertTrue(result.isDirectory());
 
@@ -197,8 +206,8 @@ public class PreparatorTest {
         
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator(source)) {
-                
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(source);
                 result = preparator.getResult();
                 assertTrue(result.isDirectory());
                 
@@ -223,8 +232,8 @@ public class PreparatorTest {
         
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator(source)) {
-                
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(source);
                 result = preparator.getResult();
                 assertTrue(result.isDirectory());
                 
@@ -261,8 +270,8 @@ public class PreparatorTest {
         
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator(source)) {
-                
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(source);
                 result = preparator.getResult();
                 assertTrue(result.isDirectory());
                 
@@ -321,7 +330,8 @@ public class PreparatorTest {
         assertTrue(source.isDirectory(), "precondition: empty test directory exists");
         
         assertDoesNotThrow(() -> {
-            try (Preparator preparator = new Preparator(source)) {
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(source);
                 File result = preparator.getResult();
 
                 File classpath = new File(result, ".classpath");
@@ -372,7 +382,8 @@ public class PreparatorTest {
         File source = new File(TESTDATA, "existingClasspath");
         
         assertDoesNotThrow(() -> {
-            try (Preparator preparator = new Preparator(source)) {
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(source);
                 File result = preparator.getResult();
 
                 // classpath should be copied
@@ -399,7 +410,8 @@ public class PreparatorTest {
         File source = new File(TESTDATA, "existingProject");
         
         assertDoesNotThrow(() -> {
-            try (Preparator preparator = new Preparator(source)) {
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(source);
                 File result = preparator.getResult();
                 
                 // classpath is generated
