@@ -79,7 +79,8 @@ public class SvnResultHandlerIT {
     public void convertPreErrorMessageToStringTest() {
 
         assertDoesNotThrow(() -> {
-            try (Preparator prep = new Preparator(new File(TESTDATA, "notcompiling"))) {
+            try (Preparator prep = new Preparator()) {
+                prep.prepareDir(new File(TESTDATA, "notcompiling"));
                 File testdir = prep.getResult();
 
                 File classpath = new File(testdir, ".classpath");
@@ -146,7 +147,8 @@ public class SvnResultHandlerIT {
     public void convertPostErrorMessageToStringTest() {
 
         assertDoesNotThrow(() -> {
-            try (Preparator prep = new Preparator(new File(TESTDATA, "notcompiling"))) {
+            try (Preparator prep = new Preparator()) {
+                prep.prepareDir(new File(TESTDATA, "notcompiling"));
                 File testdir = prep.getResult();
 
                 String buildurl = docker.getSvnUrl() + "Homework02/JP001/";
@@ -211,7 +213,8 @@ public class SvnResultHandlerIT {
     @Test
     public void convertPostSvnErrorMessageToProblem() {
         assertDoesNotThrow(() -> {
-            try (Preparator prep = new Preparator(new File(TESTDATA, "checkstyleError"))) {
+            try (Preparator prep = new Preparator()) {
+                prep.prepareDir(new File(TESTDATA, "checkstyleError"));
                 File testdir = prep.getResult();
 
                 String buildurl = docker.getSvnUrl() + "Homework02/JP001/";
