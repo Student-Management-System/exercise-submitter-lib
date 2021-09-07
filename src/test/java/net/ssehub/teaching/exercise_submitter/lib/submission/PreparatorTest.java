@@ -24,25 +24,25 @@ import org.junit.jupiter.api.Test;
 
 public class PreparatorTest {
 
-    private final static File TESTDATA = new File("src/test/resources/PreparatorTest");
+    private static final File TESTDATA = new File("src/test/resources/PreparatorTest");
 
     @Test
     public void throwsIfDirDoesntExist() {
         IOException ex = assertThrows(IOException.class, () -> {
-            try(Preparator preparator = new Preparator()) {
-            preparator.prepareDir(new File("doesnt_exist"));
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(new File("doesnt_exist"));
             }
-    });
+        });
         assertEquals("doesnt_exist is not a directory", ex.getMessage());
     }
 
     @Test
     public void throwsIfDirIsFile() {
         IOException ex = assertThrows(IOException.class, () -> {
-            try(Preparator preparator = new Preparator()) {
-            preparator.prepareDir(new File(TESTDATA, "file.txt"));
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(new File(TESTDATA, "file.txt"));
             }
-    });
+        });
         assertEquals("file.txt is not a directory", ex.getMessage());
     }
 
@@ -58,13 +58,13 @@ public class PreparatorTest {
                 preparator.prepareDir(source);
 
                 assertAll(
-                        () -> assertTrue(result.isDirectory()),
-                        () -> assertNotEquals(result, source),
-                        
-                        //.classpath + .project generated
-                        () -> assertEquals(2, result.listFiles().length),
-                        () -> assertTrue(new File(result, ".classpath").isFile()),
-                        () -> assertTrue(new File(result, ".project").isFile())
+                    () -> assertTrue(result.isDirectory()),
+                    () -> assertNotEquals(result, source),
+                    
+                    //.classpath + .project generated
+                    () -> assertEquals(2, result.listFiles().length),
+                    () -> assertTrue(new File(result, ".classpath").isFile()),
+                    () -> assertTrue(new File(result, ".project").isFile())
                 );
             }
         });
@@ -100,19 +100,19 @@ public class PreparatorTest {
                 result = preparator.getResult();
                 
                 assertAll(
-                        () -> assertTrue(result.isDirectory()),
-                        // file + .project and .classpath 
-                        () -> assertTrue(new File(result, "file.txt").isFile()),
-                        () -> assertTrue(new File(result, ".project").isFile()),
-                        () -> assertTrue(new File(result, ".classpath").isFile()),
-                        
-                        () -> assertEquals(3, result.listFiles().length),
-                        
-                        // test that copied content is correct
-                        () -> {
-                            String fileContent = Files.readString(new File(result, "file.txt").toPath());
-                            assertEquals("This is a file.\n", fileContent);
-                        }
+                    () -> assertTrue(result.isDirectory()),
+                    // file + .project and .classpath 
+                    () -> assertTrue(new File(result, "file.txt").isFile()),
+                    () -> assertTrue(new File(result, ".project").isFile()),
+                    () -> assertTrue(new File(result, ".classpath").isFile()),
+                    
+                    () -> assertEquals(3, result.listFiles().length),
+                    
+                    // test that copied content is correct
+                    () -> {
+                        String fileContent = Files.readString(new File(result, "file.txt").toPath());
+                        assertEquals("This is a file.\n", fileContent);
+                    }
                 ); 
                 
             }
@@ -151,25 +151,25 @@ public class PreparatorTest {
                 File project = new File(result, ".project");
                 
                 assertAll(
-                        () -> assertTrue(result.isDirectory()),
-                        () -> assertTrue(subDir.isDirectory()),
-                        
-                        //.project and .classpath are generated
-                        () -> assertTrue(classpath.exists()),
-                        () -> assertTrue(project.exists()),
-                        
-                        // plus one sub directory
-                        () -> assertEquals(3, result.listFiles().length),
-                        
-                        // exactly one file in sub directory
-                        () -> assertTrue(new File(subDir, "file.txt").isFile()),
-                        () -> assertEquals(1, subDir.listFiles().length),
-                        
-                        // test that copied content is correct
-                        () -> {
-                            String fileContent = Files.readString((new File(subDir, "file.txt").toPath()));
-                            assertEquals("This is a file.\n", fileContent);
-                        }
+                    () -> assertTrue(result.isDirectory()),
+                    () -> assertTrue(subDir.isDirectory()),
+                    
+                    //.project and .classpath are generated
+                    () -> assertTrue(classpath.exists()),
+                    () -> assertTrue(project.exists()),
+                    
+                    // plus one sub directory
+                    () -> assertEquals(3, result.listFiles().length),
+                    
+                    // exactly one file in sub directory
+                    () -> assertTrue(new File(subDir, "file.txt").isFile()),
+                    () -> assertEquals(1, subDir.listFiles().length),
+                    
+                    // test that copied content is correct
+                    () -> {
+                        String fileContent = Files.readString((new File(subDir, "file.txt").toPath()));
+                        assertEquals("This is a file.\n", fileContent);
+                    }
                 );
             }
         });
@@ -253,7 +253,8 @@ public class PreparatorTest {
     }
     
     @Test
-    @Disabled("There seems to be no way to create an invalid ISO 8859-1 file; thus the invalid file is always (wrongly) converted to UTF-8 instead of copying it over unchanged") // TODO
+    @Disabled("There seems to be no way to create an invalid ISO 8859-1 file; thus the invalid file is always "
+            + "(wrongly) converted to UTF-8 instead of copying it over unchanged") // TODO
     public void invalidEncodingNotConverted() {
         File source = new File(TESTDATA, "encodings");
         
@@ -281,10 +282,10 @@ public class PreparatorTest {
                     byte[] bytes = fs.readAllBytes();
                     
                     byte[] expected = {
-                            'i', 'n', 'v', 'a', 'l', 'i', 'd', ' ', 'U', 'T', 'F', '-', '8', ':', ' ',
-                            (byte) 0xe9, 0x00, '\n',
-                            'i', 'n', 'v', 'a', 'l', 'i', 'd', ' ', 'C', 'P', '-', '1', '2', '5', '2', ':', ' ',
-                            (byte) 0x81, '\n'
+                        'i', 'n', 'v', 'a', 'l', 'i', 'd', ' ', 'U', 'T', 'F', '-', '8', ':', ' ',
+                        (byte) 0xe9, 0x00, '\n',
+                        'i', 'n', 'v', 'a', 'l', 'i', 'd', ' ', 'C', 'P', '-', '1', '2', '5', '2', ':', ' ',
+                        (byte) 0x81, '\n'
                     };
                     assertArrayEquals(expected, bytes);
                 }
@@ -308,17 +309,26 @@ public class PreparatorTest {
         File invalid = new File(encodingsDir, "invalid.txt");
         
         assertAll(
-                () -> assertTrue(assertDoesNotThrow(() -> Preparator.checkEncoding(utf8.toPath(), StandardCharsets.UTF_8))),
-                () -> assertTrue(assertDoesNotThrow(() -> Preparator.checkEncoding(cp1252.toPath(), Charset.forName("cp1252")))),
-                () -> assertTrue(assertDoesNotThrow(() -> Preparator.checkEncoding(iso88591.toPath(), StandardCharsets.ISO_8859_1))),
-                () -> assertTrue(assertDoesNotThrow(() -> Preparator.checkEncoding(utf8Long.toPath(), StandardCharsets.UTF_8))),
-                
-                () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(cp1252.toPath(), StandardCharsets.UTF_8))),
-                () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(iso88591.toPath(), StandardCharsets.UTF_8))),
-                
-                () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(invalid.toPath(), StandardCharsets.UTF_8))),
-//                () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(invalid.toPath(), StandardCharsets.ISO_8859_1))),
-                () -> assertFalse(assertDoesNotThrow(() -> Preparator.checkEncoding(invalid.toPath(), Charset.forName("cp1252"))))
+            () -> assertTrue(assertDoesNotThrow(
+                () -> Preparator.checkEncoding(utf8.toPath(), StandardCharsets.UTF_8))),
+            () -> assertTrue(assertDoesNotThrow(
+                () -> Preparator.checkEncoding(cp1252.toPath(), Charset.forName("cp1252")))),
+            () -> assertTrue(assertDoesNotThrow(
+                () -> Preparator.checkEncoding(iso88591.toPath(), StandardCharsets.ISO_8859_1))),
+            () -> assertTrue(assertDoesNotThrow(
+                () -> Preparator.checkEncoding(utf8Long.toPath(), StandardCharsets.UTF_8))),
+            
+            () -> assertFalse(assertDoesNotThrow(
+                () -> Preparator.checkEncoding(cp1252.toPath(), StandardCharsets.UTF_8))),
+            () -> assertFalse(assertDoesNotThrow(
+                () -> Preparator.checkEncoding(iso88591.toPath(), StandardCharsets.UTF_8))),
+            
+            () -> assertFalse(assertDoesNotThrow(
+                () -> Preparator.checkEncoding(invalid.toPath(), StandardCharsets.UTF_8))),
+//            () -> assertFalse(assertDoesNotThrow(
+//                () -> Preparator.checkEncoding(invalid.toPath(), StandardCharsets.ISO_8859_1))),
+            () -> assertFalse(
+                assertDoesNotThrow(() -> Preparator.checkEncoding(invalid.toPath(), Charset.forName("cp1252"))))
         );
         
     }
@@ -338,40 +348,41 @@ public class PreparatorTest {
                 File project = new File(result, ".project");
                 
                 assertAll(
-                        () -> assertTrue(classpath.isFile()),
-                        () -> assertTrue(project.isFile()),
-                        () -> assertEquals(2, result.listFiles().length),
-                        
-                        () -> {
-                            String content = Files.readString(classpath.toPath());
-                            assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                                    + "<classpath>\n"
-                                    + "    <classpathentry kind=\"src\" path=\"\"/>\n"
-                                    + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
-                                    + "    <classpathentry kind=\"output\" path=\"\"/>\n"
-                                    + "</classpath>\n", content);
-                        },
-                        () -> {
-                            String content = Files.readString(project.toPath());
-                            assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                                    + "<projectDescription>\n"
-                                    // replaces $projectName with the name of the folder
-                                    + "    <name>emptyDir</name>\n"
-                                    + "    <comment></comment>\n"
-                                    + "    <projects>\n"
-                                    + "    </projects>\n"
-                                    + "    <buildSpec>\n"
-                                    + "        <buildCommand>\n"
-                                    + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
-                                    + "            <arguments>\n"
-                                    + "            </arguments>\n"
-                                    + "        </buildCommand>\n"
-                                    + "    </buildSpec>\n"
-                                    + "    <natures>\n"
-                                    + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
-                                    + "    </natures>\n"
-                                    + "</projectDescription>\n", content);
-                        }
+                    () -> assertTrue(classpath.isFile()),
+                    () -> assertTrue(project.isFile()),
+                    () -> assertEquals(2, result.listFiles().length),
+                    
+                    () -> {
+                        String content = Files.readString(classpath.toPath());
+                        assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                                + "<classpath>\n"
+                                + "    <classpathentry kind=\"src\" path=\"\"/>\n"
+                                + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER"
+                                    + "/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
+                                + "    <classpathentry kind=\"output\" path=\"\"/>\n"
+                                + "</classpath>\n", content);
+                    },
+                    () -> {
+                        String content = Files.readString(project.toPath());
+                        assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                                + "<projectDescription>\n"
+                                // replaces $projectName with the name of the folder
+                                + "    <name>emptyDir</name>\n"
+                                + "    <comment></comment>\n"
+                                + "    <projects>\n"
+                                + "    </projects>\n"
+                                + "    <buildSpec>\n"
+                                + "        <buildCommand>\n"
+                                + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
+                                + "            <arguments>\n"
+                                + "            </arguments>\n"
+                                + "        </buildCommand>\n"
+                                + "    </buildSpec>\n"
+                                + "    <natures>\n"
+                                + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
+                                + "    </natures>\n"
+                                + "</projectDescription>\n", content);
+                    }
                 );
             }
         });
@@ -392,14 +403,14 @@ public class PreparatorTest {
                 File project = new File(result, ".project");
                 
                 assertAll(
-                        () -> assertTrue(classpath.isFile()),
-                        () -> assertTrue(project.isFile()),
-                        () -> assertEquals(2, result.listFiles().length),
-                        
-                        () -> {
-                            String content = Files.readString(classpath.toPath());
-                            assertEquals("existing classpath\n", content);
-                        }
+                    () -> assertTrue(classpath.isFile()),
+                    () -> assertTrue(project.isFile()),
+                    () -> assertEquals(2, result.listFiles().length),
+                    
+                    () -> {
+                        String content = Files.readString(classpath.toPath());
+                        assertEquals("existing classpath\n", content);
+                    }
                 );
             }
         });
@@ -420,14 +431,14 @@ public class PreparatorTest {
                 File project = new File(result, ".project");
                 
                 assertAll(
-                        () -> assertTrue(classpath.isFile()),
-                        () -> assertTrue(project.isFile()),
-                        () -> assertEquals(2, result.listFiles().length),
-                        
-                        () -> {
-                            String content = Files.readString(project.toPath());
-                            assertEquals("existing project\n", content);
-                        }
+                    () -> assertTrue(classpath.isFile()),
+                    () -> assertTrue(project.isFile()),
+                    () -> assertEquals(2, result.listFiles().length),
+                    
+                    () -> {
+                        String content = Files.readString(project.toPath());
+                        assertEquals("existing project\n", content);
+                    }
                 );
             }
         });
@@ -435,7 +446,7 @@ public class PreparatorTest {
     
     @Test
     public void deletesOldFiles() {
-       File source = new File(TESTDATA, "notEmptyDirWithSubDir");
+        File source = new File(TESTDATA, "notEmptyDirWithSubDir");
         
         assertDoesNotThrow(() -> {
             try (Preparator preparator = new Preparator()) {
@@ -451,13 +462,13 @@ public class PreparatorTest {
     }
     @Test
     public void deletesOldFilesExceptSvn() {
-       File source = new File(TESTDATA, "notEmptyDirWithSubDir");
+        File source = new File(TESTDATA, "notEmptyDirWithSubDir");
         
         assertDoesNotThrow(() -> {
             try (Preparator preparator = new Preparator()) {
                 preparator.prepareDir(source);
                 File result = preparator.getResult();
-                File svn = new File(result,".svn");
+                File svn = new File(result, ".svn");
                 svn.mkdir();
                 
                 preparator.deleteOldFiles();

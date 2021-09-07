@@ -85,7 +85,8 @@
 					<failOnViolation>true</failOnViolation>
 					<includeResources>false</includeResources>
 					<includeTestResources>false</includeTestResources>
-					<includeTestSourceDirectory>false</includeTestSourceDirectory>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    <suppressionsLocation>checkstyle-test-suppressions.xml</suppressionsLocation>
 				</configuration>
 				<executions>
 					<execution>

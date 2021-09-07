@@ -35,7 +35,7 @@ public class SvnResultHandlerIT {
 
     private static StuMgmtDocker docker;
 
-    private final static File TESTDATA = new File("src/test/resources/SvnResultHandlerTest");
+    private static final File TESTDATA = new File("src/test/resources/SvnResultHandlerTest");
 
     @BeforeAll
     public static void setupServers() {
@@ -111,21 +111,22 @@ public class SvnResultHandlerIT {
                 SVNWCClient wcClient = clientManager.getWCClient();
 
                 clientManager.getStatusClient().doStatus(testdir, SVNRevision.HEAD, SVNDepth.INFINITY, false, false,
-                        false, false, status -> {
-                            SVNStatusType type = status.getNodeStatus();
-                            File file = status.getFile();
+                        false, false,
+                    status -> {
+                        SVNStatusType type = status.getNodeStatus();
+                        File file = status.getFile();
 
-                            if (type == SVNStatusType.STATUS_UNVERSIONED) {
-                                wcClient.doAdd(file, true, false, false, SVNDepth.EMPTY, false, false);
+                        if (type == SVNStatusType.STATUS_UNVERSIONED) {
+                            wcClient.doAdd(file, true, false, false, SVNDepth.EMPTY, false, false);
 
-                            } else if (type == SVNStatusType.STATUS_MISSING) {
-                                wcClient.doDelete(file, true, false, false);
-                            }
-                        }, null);
+                        } else if (type == SVNStatusType.STATUS_MISSING) {
+                            wcClient.doDelete(file, true, false, false);
+                        }
+                    }, null);
 
                 SVNCommitInfo info = null;
                 try {
-                    info = client.doCommit(new File[] { testdir }, false, "Testcommit", null, null, false, false,
+                    info = client.doCommit(new File[] {testdir}, false, "Testcommit", null, null, false, false,
                             SVNDepth.INFINITY);
 
                 } catch (SVNException e) {
@@ -136,7 +137,8 @@ public class SvnResultHandlerIT {
                 }
 
                 assertEquals(SvnResultHandler.svnErrorMessageToString(info.getErrorMessage()), "<submitResults>\n"
-                        + "    <message message=\"Does not contain a valid eclipse project\" tool=\"eclipse-configuration\" type=\"error\"/>\n"
+                        + "    <message message=\"Does not contain a valid eclipse project\" "
+                                + "tool=\"eclipse-configuration\" type=\"error\"/>\n"
                         + "</submitResults>");
             }
         });
@@ -176,21 +178,22 @@ public class SvnResultHandlerIT {
                 SVNWCClient wcClient = clientManager.getWCClient();
 
                 clientManager.getStatusClient().doStatus(testdir, SVNRevision.HEAD, SVNDepth.INFINITY, false, false,
-                        false, false, status -> {
-                            SVNStatusType type = status.getNodeStatus();
-                            File file = status.getFile();
+                        false, false,
+                    status -> {
+                        SVNStatusType type = status.getNodeStatus();
+                        File file = status.getFile();
 
-                            if (type == SVNStatusType.STATUS_UNVERSIONED) {
-                                wcClient.doAdd(file, true, false, false, SVNDepth.EMPTY, false, false);
+                        if (type == SVNStatusType.STATUS_UNVERSIONED) {
+                            wcClient.doAdd(file, true, false, false, SVNDepth.EMPTY, false, false);
 
-                            } else if (type == SVNStatusType.STATUS_MISSING) {
-                                wcClient.doDelete(file, true, false, false);
-                            }
-                        }, null);
+                        } else if (type == SVNStatusType.STATUS_MISSING) {
+                            wcClient.doDelete(file, true, false, false);
+                        }
+                    }, null);
 
                 SVNCommitInfo info = null;
                 try {
-                    info = client.doCommit(new File[] { testdir }, false, "Testcommit", null, null, false, false,
+                    info = client.doCommit(new File[] {testdir}, false, "Testcommit", null, null, false, false,
                             SVNDepth.INFINITY);
 
                 } catch (SVNException e) {
@@ -204,8 +207,10 @@ public class SvnResultHandlerIT {
                         + "    <message file=\"Main.java\" line=\"3\" message=\"invalid method declaration;"
                         + " return type required\" tool=\"javac\" type=\"error\">\n"
                         + "        <example position=\"5\"/>\n" + "    </message>\n"
-                        + "    <message file=\"Main.java\" line=\"3\" message=\"';' expected\" tool=\"javac\" type=\"error\">\n"
-                        + "        <example position=\"23\"/>\n" + "    </message>\n" + "</submitResults>\n\n");
+                        + "    <message file=\"Main.java\" line=\"3\" message=\"';' expected\" "
+                                + "tool=\"javac\" type=\"error\">\n"
+                        + "        <example position=\"23\"/>\n" + "    </message>\n"
+                        + "</submitResults>\n\n");
             }
         });
     }
@@ -242,21 +247,22 @@ public class SvnResultHandlerIT {
                 SVNWCClient wcClient = clientManager.getWCClient();
 
                 clientManager.getStatusClient().doStatus(testdir, SVNRevision.HEAD, SVNDepth.INFINITY, false, false,
-                        false, false, status -> {
-                            SVNStatusType type = status.getNodeStatus();
-                            File file = status.getFile();
+                        false, false,
+                    status -> {
+                        SVNStatusType type = status.getNodeStatus();
+                        File file = status.getFile();
 
-                            if (type == SVNStatusType.STATUS_UNVERSIONED) {
-                                wcClient.doAdd(file, true, false, false, SVNDepth.EMPTY, false, false);
+                        if (type == SVNStatusType.STATUS_UNVERSIONED) {
+                            wcClient.doAdd(file, true, false, false, SVNDepth.EMPTY, false, false);
 
-                            } else if (type == SVNStatusType.STATUS_MISSING) {
-                                wcClient.doDelete(file, true, false, false);
-                            }
-                        }, null);
+                        } else if (type == SVNStatusType.STATUS_MISSING) {
+                            wcClient.doDelete(file, true, false, false);
+                        }
+                    }, null);
 
                 SVNCommitInfo info = null;
                 try {
-                    info = client.doCommit(new File[] { testdir }, false, "Testcommit", null, null, false, false,
+                    info = client.doCommit(new File[] {testdir}, false, "Testcommit", null, null, false, false,
                             SVNDepth.INFINITY);
 
                 } catch (SVNException e) {
