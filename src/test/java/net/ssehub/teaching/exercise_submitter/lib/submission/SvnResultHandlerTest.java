@@ -44,7 +44,7 @@ public class SvnResultHandlerTest {
             problems = handler.parseXmlToProblem();
             
             assertEquals(1, problems.size());
-            Problem problem1 = new Problem("javac","';' expected",Problem.Severity.WARNING);
+            Problem problem1 = new Problem("javac", "';' expected", Problem.Severity.WARNING);
             assertTrue(problem1.equals(problems.get(0)));
         });
     }
@@ -62,7 +62,7 @@ public class SvnResultHandlerTest {
             problems = handler.parseXmlToProblem();
             
             assertEquals(1, problems.size());
-            Problem problem1 = new Problem("javac","';' expected",Problem.Severity.ERROR);
+            Problem problem1 = new Problem("javac", "';' expected", Problem.Severity.ERROR);
             assertTrue(problem1.equals(problems.get(0)));
         });
     }
@@ -80,7 +80,7 @@ public class SvnResultHandlerTest {
             problems = handler.parseXmlToProblem();
             
             assertEquals(1, problems.size());
-            Problem problem1 = new Problem("javac","';' expected",Problem.Severity.ERROR);
+            Problem problem1 = new Problem("javac", "';' expected", Problem.Severity.ERROR);
             problem1.setFile(new File("Main.java"));
             assertTrue(problem1.equals(problems.get(0)));
         });
@@ -88,9 +88,9 @@ public class SvnResultHandlerTest {
     @Test
     public void parseErrorMessageFileLineButNoColumn() {
         final String erromessage = "<?xml version = \"1.0\"?>\n"
-                +  "<submitResults>\n" 
-                + "    <message tool=\"javac\" type=\"error\" message=\"';' expected\" file=\"Main.java\" line=\"20\"/>\n"
-                + "</submitResults>\n";
+            +  "<submitResults>\n" 
+            + "    <message tool=\"javac\" type=\"error\" message=\"';' expected\" file=\"Main.java\" line=\"20\"/>\n"
+            + "</submitResults>\n";
         SvnResultHandler handler = new SvnResultHandler(erromessage);
         
         assertDoesNotThrow(() -> {
@@ -98,7 +98,7 @@ public class SvnResultHandlerTest {
             problems = handler.parseXmlToProblem();
             
             assertEquals(1, problems.size());
-            Problem problem1 = new Problem("javac","';' expected",Problem.Severity.ERROR);
+            Problem problem1 = new Problem("javac", "';' expected", Problem.Severity.ERROR);
             problem1.setFile(new File("Main.java"));
             problem1.setLine(20);
             assertTrue(problem1.equals(problems.get(0)));
@@ -107,11 +107,11 @@ public class SvnResultHandlerTest {
     @Test
     public void parseErrorMessageFileLineAndColumn() {
         final String erromessage = "<?xml version = \"1.0\"?>\n"
-                +  "<submitResults>\n" 
-                + "    <message tool=\"javac\" type=\"error\" message=\"';' expected\" file=\"Main.java\" line=\"20\">\n"
-                + "        <example position=\"8\"/> \n"
-                + "    </message>\n "
-                + "</submitResults>\n";
+            +  "<submitResults>\n" 
+            + "    <message tool=\"javac\" type=\"error\" message=\"';' expected\" file=\"Main.java\" line=\"20\">\n"
+            + "        <example position=\"8\"/> \n"
+            + "    </message>\n "
+            + "</submitResults>\n";
         SvnResultHandler handler = new SvnResultHandler(erromessage);
         
         assertDoesNotThrow(() -> {
@@ -119,7 +119,7 @@ public class SvnResultHandlerTest {
             problems = handler.parseXmlToProblem();
             
             assertEquals(1, problems.size());
-            Problem problem1 = new Problem("javac","';' expected",Problem.Severity.ERROR);
+            Problem problem1 = new Problem("javac", "';' expected", Problem.Severity.ERROR);
             problem1.setFile(new File("Main.java"));
             problem1.setLine(20);
             problem1.setColumn(8);
@@ -141,8 +141,8 @@ public class SvnResultHandlerTest {
         List<Problem> problems = assertDoesNotThrow(() -> handler.parseXmlToProblem());
             
         List<Problem> expected = Arrays.asList(
-                new Problem("javac","';' expected",Problem.Severity.ERROR),
-                new Problem("javac","not a statement",Problem.Severity.ERROR));
+                new Problem("javac", "';' expected", Problem.Severity.ERROR),
+                new Problem("javac", "not a statement", Problem.Severity.ERROR));
                 
         assertEquals(expected, problems);
     }
@@ -166,7 +166,8 @@ public class SvnResultHandlerTest {
     }
     @Test
     public void svnPreErrorMessageToStringTest() {
-        SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Commit failed (details follow):");
+        SVNErrorMessage error = SVNErrorMessage.create(
+                SVNErrorCode.REPOS_HOOK_FAILURE, "Commit failed (details follow):");
         
         SVNErrorMessage child = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE,
                 "Commit blocked by pre-commit hook (exit code 1) with output:\n"
@@ -187,14 +188,14 @@ public class SvnResultHandlerTest {
                 + "</submitResults>\n");
         
         
-      }
+    }
     
     @Test
     public void invalidXmlSchemaRootNodeWrong() {
         final String erromessage = "<?xml version = \"1.0\"?>\n"
-                                 +  "<wrong>\n" 
-                                 + "    <message tool=\"javac\" type=\"error\" message=\"';' expected\" file=\"Main.java\" line=\"20\" />\n"
-                                 + "</wrong>\n";
+            +  "<wrong>\n" 
+            + "    <message tool=\"javac\" type=\"error\" message=\"';' expected\" file=\"Main.java\" line=\"20\" />\n"
+            + "</wrong>\n";
         SvnResultHandler handler = new SvnResultHandler(erromessage);
         assertThrows(SAXParseException.class, () -> handler.parseXmlToProblem());
     }
@@ -202,9 +203,9 @@ public class SvnResultHandlerTest {
     @Test
     public void invalidXmlSchemaNestedNodeWrong() {
         final String erromessage = "<?xml version = \"1.0\"?>\n"
-                +  "<submitResults>\n" 
-                + "    <wrong tool=\"javac\" type=\"error\" message=\"';' expected\" file=\"Main.java\" line=\"20\" />\n"
-                + "</submitResults>\n";
+            +  "<submitResults>\n" 
+            + "    <wrong tool=\"javac\" type=\"error\" message=\"';' expected\" file=\"Main.java\" line=\"20\" />\n"
+            + "</submitResults>\n";
         SvnResultHandler handler = new SvnResultHandler(erromessage);
         assertThrows(SAXParseException.class, () -> handler.parseXmlToProblem());
     }

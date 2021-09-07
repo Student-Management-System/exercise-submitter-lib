@@ -29,7 +29,8 @@ public class ExerciseSubmitterManagerTest {
                 .withDummyApiConnection()
                 .build());
         
-        assertEquals("http://127.0.0.1/java/abgabe/Homework03/Group01/", assertDoesNotThrow(() -> manager.getSvnUrl(assignment)));
+        assertEquals("http://127.0.0.1/java/abgabe/Homework03/Group01/",
+                assertDoesNotThrow(() -> manager.getSvnUrl(assignment)));
     }
     
     @Disabled //TODO: change Test
@@ -43,7 +44,8 @@ public class ExerciseSubmitterManagerTest {
                 .withDummyApiConnection()
                 .build());
         
-        assertEquals("http://127.0.0.1/java/abgabe/Test02/teststudent1/", assertDoesNotThrow(() -> manager.getSvnUrl(assignment)));
+        assertEquals("http://127.0.0.1/java/abgabe/Test02/teststudent1/",
+                assertDoesNotThrow(() -> manager.getSvnUrl(assignment)));
     }
     
     @Test

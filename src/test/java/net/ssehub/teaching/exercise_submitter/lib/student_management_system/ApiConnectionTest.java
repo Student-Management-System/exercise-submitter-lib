@@ -47,7 +47,8 @@ public class ApiConnectionTest {
         DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
         dummyServer.start();
         
-        ApiConnection api = new ApiConnection("http://localhost:" + dummyServer.getPort(), "http://doesnt.matter.local");
+        ApiConnection api = new ApiConnection(
+                "http://localhost:" + dummyServer.getPort(), "http://doesnt.matter.local");
         
         ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "123456"));
         assertAll(
@@ -62,7 +63,8 @@ public class ApiConnectionTest {
         DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
         dummyServer.start();
         
-        ApiConnection api = new ApiConnection("http://localhost:" + dummyServer.getPort(), "http://doesnt.matter.local");
+        ApiConnection api = new ApiConnection(
+                "http://localhost:" + dummyServer.getPort(), "http://doesnt.matter.local");
         
         ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "123456"));
         assertAll(
@@ -91,7 +93,8 @@ public class ApiConnectionTest {
         DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
         dummyServer.start();
         
-        ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        ApiConnection api = new ApiConnection(
+                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
         
         ApiException e = assertThrows(ApiException.class, () -> api.getCourse("java-wise2021"));
         assertAll(
@@ -106,7 +109,8 @@ public class ApiConnectionTest {
         DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
         dummyServer.start();
         
-        ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        ApiConnection api = new ApiConnection(
+                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
         
         ApiException e = assertThrows(ApiException.class, () -> api.getCourse("java-wise2021"));
         assertAll(
@@ -119,14 +123,16 @@ public class ApiConnectionTest {
     @Test
     public void getAssignmentsInvalidHost() {
         ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
-        NetworkException e = assertThrows(NetworkException.class, () -> api.getAssignments(new Course("Java", "java-wise20210")));
+        NetworkException e = assertThrows(NetworkException.class,
+            () -> api.getAssignments(new Course("Java", "java-wise20210")));
         assertTrue(e.getCause() instanceof IOException);
     }
     
     @Test
     public void getAssignmentsNoServiceListening() {
         ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
-        NetworkException e = assertThrows(NetworkException.class, () -> api.getAssignments(new Course("Java", "java-wise20210")));
+        NetworkException e = assertThrows(NetworkException.class,
+            () -> api.getAssignments(new Course("Java", "java-wise20210")));
         assertTrue(e.getCause() instanceof IOException);
     }
     
@@ -135,7 +141,8 @@ public class ApiConnectionTest {
         DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
         dummyServer.start();
         
-        ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        ApiConnection api = new ApiConnection(
+                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
         
         ApiException e = assertThrows(ApiException.class, () -> api.getAssignments(new Course("", "java-wise2021")));
         assertAll(
@@ -150,7 +157,8 @@ public class ApiConnectionTest {
         DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
         dummyServer.start();
         
-        ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        ApiConnection api = new ApiConnection(
+                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
         
         ApiException e = assertThrows(ApiException.class, () -> api.getAssignments(new Course("", "java-wise2021")));
         assertAll(
@@ -165,7 +173,8 @@ public class ApiConnectionTest {
         ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
         fakeLogin(api);
         
-        NetworkException e = assertThrows(NetworkException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
+        NetworkException e = assertThrows(NetworkException.class, () -> api.getGroupName(
+                new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
         assertTrue(e.getCause() instanceof IOException);
     }
     
@@ -174,7 +183,8 @@ public class ApiConnectionTest {
         ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
         fakeLogin(api);
         
-        NetworkException e = assertThrows(NetworkException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
+        NetworkException e = assertThrows(NetworkException.class, () -> api.getGroupName(
+                new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
         assertTrue(e.getCause() instanceof IOException);
     }
     
@@ -183,10 +193,12 @@ public class ApiConnectionTest {
         DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
         dummyServer.start();
         
-        ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        ApiConnection api = new ApiConnection(
+                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
         fakeLogin(api);
         
-        ApiException e = assertThrows(ApiException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
+        ApiException e = assertThrows(ApiException.class, () -> api.getGroupName(
+                new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
         assertAll(
             () -> assertSame(ApiException.class, e.getClass()),
             () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
@@ -199,10 +211,12 @@ public class ApiConnectionTest {
         DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
         dummyServer.start();
         
-        ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        ApiConnection api = new ApiConnection(
+                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
         fakeLogin(api);
         
-        ApiException e = assertThrows(ApiException.class, () -> api.getGroupName(new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
+        ApiException e = assertThrows(ApiException.class, () -> api.getGroupName(
+                new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
         assertAll(
             () -> assertSame(ApiException.class, e.getClass()),
             () -> assertEquals("Invalid JSON response", e.getMessage()),
@@ -254,6 +268,7 @@ public class ApiConnectionTest {
                     try {
                         InputStream in = socket.getInputStream();
                         while (in.read() != -1) {
+                            // just read
                         }
                     } catch (IOException e) {
                         e.printStackTrace();

@@ -12,7 +12,6 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import net.ssehub.studentmgmt.docker.StuMgmtDocker;
@@ -31,7 +30,7 @@ public class SubmitterIT {
 
     private static StuMgmtDocker docker;
 
-    private final static File TESTDATA = new File("src/test/resources/SubmitterTest");
+    private static final File TESTDATA = new File("src/test/resources/SubmitterTest");
     
     private static String homework02id = null;
 
@@ -79,81 +78,77 @@ public class SubmitterIT {
     public void submitTest() {
         assertDoesNotThrow(() -> {
           
-        File dir = new File(TESTDATA, "Works");
-        
-        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
-        fackto.withAuthUrl(docker.getAuthUrl());
-        fackto.withMgmtUrl(docker.getStuMgmtUrl());
-        fackto.withSvnUrl(docker.getSvnUrl());
-        fackto.withUsername("student1");
-        fackto.withPassword("123456");
-        fackto.withCourse("java-wise2021");
-        
-        ExerciseSubmitterManager manager = fackto.build();
-        
-        
-        Assignment assignment = new Assignment(SubmitterIT.homework02id,"Homework02", Assignment.State.SUBMISSION, true);
-        Submitter submitter = manager.getSubmitter(assignment);
-        //check result
-        SubmissionResult result = submitter.submit(dir);
-        List<Problem> emptylist = new ArrayList<Problem>();
-        SubmissionResult resultTest = new SubmissionResult(true,emptylist);
-        
-        assertEquals(result, resultTest);
-        
-       //check files on server
-        List<String> testFileList = new ArrayList<String>();
-        testFileList.add("..");
-        testFileList.add(".classpath");
-        testFileList.add(".project");
-        testFileList.add("Main.java");
-        
-        
-        String responseFileList = SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.empty(), "student1");
-        List<String> reponselist = SubmitterIT.docker.handleHtmlResponseGetListElements(responseFileList);
-        
-        assertEquals(testFileList, reponselist);
-        assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable(".classpath"), "student1"), 
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                + "<classpath>\n"
-                + "    <classpathentry kind=\"src\" path=\"\"/>\n"
-                + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
-                + "    <classpathentry kind=\"output\" path=\"\"/>\n"
-                + "</classpath>\n");
-               
-        assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable(".project"), "student1"),
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                + "<projectDescription>\n"
-                + "    <name>Works</name>\n"
-                + "    <comment></comment>\n"
-                + "    <projects>\n"
-                + "    </projects>\n"
-                + "    <buildSpec>\n"
-                + "        <buildCommand>\n"
-                + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
-                + "            <arguments>\n"
-                + "            </arguments>\n"
-                + "        </buildCommand>\n"
-                + "    </buildSpec>\n"
-                + "    <natures>\n"
-                + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
-                + "    </natures>\n"
-                + "</projectDescription>\n");
-                
-        assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable("Main.java"), "student1"),
-                "\n"
-                + "public class Main {\n"
-                + "    \n"
-                + "    public static void main(String[] args) {\n"
-                + "        System.out.println(\"Hello world!\");\n"
-                + "    }\n"
-                + "}\n");
-                
-        
-        
+            File dir = new File(TESTDATA, "Works");
+            
+            ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
+            fackto.withAuthUrl(docker.getAuthUrl());
+            fackto.withMgmtUrl(docker.getStuMgmtUrl());
+            fackto.withSvnUrl(docker.getSvnUrl());
+            fackto.withUsername("student1");
+            fackto.withPassword("123456");
+            fackto.withCourse("java-wise2021");
+            
+            ExerciseSubmitterManager manager = fackto.build();
+            
+            
+            Assignment assignment = new Assignment(homework02id, "Homework02", Assignment.State.SUBMISSION, true);
+            Submitter submitter = manager.getSubmitter(assignment);
+            //check result
+            SubmissionResult result = submitter.submit(dir);
+            List<Problem> emptylist = new ArrayList<Problem>();
+            SubmissionResult resultTest = new SubmissionResult(true, emptylist);
+            
+            assertEquals(result, resultTest);
+            
+           //check files on server
+            List<String> testFileList = new ArrayList<String>();
+            testFileList.add("..");
+            testFileList.add(".classpath");
+            testFileList.add(".project");
+            testFileList.add("Main.java");
+            
+            
+            String responseFileList = docker.getHTTPResponseSvnFile(homework02id, Optional.empty(), "student1");
+            List<String> reponselist = docker.handleHtmlResponseGetListElements(responseFileList);
+            
+            assertEquals(testFileList, reponselist);
+            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable(".classpath"), "student1"), 
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                    + "<classpath>\n"
+                    + "    <classpathentry kind=\"src\" path=\"\"/>\n"
+                    + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER"
+                        + "/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
+                    + "    <classpathentry kind=\"output\" path=\"\"/>\n"
+                    + "</classpath>\n");
+                   
+            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable(".project"), "student1"),
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                    + "<projectDescription>\n"
+                    + "    <name>Works</name>\n"
+                    + "    <comment></comment>\n"
+                    + "    <projects>\n"
+                    + "    </projects>\n"
+                    + "    <buildSpec>\n"
+                    + "        <buildCommand>\n"
+                    + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
+                    + "            <arguments>\n"
+                    + "            </arguments>\n"
+                    + "        </buildCommand>\n"
+                    + "    </buildSpec>\n"
+                    + "    <natures>\n"
+                    + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
+                    + "    </natures>\n"
+                    + "</projectDescription>\n");
+                    
+            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable("Main.java"), "student1"),
+                    "\n"
+                    + "public class Main {\n"
+                    + "    \n"
+                    + "    public static void main(String[] args) {\n"
+                    + "        System.out.println(\"Hello world!\");\n"
+                    + "    }\n"
+                    + "}\n");
         });
-       
-        
     }
     @Test
     public void submitTestExistingFilesOverwritten() {
@@ -161,7 +156,7 @@ public class SubmitterIT {
         assertDoesNotThrow(() -> {
             
             File dir = new File(TESTDATA, "Works");
-            File overwrite = new File(TESTDATA,"WorksOverwrite");
+            File overwrite = new File(TESTDATA, "WorksOverwrite");
             
             ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
             fackto.withAuthUrl(docker.getAuthUrl());
@@ -173,14 +168,14 @@ public class SubmitterIT {
             
             ExerciseSubmitterManager manager = fackto.build();
             
-            Assignment assignment = new Assignment(SubmitterIT.homework02id,"Homework02", Assignment.State.SUBMISSION, true);
+            Assignment assignment = new Assignment(homework02id, "Homework02", Assignment.State.SUBMISSION, true);
             Submitter submitter = manager.getSubmitter(assignment);
             //simul pre existing file
             submitter.submit(overwrite);
             //check result
             SubmissionResult result = submitter.submit(dir);
             List<Problem> emptylist = new ArrayList<Problem>();
-            SubmissionResult resultTest = new SubmissionResult(true,emptylist);
+            SubmissionResult resultTest = new SubmissionResult(true, emptylist);
             
             assertEquals(result, resultTest);
             
@@ -192,19 +187,20 @@ public class SubmitterIT {
             testFileList.add("Main.java");
             
             
-            String responseFileList = SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.empty(), "student1");
-            List<String> reponselist = SubmitterIT.docker.handleHtmlResponseGetListElements(responseFileList);
+            String responseFileList = docker.getHTTPResponseSvnFile(homework02id, Optional.empty(), "student1");
+            List<String> reponselist = docker.handleHtmlResponseGetListElements(responseFileList);
             
             assertEquals(testFileList, reponselist);
-            assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable(".classpath"), "student1"), 
+            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable(".classpath"), "student1"), 
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<classpath>\n"
                     + "    <classpathentry kind=\"src\" path=\"\"/>\n"
-                    + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
+                    + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/"
+                            + "org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
                     + "    <classpathentry kind=\"output\" path=\"\"/>\n"
                     + "</classpath>\n");
                    
-            assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable(".project"), "student1"),
+            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable(".project"), "student1"),
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<projectDescription>\n"
                     + "    <name>Works</name>\n"
@@ -223,7 +219,7 @@ public class SubmitterIT {
                     + "    </natures>\n"
                     + "</projectDescription>\n");
                     
-            assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable("Main.java"), "student1"),
+            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable("Main.java"), "student1"),
                     "\n"
                     + "public class Main {\n"
                     + "    \n"
@@ -234,14 +230,14 @@ public class SubmitterIT {
                     
             
             
-            });
+        });
     }
     @Test
     public void submitTestExistingFilesDeleted() {
-            assertDoesNotThrow(() -> {
+        assertDoesNotThrow(() -> {
             
             File dir = new File(TESTDATA, "Works");
-            File delete = new File(TESTDATA,"WorksDelete");
+            File delete = new File(TESTDATA, "WorksDelete");
             
             ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
             fackto.withAuthUrl(docker.getAuthUrl());
@@ -253,14 +249,14 @@ public class SubmitterIT {
             
             ExerciseSubmitterManager manager = fackto.build();
             
-            Assignment assignment = new Assignment(SubmitterIT.homework02id,"Homework02", Assignment.State.SUBMISSION, true);
+            Assignment assignment = new Assignment(homework02id, "Homework02", Assignment.State.SUBMISSION, true);
             Submitter submitter = manager.getSubmitter(assignment);
             //simul pre existing file
             submitter.submit(delete);
             //check result
             SubmissionResult result = submitter.submit(dir);
             List<Problem> emptylist = new ArrayList<Problem>();
-            SubmissionResult resultTest = new SubmissionResult(true,emptylist);
+            SubmissionResult resultTest = new SubmissionResult(true, emptylist);
             
             assertEquals(result, resultTest);
             
@@ -272,19 +268,20 @@ public class SubmitterIT {
             testFileList.add("Main.java");
             
             
-            String responseFileList = SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.empty(), "student1");
-            List<String> reponselist = SubmitterIT.docker.handleHtmlResponseGetListElements(responseFileList);
+            String responseFileList = docker.getHTTPResponseSvnFile(homework02id, Optional.empty(), "student1");
+            List<String> reponselist = docker.handleHtmlResponseGetListElements(responseFileList);
             
             assertEquals(testFileList, reponselist);
-            assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable(".classpath"), "student1"), 
+            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable(".classpath"), "student1"), 
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<classpath>\n"
                     + "    <classpathentry kind=\"src\" path=\"\"/>\n"
-                    + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
+                    + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/"
+                            + "org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
                     + "    <classpathentry kind=\"output\" path=\"\"/>\n"
                     + "</classpath>\n");
                    
-            assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable(".project"), "student1"),
+            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable(".project"), "student1"),
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<projectDescription>\n"
                     + "    <name>Works</name>\n"
@@ -303,7 +300,7 @@ public class SubmitterIT {
                     + "    </natures>\n"
                     + "</projectDescription>\n");
                     
-            assertEquals(SubmitterIT.docker.getHTTPResponseSvnFile(SubmitterIT.homework02id, Optional.ofNullable("Main.java"), "student1"),
+            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable("Main.java"), "student1"),
                     "\n"
                     + "public class Main {\n"
                     + "    \n"
@@ -313,7 +310,7 @@ public class SubmitterIT {
                     + "}\n");
                     
             
-            });
+        });
     }
     
     
@@ -322,97 +319,92 @@ public class SubmitterIT {
         assertDoesNotThrow(() -> {
             
        
-        File dir = new File(TESTDATA, "error");
-        //create file above 10mb
-        Preparator prep = new Preparator();
-        prep.prepareDir(dir);
-        File fileresult = prep.getResult();
-        File bigFile = new File(fileresult,"bigfile.txt");
-        bigFile.createNewFile();
-        
-        FileWriter fw = new FileWriter(bigFile);
-        for(int i = 0; i < 11000; i++) {
-            for(int e = 0; e < 1000; e++) {
-                fw.write("W");
+            File dir = new File(TESTDATA, "error");
+            //create file above 10mb
+            Preparator prep = new Preparator();
+            prep.prepareDir(dir);
+            File fileresult = prep.getResult();
+            File bigFile = new File(fileresult, "bigfile.txt");
+            bigFile.createNewFile();
+            
+            FileWriter fw = new FileWriter(bigFile);
+            for (int i = 0; i < 11000; i++) {
+                for (int e = 0; e < 1000; e++) {
+                    fw.write("W");
+                }
+                fw.write("\n");
             }
-            fw.write("\n");
-        }
-        fw.close();
-        
-        
-        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
-        fackto.withAuthUrl(docker.getAuthUrl());
-        fackto.withMgmtUrl(docker.getStuMgmtUrl());
-        fackto.withSvnUrl(docker.getSvnUrl());
-        fackto.withUsername("student1");
-        fackto.withPassword("123456");
-        fackto.withCourse("java-wise2021");
-        
-        ExerciseSubmitterManager manager = fackto.build();
-        
-        
-        Assignment assignment = new Assignment(SubmitterIT.homework02id,"Homework02", Assignment.State.SUBMISSION, true);
-        Submitter submitter = manager.getSubmitter(assignment);
-        
-        SubmissionResult result = submitter.submit(fileresult);
-        List<Problem> list = new ArrayList<Problem>();
-        
-        Problem problem = new Problem("file-size","File is too large",Severity.ERROR);
-        problem.setFile(new File("bigfile.txt"));
-        
-        Problem problem1 = new Problem("file-size","Submission size is too large",Severity.ERROR);
-        list.add(problem);
-        list.add(problem1);
-        
-        SubmissionResult resultTest = new SubmissionResult(false,list);
-        
-        assertEquals(result, resultTest);
-        
-        prep.close();
+            fw.close();
+            
+            
+            ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
+            fackto.withAuthUrl(docker.getAuthUrl());
+            fackto.withMgmtUrl(docker.getStuMgmtUrl());
+            fackto.withSvnUrl(docker.getSvnUrl());
+            fackto.withUsername("student1");
+            fackto.withPassword("123456");
+            fackto.withCourse("java-wise2021");
+            
+            ExerciseSubmitterManager manager = fackto.build();
+            
+            
+            Assignment assignment = new Assignment(homework02id, "Homework02", Assignment.State.SUBMISSION, true);
+            Submitter submitter = manager.getSubmitter(assignment);
+            
+            SubmissionResult result = submitter.submit(fileresult);
+            List<Problem> list = new ArrayList<Problem>();
+            
+            Problem problem = new Problem("file-size", "File is too large", Severity.ERROR);
+            problem.setFile(new File("bigfile.txt"));
+            
+            Problem problem1 = new Problem("file-size", "Submission size is too large", Severity.ERROR);
+            list.add(problem);
+            list.add(problem1);
+            
+            SubmissionResult resultTest = new SubmissionResult(false, list);
+            
+            assertEquals(result, resultTest);
+            
+            prep.close();
         });
-        
-     
-        
     }
+    
     @Test
     public void submitTestwithPostProblems() {
         assertDoesNotThrow(() -> {
              
-        File dir = new File(TESTDATA, "error");
-        
-        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
-        fackto.withAuthUrl(docker.getAuthUrl());
-        fackto.withMgmtUrl(docker.getStuMgmtUrl());
-        fackto.withSvnUrl(docker.getSvnUrl());
-        fackto.withUsername("student1");
-        fackto.withPassword("123456");
-        fackto.withCourse("java-wise2021");
-        
-        ExerciseSubmitterManager manager = fackto.build();
-        
-        
-        Assignment assignment = new Assignment(SubmitterIT.homework02id,"Homework02", Assignment.State.SUBMISSION, true);
-        Submitter submitter = manager.getSubmitter(assignment);
-        
-        SubmissionResult result = submitter.submit(dir);
-        List<Problem> list = new ArrayList<Problem>();
-        
-        Problem problem = new Problem("javac", "cannot find symbol", Severity.ERROR);
-        problem.setFile(new File("Main.java"));
-        problem.setLine(7);
-        problem.setColumn(9);
-        list.add(problem);
-        
-        
-        SubmissionResult resultTest = new SubmissionResult(true,list);
-        
-        assertEquals(result, resultTest);
-        
+            File dir = new File(TESTDATA, "error");
+            
+            ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
+            fackto.withAuthUrl(docker.getAuthUrl());
+            fackto.withMgmtUrl(docker.getStuMgmtUrl());
+            fackto.withSvnUrl(docker.getSvnUrl());
+            fackto.withUsername("student1");
+            fackto.withPassword("123456");
+            fackto.withCourse("java-wise2021");
+            
+            ExerciseSubmitterManager manager = fackto.build();
+            
+            
+            Assignment assignment = new Assignment(homework02id, "Homework02", Assignment.State.SUBMISSION, true);
+            Submitter submitter = manager.getSubmitter(assignment);
+            
+            SubmissionResult result = submitter.submit(dir);
+            List<Problem> list = new ArrayList<Problem>();
+            
+            Problem problem = new Problem("javac", "cannot find symbol", Severity.ERROR);
+            problem.setFile(new File("Main.java"));
+            problem.setLine(7);
+            problem.setColumn(9);
+            list.add(problem);
+            
+            
+            SubmissionResult resultTest = new SubmissionResult(true, list);
+            
+            assertEquals(result, resultTest);
         });
-        
-      
-        
     }
+    
     @Test
     public void submitTestWithAuthFailure() {
             
@@ -428,15 +420,14 @@ public class SubmitterIT {
         fackto.withCourse("java-wise2021");
         
         assertDoesNotThrow(() -> {
-        ExerciseSubmitterManager manager = fackto.build();
-        
-        Assignment assignment =  new Assignment("005", "Homework03", State.SUBMISSION, true);
-        
-        assertThrows(AuthenticationException.class, () -> {
-            Submitter submitter = manager.getSubmitter(assignment);
-            submitter.submit(dir);
-        });
-    
+            ExerciseSubmitterManager manager = fackto.build();
+            
+            Assignment assignment =  new Assignment("005", "Homework03", State.SUBMISSION, true);
+            
+            assertThrows(AuthenticationException.class, () -> {
+                Submitter submitter = manager.getSubmitter(assignment);
+                submitter.submit(dir);
+            });
         });
         
     }
