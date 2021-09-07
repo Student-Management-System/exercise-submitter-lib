@@ -253,8 +253,9 @@ public class PreparatorTest {
     }
     
     @Test
-    @Disabled("There seems to be no way to create an invalid ISO 8859-1 file; thus the invalid file is always "
-            + "(wrongly) converted to UTF-8 instead of copying it over unchanged") // TODO
+    @Disabled("There seems to be no way to create an invalid ISO 8859-1 file;"
+            + " thus the invalid file is always (wrongly)"
+            + " converted to UTF-8 instead of copying it over unchanged") // TODO
     public void invalidEncodingNotConverted() {
         File source = new File(TESTDATA, "encodings");
         
@@ -325,10 +326,10 @@ public class PreparatorTest {
             
             () -> assertFalse(assertDoesNotThrow(
                 () -> Preparator.checkEncoding(invalid.toPath(), StandardCharsets.UTF_8))),
-//            () -> assertFalse(assertDoesNotThrow(
-//                () -> Preparator.checkEncoding(invalid.toPath(), StandardCharsets.ISO_8859_1))),
-            () -> assertFalse(
-                assertDoesNotThrow(() -> Preparator.checkEncoding(invalid.toPath(), Charset.forName("cp1252"))))
+//                () -> assertFalse(assertDoesNotThrow(
+            //() -> Preparator.checkEncoding(invalid.toPath(), StandardCharsets.ISO_8859_1))),
+            () -> assertFalse(assertDoesNotThrow(
+                () -> Preparator.checkEncoding(invalid.toPath(), Charset.forName("cp1252"))))
         );
         
     }
@@ -358,7 +359,7 @@ public class PreparatorTest {
                                 + "<classpath>\n"
                                 + "    <classpathentry kind=\"src\" path=\"\"/>\n"
                                 + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER"
-                                    + "/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
+                                + "/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
                                 + "    <classpathentry kind=\"output\" path=\"\"/>\n"
                                 + "</classpath>\n", content);
                     },
@@ -488,7 +489,7 @@ public class PreparatorTest {
         assertDoesNotThrow(() -> {
             try (Preparator preparator = new Preparator()) {
                 File result = preparator.getResult();
-                File svn = new File(result,".svn");
+                File svn = new File(result, ".svn");
                 result.mkdir();
                 svn.mkdir();
            
@@ -499,27 +500,27 @@ public class PreparatorTest {
                 preparator.prepareDir(source);
                 
                 assertAll(
-                        () -> assertTrue(result.isDirectory()),
-                        () -> assertTrue(subDir.isDirectory()),
-                        () -> assertTrue(svn.isDirectory()),
-                        
-                        //.project and .classpath are generated
-                        () -> assertTrue(classpath.exists()),
-                        () -> assertTrue(project.exists()),
-                        
-                       
-                        () -> assertEquals(4, result.listFiles().length),
-                        
-                       
-                        () -> assertTrue(new File(subDir, "file.txt").isFile()),
-                        () -> assertEquals(1, subDir.listFiles().length),
-                        () -> assertEquals(0, svn.listFiles().length),
-                        
-                        // test that copied content is correct
-                        () -> {
-                            String fileContent = Files.readString((new File(subDir, "file.txt").toPath()));
-                            assertEquals("This is a file.\n", fileContent);
-                        }
+                    () -> assertTrue(result.isDirectory()), 
+                    () -> assertTrue(subDir.isDirectory()),
+                    () -> assertTrue(svn.isDirectory()),
+                    
+                    //.project and .classpath are generated
+                    () -> assertTrue(classpath.exists()),
+                    () -> assertTrue(project.exists()),
+                    
+                   
+                    () -> assertEquals(4, result.listFiles().length),
+                    
+                   
+                    () -> assertTrue(new File(subDir, "file.txt").isFile()),
+                    () -> assertEquals(1, subDir.listFiles().length),
+                    () -> assertEquals(0, svn.listFiles().length),
+                    
+                    // test that copied content is correct
+                    () -> {
+                        String fileContent = Files.readString((new File(subDir, "file.txt").toPath()));
+                        assertEquals("This is a file.\n", fileContent);
+                    }
                 );
                
                 
