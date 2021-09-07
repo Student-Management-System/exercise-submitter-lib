@@ -470,5 +470,50 @@ public class PreparatorTest {
         
         
     }
+    @Test 
+    public void copyInNotEmptyDir() {
+        File source = new File(TESTDATA, "notEmptyDirWithSubDir");
+        
+        assertDoesNotThrow(() -> {
+            try (Preparator preparator = new Preparator()) {
+                File result = preparator.getResult();
+                File svn = new File(result,".svn");
+                result.mkdir();
+                svn.mkdir();
+           
+                File subDir = new File(result, "notEmptyDir");
+                File classpath = new File(result, ".classpath");
+                File project = new File(result, ".project");
+                
+                preparator.prepareDir(source);
+                
+                assertAll(
+                        () -> assertTrue(result.isDirectory()),
+                        () -> assertTrue(subDir.isDirectory()),
+                        () -> assertTrue(svn.isDirectory()),
+                        
+                        //.project and .classpath are generated
+                        () -> assertTrue(classpath.exists()),
+                        () -> assertTrue(project.exists()),
+                        
+                       
+                        () -> assertEquals(4, result.listFiles().length),
+                        
+                       
+                        () -> assertTrue(new File(subDir, "file.txt").isFile()),
+                        () -> assertEquals(1, subDir.listFiles().length),
+                        () -> assertEquals(0, svn.listFiles().length),
+                        
+                        // test that copied content is correct
+                        () -> {
+                            String fileContent = Files.readString((new File(subDir, "file.txt").toPath()));
+                            assertEquals("This is a file.\n", fileContent);
+                        }
+                );
+               
+                
+            }
+        });
+    }
 
 }
