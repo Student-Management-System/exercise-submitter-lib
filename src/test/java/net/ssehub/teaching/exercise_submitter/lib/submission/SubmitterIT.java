@@ -7,8 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -101,18 +102,16 @@ public class SubmitterIT {
             assertEquals(result, resultTest);
             
            //check files on server
-            List<String> testFileList = new ArrayList<String>();
-            testFileList.add("..");
+            Set<String> testFileList = new HashSet<>();
             testFileList.add(".classpath");
             testFileList.add(".project");
             testFileList.add("Main.java");
             
             
-            String responseFileList = docker.getHTTPResponseSvnFile(homework02id, Optional.empty(), "student1");
-            List<String> reponselist = docker.handleHtmlResponseGetListElements(responseFileList);
+            Set<String> reponselist = docker.getSvnDirectoryContent("Homework02/JP001");
             
             assertEquals(testFileList, reponselist);
-            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable(".classpath"), "student1"), 
+            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/.classpath"), 
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<classpath>\n"
                     + "    <classpathentry kind=\"src\" path=\"\"/>\n"
@@ -121,7 +120,7 @@ public class SubmitterIT {
                     + "    <classpathentry kind=\"output\" path=\"\"/>\n"
                     + "</classpath>\n");
                    
-            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable(".project"), "student1"),
+            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/.project"),
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<projectDescription>\n"
                     + "    <name>Works</name>\n"
@@ -140,7 +139,7 @@ public class SubmitterIT {
                     + "    </natures>\n"
                     + "</projectDescription>\n");
                     
-            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable("Main.java"), "student1"),
+            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/Main.java"),
                     "\n"
                     + "public class Main {\n"
                     + "    \n"
@@ -180,18 +179,16 @@ public class SubmitterIT {
             assertEquals(result, resultTest);
             
            //check files on server
-            List<String> testFileList = new ArrayList<String>();
-            testFileList.add("..");
+            Set<String> testFileList = new HashSet<>();
             testFileList.add(".classpath");
             testFileList.add(".project");
             testFileList.add("Main.java");
             
             
-            String responseFileList = docker.getHTTPResponseSvnFile(homework02id, Optional.empty(), "student1");
-            List<String> reponselist = docker.handleHtmlResponseGetListElements(responseFileList);
+            Set<String> reponselist = docker.getSvnDirectoryContent("Homework02/JP001");
             
             assertEquals(testFileList, reponselist);
-            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable(".classpath"), "student1"), 
+            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/.classpath"),
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<classpath>\n"
                     + "    <classpathentry kind=\"src\" path=\"\"/>\n"
@@ -200,7 +197,7 @@ public class SubmitterIT {
                     + "    <classpathentry kind=\"output\" path=\"\"/>\n"
                     + "</classpath>\n");
                    
-            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable(".project"), "student1"),
+            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/.project"),
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<projectDescription>\n"
                     + "    <name>Works</name>\n"
@@ -219,7 +216,7 @@ public class SubmitterIT {
                     + "    </natures>\n"
                     + "</projectDescription>\n");
                     
-            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable("Main.java"), "student1"),
+            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/Main.java"),
                     "\n"
                     + "public class Main {\n"
                     + "    \n"
@@ -261,18 +258,16 @@ public class SubmitterIT {
             assertEquals(result, resultTest);
             
            //check files on server
-            List<String> testFileList = new ArrayList<String>();
-            testFileList.add("..");
+            Set<String> testFileList = new HashSet<>();
             testFileList.add(".classpath");
             testFileList.add(".project");
             testFileList.add("Main.java");
             
             
-            String responseFileList = docker.getHTTPResponseSvnFile(homework02id, Optional.empty(), "student1");
-            List<String> reponselist = docker.handleHtmlResponseGetListElements(responseFileList);
+            Set<String> reponselist = docker.getSvnDirectoryContent("Homework02/JP001");
             
             assertEquals(testFileList, reponselist);
-            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable(".classpath"), "student1"), 
+            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/.classpath"),
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<classpath>\n"
                     + "    <classpathentry kind=\"src\" path=\"\"/>\n"
@@ -281,7 +276,7 @@ public class SubmitterIT {
                     + "    <classpathentry kind=\"output\" path=\"\"/>\n"
                     + "</classpath>\n");
                    
-            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable(".project"), "student1"),
+            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/.project"),
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<projectDescription>\n"
                     + "    <name>Works</name>\n"
@@ -300,7 +295,7 @@ public class SubmitterIT {
                     + "    </natures>\n"
                     + "</projectDescription>\n");
                     
-            assertEquals(docker.getHTTPResponseSvnFile(homework02id, Optional.ofNullable("Main.java"), "student1"),
+            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/Main.java"),
                     "\n"
                     + "public class Main {\n"
                     + "    \n"
