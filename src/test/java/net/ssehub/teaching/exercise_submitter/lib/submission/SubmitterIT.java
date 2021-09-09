@@ -7,8 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterAll;
@@ -33,7 +35,9 @@ public class SubmitterIT {
 
     private static final File TESTDATA = new File("src/test/resources/SubmitterTest");
     
-    private static String homework02id = null;
+    private static String courseId = null;
+    
+    private static Map<String, String> assignmentids = new HashMap<String, String>();
 
     @BeforeAll
     public static void setupServers() {
@@ -45,7 +49,7 @@ public class SubmitterIT {
         docker.createUser("student3", "123456");
         docker.createUser("student4", "123456");
 
-        String courseId = docker.createCourse("java", "wise2021", "Programmierpraktikum: Java", "adam", "svn");
+        courseId = docker.createCourse("java", "wise2021", "Programmierpraktikum: Java", "adam", "svn");
 
         docker.enrollStudent(courseId, "student1");
         docker.enrollStudent(courseId, "student2");
@@ -55,19 +59,29 @@ public class SubmitterIT {
         docker.createGroup(courseId, "JP001", "student1", "student3");
         docker.createGroup(courseId, "JP002", "student2", "student4");
 
-        String a1 = docker.createAssignment(courseId, "Homework01", AssignmentState.INVISIBLE, Collaboration.GROUP);
-        String a2 = docker.createAssignment(courseId, "Homework02", AssignmentState.INVISIBLE, Collaboration.GROUP);
-        docker.createAssignment(courseId, "Testat01", AssignmentState.INVISIBLE, Collaboration.SINGLE);
-
-        docker.changeAssignmentState(courseId, a1, AssignmentState.SUBMISSION);
-        docker.changeAssignmentState(courseId, a1, AssignmentState.IN_REVIEW);
+        assignmentids.put("submitTest",
+                docker.createAssignment(courseId, "submitTest",
+                        AssignmentState.INVISIBLE, Collaboration.GROUP));
+        assignmentids.put("submitTestExistingFilesOverwritten",
+                docker.createAssignment(courseId, "submitTestExistingFilesOverwritten",
+                        AssignmentState.SUBMISSION, Collaboration.GROUP));
+        assignmentids.put("submitTestExistingFilesDeleted",
+                docker.createAssignment(courseId, "submitTestExistingFilesDeleted",
+                        AssignmentState.SUBMISSION, Collaboration.GROUP));
+        assignmentids.put("submitTestwithPreProblems",
+                docker.createAssignment(courseId, "submitTestwithPreProblems",
+                        AssignmentState.SUBMISSION, Collaboration.GROUP));
+        assignmentids.put("submitTestwithPostProblem",
+                docker.createAssignment(courseId, "submitTestwithPostProblem", 
+                        AssignmentState.SUBMISSION, Collaboration.GROUP));
+        
 
         // start the SVN late, so that only one assignment change event triggers a full update
         docker.startSvn(courseId, "svn");
 
-        docker.changeAssignmentState(courseId, a2, AssignmentState.SUBMISSION);
+        docker.changeAssignmentState(courseId, assignmentids.get("submitTest"), AssignmentState.SUBMISSION);
         
-        homework02id = a2;
+      
     }
 
     @AfterAll
@@ -91,8 +105,10 @@ public class SubmitterIT {
             
             ExerciseSubmitterManager manager = fackto.build();
             
+            String homeworkname = "submitTest";
+            String homeworkid = assignmentids.get(homeworkname);
+            Assignment assignment = new Assignment(homeworkid, homeworkname, Assignment.State.SUBMISSION, true);
             
-            Assignment assignment = new Assignment(homework02id, "Homework02", Assignment.State.SUBMISSION, true);
             Submitter submitter = manager.getSubmitter(assignment);
             //check result
             SubmissionResult result = submitter.submit(dir);
@@ -108,10 +124,10 @@ public class SubmitterIT {
             testFileList.add("Main.java");
             
             
-            Set<String> reponselist = docker.getSvnDirectoryContent("Homework02/JP001");
+            Set<String> reponselist = docker.getSvnDirectoryContent(homeworkname + "/JP001");
             
             assertEquals(testFileList, reponselist);
-            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/.classpath"), 
+            assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.classpath"), 
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<classpath>\n"
                     + "    <classpathentry kind=\"src\" path=\"\"/>\n"
@@ -120,7 +136,7 @@ public class SubmitterIT {
                     + "    <classpathentry kind=\"output\" path=\"\"/>\n"
                     + "</classpath>\n");
                    
-            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/.project"),
+            assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.project"),
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<projectDescription>\n"
                     + "    <name>Works</name>\n"
@@ -139,7 +155,7 @@ public class SubmitterIT {
                     + "    </natures>\n"
                     + "</projectDescription>\n");
                     
-            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/Main.java"),
+            assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/Main.java"),
                     "\n"
                     + "public class Main {\n"
                     + "    \n"
@@ -167,7 +183,10 @@ public class SubmitterIT {
             
             ExerciseSubmitterManager manager = fackto.build();
             
-            Assignment assignment = new Assignment(homework02id, "Homework02", Assignment.State.SUBMISSION, true);
+            String homeworkname = "submitTestExistingFilesOverwritten";
+            String homeworkid = assignmentids.get(homeworkname);
+            Assignment assignment = new Assignment(homeworkid, homeworkname, Assignment.State.SUBMISSION, true);
+            
             Submitter submitter = manager.getSubmitter(assignment);
             //simul pre existing file
             submitter.submit(overwrite);
@@ -185,10 +204,10 @@ public class SubmitterIT {
             testFileList.add("Main.java");
             
             
-            Set<String> reponselist = docker.getSvnDirectoryContent("Homework02/JP001");
+            Set<String> reponselist = docker.getSvnDirectoryContent(homeworkname + "/JP001");
             
             assertEquals(testFileList, reponselist);
-            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/.classpath"),
+            assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.classpath"),
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<classpath>\n"
                     + "    <classpathentry kind=\"src\" path=\"\"/>\n"
@@ -197,7 +216,7 @@ public class SubmitterIT {
                     + "    <classpathentry kind=\"output\" path=\"\"/>\n"
                     + "</classpath>\n");
                    
-            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/.project"),
+            assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.project"),
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<projectDescription>\n"
                     + "    <name>Works</name>\n"
@@ -216,7 +235,7 @@ public class SubmitterIT {
                     + "    </natures>\n"
                     + "</projectDescription>\n");
                     
-            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/Main.java"),
+            assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/Main.java"),
                     "\n"
                     + "public class Main {\n"
                     + "    \n"
@@ -246,7 +265,11 @@ public class SubmitterIT {
             
             ExerciseSubmitterManager manager = fackto.build();
             
-            Assignment assignment = new Assignment(homework02id, "Homework02", Assignment.State.SUBMISSION, true);
+            String homeworkname = "submitTestExistingFilesDeleted";
+            String homeworkid = assignmentids.get(homeworkname);
+            Assignment assignment = new Assignment(homeworkid, homeworkname, Assignment.State.SUBMISSION, true);
+            
+           
             Submitter submitter = manager.getSubmitter(assignment);
             //simul pre existing file
             submitter.submit(delete);
@@ -264,10 +287,10 @@ public class SubmitterIT {
             testFileList.add("Main.java");
             
             
-            Set<String> reponselist = docker.getSvnDirectoryContent("Homework02/JP001");
+            Set<String> reponselist = docker.getSvnDirectoryContent(homeworkname + "/JP001");
             
             assertEquals(testFileList, reponselist);
-            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/.classpath"),
+            assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.classpath"),
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<classpath>\n"
                     + "    <classpathentry kind=\"src\" path=\"\"/>\n"
@@ -276,7 +299,7 @@ public class SubmitterIT {
                     + "    <classpathentry kind=\"output\" path=\"\"/>\n"
                     + "</classpath>\n");
                    
-            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/.project"),
+            assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.project"),
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<projectDescription>\n"
                     + "    <name>Works</name>\n"
@@ -295,7 +318,7 @@ public class SubmitterIT {
                     + "    </natures>\n"
                     + "</projectDescription>\n");
                     
-            assertEquals(docker.getSvnFileOverHttp("Homework02/JP001/Main.java"),
+            assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/Main.java"),
                     "\n"
                     + "public class Main {\n"
                     + "    \n"
@@ -342,8 +365,11 @@ public class SubmitterIT {
             
             ExerciseSubmitterManager manager = fackto.build();
             
+            String homeworkname = "submitTestwithPreProblems";
+            String homeworkid = assignmentids.get(homeworkname);
+            Assignment assignment = new Assignment(homeworkid, homeworkname, Assignment.State.SUBMISSION, true);
             
-            Assignment assignment = new Assignment(homework02id, "Homework02", Assignment.State.SUBMISSION, true);
+           
             Submitter submitter = manager.getSubmitter(assignment);
             
             SubmissionResult result = submitter.submit(fileresult);
@@ -380,8 +406,10 @@ public class SubmitterIT {
             
             ExerciseSubmitterManager manager = fackto.build();
             
+            String homeworkname = "submitTestwithPostProblem";
+            String homeworkid = assignmentids.get(homeworkname);
+            Assignment assignment = new Assignment(homeworkid, homeworkname, Assignment.State.SUBMISSION, true);
             
-            Assignment assignment = new Assignment(homework02id, "Homework02", Assignment.State.SUBMISSION, true);
             Submitter submitter = manager.getSubmitter(assignment);
             
             SubmissionResult result = submitter.submit(dir);
@@ -416,6 +444,7 @@ public class SubmitterIT {
         
         assertDoesNotThrow(() -> {
             ExerciseSubmitterManager manager = fackto.build();
+            
             
             Assignment assignment =  new Assignment("005", "Homework03", State.SUBMISSION, true);
             
