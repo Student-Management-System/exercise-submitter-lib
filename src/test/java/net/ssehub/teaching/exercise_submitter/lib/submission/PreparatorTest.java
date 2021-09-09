@@ -527,5 +527,26 @@ public class PreparatorTest {
             }
         });
     }
+    
+    @Test 
+    public void copyDirwithEmptySubDir() {
+        File source = new File(TESTDATA, "emptyDirwithSubDir");
+        
+        assertDoesNotThrow(() -> {
+            try (Preparator preparator = new Preparator()) {
+                File result = preparator.getResult();
+                preparator.prepareDir(source);
+                File subdir = new File(result, "emptyDir");
+                
+                assertAll(
+                    () -> assertTrue(subdir.exists() && subdir.isDirectory()),
+                    () -> assertTrue(subdir.list().length == 0),
+                    () -> assertTrue(result.list().length == 3)
+                );
+                
+                
+            }
+        });
+    }
 
 }
