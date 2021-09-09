@@ -26,7 +26,7 @@ public class SubmitterTest {
 
         assertThrows(IllegalArgumentException.class, () -> {
             ExerciseSubmitterManager manager = factory.build();
-            Submitter submitter = manager.getSubmitter(new Assignment("002", "Homework02", State.IN_REVIEW, true));
+            Submitter submitter = manager.getSubmitter(new Assignment("005", "Homework03", State.SUBMISSION, true));
             submitter.submit(new File("main.java"));
         });
     }
