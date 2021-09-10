@@ -140,6 +140,7 @@ public class ExerciseSubmitterManagerTest {
                 .withPassword("teststudent1")
                 .withCourse("java-wise2021")
                 .withDummyApiConnection()
+                .withSvnUrl("http://localhost:8888/svn/submission")
                 .build());
         
         Replayer replayer = assertDoesNotThrow(() -> manager.getReplayer(assignment));

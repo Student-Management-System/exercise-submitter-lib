@@ -24,7 +24,6 @@ import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiE
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.GroupNotFoundException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.NetworkException;
 import net.ssehub.teaching.exercise_submitter.lib.submission.SubmissionException;
-import net.ssehub.teaching.exercise_submitter.lib.submission.SubmissionResult;
 import net.ssehub.teaching.exercise_submitter.lib.submission.Submitter;
 
 public class ReplayerIT {
