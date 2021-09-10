@@ -1,5 +1,6 @@
 package net.ssehub.teaching.exercise_submitter.lib;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -185,16 +186,17 @@ public class ExerciseSubmitterManager {
      * @throws UserNotInCourseException the user not in course exception
      * @throws GroupNotFoundException the group not found exception
      * @throws ApiException If the group name of a group assignment cannot be retrieved.
+     * @throws IOException 
      * @see #isReplayable(Assignment)
      */
     public Replayer getReplayer(Assignment assignment)
             throws IllegalArgumentException, NetworkException, AuthenticationException, UserNotInCourseException,
-            GroupNotFoundException, ApiException {
+            GroupNotFoundException, ApiException, IOException {
         if (!isReplayable(assignment)) {
             throw new IllegalArgumentException("Assignment " + assignment.getName() + " is not replayable");
         }
         
-        return new Replayer(getSvnUrl(assignment));
+        return new Replayer(getSvnUrl(assignment), this.credentials);
     }
     
     /**
