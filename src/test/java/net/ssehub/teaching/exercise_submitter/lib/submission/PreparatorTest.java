@@ -531,6 +531,9 @@ public class PreparatorTest {
     @Test 
     public void copyDirwithEmptySubDir() {
         File source = new File(TESTDATA, "emptyDirwithSubDir");
+        source.mkdir();
+        File sourceSubDir = new File(source, "emptyDir");
+        sourceSubDir.mkdir();
         
         assertDoesNotThrow(() -> {
             try (Preparator preparator = new Preparator()) {
