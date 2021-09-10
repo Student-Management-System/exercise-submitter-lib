@@ -1,11 +1,19 @@
 package net.ssehub.teaching.exercise_submitter.lib.replay;
 
-public class ReplayException extends Exception{
+/**
+ * Represents an exception during a Replay of the SVN repository.
+ * 
+ * @author Lukas
+ *
+ */
+public class ReplayException extends Exception {
 
     
     private static final long serialVersionUID = -6984269557211018607L;
 
-    
+    /**
+     * Creates a new exception.
+     */
     public ReplayException() {
     }
 
