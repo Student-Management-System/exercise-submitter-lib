@@ -7,9 +7,11 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -17,8 +19,11 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
 import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager;
+
 
 /**
  * Replays versions from the SVN version history of an exercise submission.
@@ -126,7 +131,9 @@ public class Replayer implements Closeable {
             } else if (nodeKind == SVNNodeKind.FILE) {
                 throw new ReplayException("Url points to a file not a directory");
             }
-            return convertSVNRevisionListEntriesToVersion(repository, "", new ArrayList<Version>());
+            List<Version> list = convertSVNRevisionListEntriesToVersion(repository, "", new ArrayList<Version>());
+            Collections.reverse(list);
+            return list;
         } catch (SVNException e) {
             throw new ReplayException(e);
         }
@@ -139,9 +146,23 @@ public class Replayer implements Closeable {
      * @param version The version to replay. See {@link #getVersions()}.
      *
      * @return A temporary directory with the submission content.
+     * @throws IOException 
+     * @throws ReplayException 
      */
-    public File replay(Version version) {
-        return null;
+    public File replay(Version version) throws IOException, ReplayException {
+        File temp = File.createTempFile("exercise_submission", null);
+        temp.delete();
+        temp.mkdir();
+        
+        SVNUpdateClient client = this.clientmanager.getUpdateClient();
+        try {
+            client.doCheckout(this.url, temp,
+                    SVNRevision.HEAD, SVNRevision.create(version.revision), SVNDepth.INFINITY, true);
+        } catch (SVNException e) {
+            throw new ReplayException("Cant make checkout", e);
+        }
+        
+        return temp;
     }
 
     /**
