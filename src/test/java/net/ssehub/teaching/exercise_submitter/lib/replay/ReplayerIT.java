@@ -226,5 +226,68 @@ public class ReplayerIT {
         
         
     }
+    
+    @Test
+    public void compareTestwithSameContent() {
+        Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
+                Assignment.State.SUBMISSION, true);
+
+        File testdir = new File(TESTDATA, "Versionfiles");
+        File version = new File(testdir, "Version2");
+        
+        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
+        fackto.withAuthUrl(docker.getAuthUrl());
+        fackto.withMgmtUrl(docker.getStuMgmtUrl());
+        fackto.withSvnUrl(docker.getSvnUrl());
+        fackto.withUsername("student1");
+        fackto.withPassword("123456");
+        fackto.withCourse("java-wise2021");
+        
+        assertDoesNotThrow(() -> {
+
+            ExerciseSubmitterManager manager = fackto.build();
+
+            Replayer replayer = manager.getReplayer(assignment);
+            
+            List<Version> versions = replayer.getVersions();
+            assertTrue(replayer.isSameContent(version, versions.get(1)));
+            
+        });
+        
+    }
+    @Test
+    public void compareTestwithAddedDir() {
+        Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
+                Assignment.State.SUBMISSION, true);
+
+        File testdir = new File(TESTDATA, "Versionfiles");
+        File version = new File(testdir, "Version2");
+        File addedDir = new File(version, "AddedDir");
+        addedDir.mkdir();
+        
+        
+        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
+        fackto.withAuthUrl(docker.getAuthUrl());
+        fackto.withMgmtUrl(docker.getStuMgmtUrl());
+        fackto.withSvnUrl(docker.getSvnUrl());
+        fackto.withUsername("student1");
+        fackto.withPassword("123456");
+        fackto.withCourse("java-wise2021");
+        
+        assertDoesNotThrow(() -> {
+
+            ExerciseSubmitterManager manager = fackto.build();
+
+            Replayer replayer = manager.getReplayer(assignment);
+            
+            List<Version> versions = replayer.getVersions();
+            assertTrue(!replayer.isSameContent(version, versions.get(1)));
+            
+            
+        });
+        
+        addedDir.delete();
+        
+    }
 
 }

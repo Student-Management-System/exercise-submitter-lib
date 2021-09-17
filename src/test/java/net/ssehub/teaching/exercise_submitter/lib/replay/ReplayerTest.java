@@ -1,5 +1,6 @@
 package net.ssehub.teaching.exercise_submitter.lib.replay;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -34,5 +35,5 @@ public class ReplayerTest {
         assertTrue(e.getMessage().equals("Urltype is not supported"));
     }
     
-    
+   
 }

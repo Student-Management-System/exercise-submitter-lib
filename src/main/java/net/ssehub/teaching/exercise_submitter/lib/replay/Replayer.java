@@ -1,8 +1,11 @@
 package net.ssehub.teaching.exercise_submitter.lib.replay;
 
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -10,6 +13,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -23,7 +27,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
 import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager;
-
 
 /**
  * Replays versions from the SVN version history of an exercise submission.
@@ -40,7 +43,7 @@ public class Replayer implements Closeable {
     /**
      * Creates a new replayer for the given SVN URL.
      *
-     * @param url The URL to the homework submission folder.
+     * @param url         The URL to the homework submission folder.
      * @param credentials The username and password
      * @throws IOException
      */
@@ -60,12 +63,10 @@ public class Replayer implements Closeable {
      */
     public static class Version {
 
-       
-
         private String author;
 
         private LocalDateTime timestamp;
-        
+
         private long revision;
 
         /**
@@ -99,18 +100,20 @@ public class Replayer implements Closeable {
         public LocalDateTime getTimestamp() {
             return this.timestamp;
         }
-        
+
         /**
          * Return the revisionid from this version.
+         *
          * @return the revisionid from this version
          */
         public long getRevision() {
-            return revision;
+            return this.revision;
         }
-        
+
         @Override
         public String toString() {
-            return "Version [author=" + author + ", timestamp=" + timestamp + ", revision=" + revision + "]";
+            return "Version [author=" + this.author + ", timestamp=" + this.timestamp + ", revision=" + this.revision
+                    + "]";
         }
 
     }
@@ -146,22 +149,20 @@ public class Replayer implements Closeable {
      * @param version The version to replay. See {@link #getVersions()}.
      *
      * @return A temporary directory with the submission content.
-     * @throws IOException 
-     * @throws ReplayException 
+     * @throws IOException
+     * @throws ReplayException
      */
     public File replay(Version version) throws IOException, ReplayException {
-        File temp = File.createTempFile("exercise_submission", null);
-        temp.delete();
-        temp.mkdir();
-        
+        File temp = this.createTempDir();
+
         SVNUpdateClient client = this.clientmanager.getUpdateClient();
         try {
-            client.doCheckout(this.url, temp,
-                    SVNRevision.HEAD, SVNRevision.create(version.revision), SVNDepth.INFINITY, true);
+            client.doCheckout(this.url, temp, SVNRevision.HEAD, SVNRevision.create(version.revision), SVNDepth.INFINITY,
+                    true);
         } catch (SVNException e) {
             throw new ReplayException("Cant make checkout", e);
         }
-        
+
         return temp;
     }
 
@@ -175,9 +176,19 @@ public class Replayer implements Closeable {
      *
      * @return Whether the given directory and the submitted version have the same
      *         content.
+     * @throws IOException
+     * @throws ReplayException
      */
-    public boolean isSameContent(File directory, Version version) {
-        return true;
+    public boolean isSameContent(File directory, Version version) throws IOException, ReplayException {
+
+        File result = this.replay(version);
+
+        boolean sameContent = this.compareTwoFiles(directory.toPath(), result.toPath(), directory, true);
+
+        Replayer.deleteDir(result, result);
+
+        return sameContent;
+
     }
 
     /**
@@ -187,6 +198,7 @@ public class Replayer implements Closeable {
     public void close() throws IOException {
 
     }
+
     /**
      * Create the clientmanager for the SVN connection.
      */
@@ -194,21 +206,25 @@ public class Replayer implements Closeable {
         this.clientmanager = SVNClientManager.newInstance(null,
                 BasicAuthenticationManager.newInstance(this.credentials.getUsername(), this.credentials.getPassword()));
     }
+
     /**
      * Parses a string url into a SVNURL.
+     *
      * @param url The url that should be parsed
      * @throws SVNException
      */
     private void createSVNURL(String url) throws SVNException {
         this.url = SVNURL.parseURIEncoded(url);
     }
-    
+
     /**
      * Downloads and converts the SVNRevisionList into Version.
-     * @param repository The current repository.
-     * @param path , default: ""
+     *
+     * @param repository  The current repository.
+     * @param path        , default: ""
      * @param versionlist , empty list
-     * @return List<Version> the versions from the repository which are on the server
+     * @return List<Version> the versions from the repository which are on the
+     *         server
      * @throws SVNException
      */
     @SuppressWarnings("rawtypes")
@@ -219,14 +235,96 @@ public class Replayer implements Closeable {
         while (iterator.hasNext()) {
             SVNDirEntry entry = (SVNDirEntry) iterator.next();
             versionlist.add(new Version(entry.getAuthor(),
-                    entry.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
-                    entry.getRevision()));
+                    entry.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(), entry.getRevision()));
             if (entry.getKind() == SVNNodeKind.DIR) {
                 versionlist = convertSVNRevisionListEntriesToVersion(repository,
                         path.equals("") ? entry.getName() : path + "/" + entry.getName(), versionlist);
             }
         }
         return versionlist;
+
+    }
+
+    /**
+     * Creates a temporay dir.
+     *
+     * @return the temp Dir as File
+     * @throws IOException
+     */
+    private File createTempDir() throws IOException {
+        File temp = File.createTempFile("exercise_submission", null);
+        temp.delete();
+        temp.mkdir();
+        return temp;
+    }
+
+    /**
+     * Compares two directories if they have the same content.
+     *
+     * @param baselocal , first dir
+     * @param basetemp  , second dir
+     * @param firstfile , firstdir as File
+     * @param result    , always set to true
+     * @return true, for same content false for NOT the same content.
+     */
+    private boolean compareTwoFiles(Path baselocal, Path basetemp, File firstfile, boolean result) {
+        if (firstfile.isFile()) {
+            try {
+                String firstFile = "";
+                try (BufferedReader reader = new BufferedReader(new FileReader(firstfile))) {
+                    firstFile = reader.lines().collect(Collectors.joining("\n", "", "\n"));
+                }
+                String secondFile = "";
+                Path relativized = baselocal.relativize(firstfile.toPath());
+                try (BufferedReader reader = new BufferedReader(
+                        new FileReader(basetemp.resolve(relativized).toFile()))) {
+                    secondFile = reader.lines().collect(Collectors.joining("\n", "", "\n"));
+                }
+                if (!firstFile.equals(secondFile)) {
+                    result = false;
+                }
+            } catch (IOException e) {
+                result = false;
+            }
+        } else if (firstfile.list().length != 0) {
+            for (int i = 0; i < firstfile.listFiles().length; i++) {
+                result = this.compareTwoFiles(baselocal, basetemp, firstfile.listFiles()[i], result);
+            }
+        } else {
+            Path relativized = baselocal.relativize(firstfile.toPath());
+            File emptydir = basetemp.resolve(relativized).toFile();
+            if (!(emptydir.exists() && emptydir.isDirectory() && emptydir.listFiles().length == 0)) {
+                result = false;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Deletes the given dir.
+     *
+     * @param dir         , directory that should be deleted
+     * @param currentfile , the same as above or null
+     */
+    private static void deleteDir(File dir, File currentfile) {
+        if (currentfile == null) {
+            currentfile = dir;
+        }
+        if (currentfile.isFile() || currentfile.list().length == 0) {
+            currentfile.delete();
+        } else {
+         
+            File[] files  = currentfile.listFiles();
+            for (int i = 0; i < files.length; i++) {
+                deleteDir(dir, files[i]);
+                if (currentfile.list().length == 0) {
+                    currentfile.delete();
+                }
+                
+            
+            }
+
+        }
 
     }
 
