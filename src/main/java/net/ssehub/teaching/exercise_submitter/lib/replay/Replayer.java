@@ -10,9 +10,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.tmatesoft.svn.core.SVNDepth;
@@ -63,6 +63,7 @@ public class Replayer implements Closeable {
      */
     public static class Version {
 
+
         private String author;
 
         private LocalDateTime timestamp;
@@ -109,6 +110,27 @@ public class Replayer implements Closeable {
         public long getRevision() {
             return this.revision;
         }
+       
+        @Override
+        public int hashCode() {
+            return Objects.hash(author, revision, timestamp);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Version other = (Version) obj;
+            return Objects.equals(author, other.author) && revision == other.revision
+                    && Objects.equals(timestamp, other.timestamp);
+        }
 
         @Override
         public String toString() {
@@ -134,8 +156,8 @@ public class Replayer implements Closeable {
             } else if (nodeKind == SVNNodeKind.FILE) {
                 throw new ReplayException("Url points to a file not a directory");
             }
-            List<Version> list = convertSVNRevisionListEntriesToVersion(repository, "", new ArrayList<Version>());
-            Collections.reverse(list);
+            List<Version> list = convertSVNRevisionListEntriesToVersion(repository, "", new ArrayList<Version>())
+                    .stream().distinct().collect(Collectors.toList());
             return list;
         } catch (SVNException e) {
             throw new ReplayException(e);

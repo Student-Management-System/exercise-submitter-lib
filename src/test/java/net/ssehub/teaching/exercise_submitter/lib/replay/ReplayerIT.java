@@ -131,7 +131,7 @@ public class ReplayerIT {
             List<Version> versions = replayer.getVersions();
             
             assertAll(
-                ()->assertTrue(versions.size() == 3),
+                ()->assertTrue(versions.size() == 2),
                 ()->assertTrue(versions.get(0).getAuthor().equals("student1")),
                 ()-> assertTrue(versions.get(1).getAuthor().equals("student1"))
             );
@@ -161,7 +161,7 @@ public class ReplayerIT {
             Replayer replayer = manager.getReplayer(assignment);
             List<Version> versions = replayer.getVersions();
             
-            File result = replayer.replay(versions.get(1));
+            File result = replayer.replay(versions.get(0));
             
             File classpath = new File(result, ".classpath");
             File projekt = new File(result, ".project");
