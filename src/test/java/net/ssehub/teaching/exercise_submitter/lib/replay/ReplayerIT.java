@@ -227,7 +227,7 @@ public class ReplayerIT {
         
         
     }
-    
+    //TODO: fix test
     @Disabled
     public void compareTestwithSameContent() {
         Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
@@ -256,6 +256,7 @@ public class ReplayerIT {
         });
         
     }
+  //TODO: fix test
     @Disabled
     public void compareTestwithAddedDir() {
         Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
