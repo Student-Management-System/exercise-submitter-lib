@@ -90,7 +90,8 @@ public class Submitter {
             SVNCommitInfo info = null;
 
             try {
-                info = this.commitclient.doCommit(new File[] {result}, false, "Testcommit", null, null, false, false,
+                info = this.commitclient.doCommit(new File[] {result}, false,
+                        "ExerciseSubmitter", null, null, false, false,
                         SVNDepth.INFINITY);
 
             } catch (SVNAuthenticationException e) {
