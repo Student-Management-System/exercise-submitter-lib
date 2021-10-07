@@ -482,6 +482,25 @@ public class PreparatorTest {
         
         
     }
+    @Test
+    public void deletesOldFilesEclipseProject() {
+        File source = new File(TESTDATA, "WorksEclipse");
+        
+        assertDoesNotThrow(() -> {
+            try (Preparator preparator = new Preparator()) {
+                preparator.prepareDir(source);
+                File result = preparator.getResult();
+                File svn = new File(result, ".svn");
+                svn.mkdir();
+                
+                preparator.deleteOldFiles();
+             
+                assertTrue(result.list().length == 1);
+                assertTrue(svn.exists());
+                
+            }
+        });
+    }
     @Test 
     public void copyInNotEmptyDir() {
         File source = new File(TESTDATA, "notEmptyDirWithSubDir");
