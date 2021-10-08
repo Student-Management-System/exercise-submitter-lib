@@ -169,7 +169,11 @@ public class Replayer implements Closeable {
                     return version1.getTimestamp().compareTo(version2.getTimestamp());
                 }
             };
+            
             Collections.sort(list, titleComparator);
+            
+            Collections.reverse(list);
+            
             return list;
         } catch (SVNException e) {
             throw new ReplayException(e);
