@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -158,6 +160,16 @@ public class Replayer implements Closeable {
             }
             List<Version> list = convertSVNRevisionListEntriesToVersion(repository, "", new ArrayList<Version>())
                     .stream().distinct().collect(Collectors.toList());
+            
+            Comparator<Version> titleComparator = new Comparator<Version>() {
+                /**
+                 * Compares the to version for the earlier time.
+                 */
+                public int compare(Version version1, Version version2) {
+                    return version1.getTimestamp().compareTo(version2.getTimestamp());
+                }
+            };
+            Collections.sort(list, titleComparator);
             return list;
         } catch (SVNException e) {
             throw new ReplayException(e);
