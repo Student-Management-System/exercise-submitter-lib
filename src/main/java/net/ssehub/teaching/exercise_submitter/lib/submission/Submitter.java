@@ -115,11 +115,11 @@ public class Submitter {
                             handler.parseXmlToProblem());
                 } else {
                     List<Problem> emptylist = new ArrayList<Problem>();
-    //                if (info.getNewRevision() == -1) {
-                    submissionresult = new SubmissionResult(true, emptylist);
-    //                } else {
-    //                    submissionresult = new SubmissionResult(true, emptylist);
-    //                }
+                    if (info.getNewRevision() == -1) {
+                        throw new SubmissionException("Version is already submitted");
+                    } else {
+                        submissionresult = new SubmissionResult(true, emptylist);
+                    }
                 }
             }
 
