@@ -179,7 +179,7 @@ public class Submitter {
                 File file = status.getFile();
 
                 if (type == SVNStatusType.STATUS_UNVERSIONED) {
-                    wcClient.doAdd(file, true, false, false, SVNDepth.EMPTY, false, false);
+                    wcClient.doAdd(file, true, false, false, SVNDepth.INFINITY, false, false);
 
                 } else if (type == SVNStatusType.STATUS_MISSING) {
                     wcClient.doDelete(file, true, false, false);
