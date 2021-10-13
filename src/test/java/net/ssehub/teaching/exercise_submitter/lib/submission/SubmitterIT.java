@@ -257,25 +257,25 @@ public class SubmitterIT {
                     + "");
                     
             assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/src/test/Main.java"),
-                  "package test;\r\n"
-                  + "\r\n"
-                  + "public class Main {\r\n"
-                  + "    public static void main(String[] args) {\r\n"
-                  + "        System.out.println(\"test\");\r\n"
-                  + "        System.out.println(\"test2\");\r\n"
-                  + "        System.out.println(\"test3\");\r\n"
-                  + "        System.out.println(\"test4\"); \r\n"
-                  + "    }\r\n"
-                  + "\r\n"
-                  + "}\r\n"
+                  "package test;\n"
+                  + "\n"
+                  + "public class Main {\n"
+                  + "    public static void main(String[] args) {\n"
+                  + "        System.out.println(\"test\");\n"
+                  + "        System.out.println(\"test2\");\n"
+                  + "        System.out.println(\"test3\");\n"
+                  + "        System.out.println(\"test4\"); \n"
+                  + "    }\n"
+                  + "\n"
+                  + "}\n"
                   + "");
             
             assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/src/test/Test.java"),
-                   "package test;\r\n"
-                   + "\r\n"
-                   + "public class Test {\r\n"
-                   + "    private int test = 10;\r\n"
-                   + "}\r\n"
+                   "package test;\n"
+                   + "\n"
+                   + "public class Test {\n"
+                   + "    private int test = 10;\n"
+                   + "}\n"
                    + "");
         });
         
