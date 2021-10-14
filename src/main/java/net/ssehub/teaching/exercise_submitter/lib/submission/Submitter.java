@@ -125,12 +125,12 @@ public class Submitter {
 
         } catch (IOException e) {
             throw new SubmissionException("cant create temp dir", e);
+            
+        } catch (SVNAuthenticationException e) {
+            throw new AuthenticationException();
+            
         } catch (SVNException | ParserConfigurationException | SAXException e) {
-            if (e instanceof SVNAuthenticationException) {
-                throw new AuthenticationException();
-            } else {
-                throw new SubmissionException("cant do checkout", e);
-            }
+            throw new SubmissionException("cant do checkout", e);
         }
         return submissionresult;
 
@@ -174,7 +174,7 @@ public class Submitter {
         SVNWCClient wcClient = this.clientmanager.getWCClient();
 
         this.clientmanager.getStatusClient().doStatus(checkoutprep.getResult(), SVNRevision.HEAD, SVNDepth.INFINITY,
-                false, false, false, false, status -> {
+            false, false, false, false, status -> {
                 SVNStatusType type = status.getNodeStatus();
                 File file = status.getFile();
 

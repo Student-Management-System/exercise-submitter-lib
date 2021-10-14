@@ -43,8 +43,10 @@ public class ExerciseSubmitterManager {
     
     /**
      * The Class Credentials is for save the current username and password for communicating with the Svn server.
+     * 
+     * TODO: move to data package.
      */
-    public class Credentials {
+    public static class Credentials {
         
    
         private String username;
