@@ -63,7 +63,9 @@ public class ReplayerIT {
 
         assignmentids.put("Homework01",
                 docker.createAssignment(courseId, "Homework01", AssignmentState.INVISIBLE, Collaboration.GROUP));
-
+        
+        assignmentids.put("addingFile",
+                docker.createAssignment(courseId, "addingFile", AssignmentState.SUBMISSION, Collaboration.GROUP));
         // start svn
 
         docker.startSvn(courseId, "svn");
@@ -84,6 +86,20 @@ public class ReplayerIT {
             });
             
         }
+        //TODO: Solve problem
+       /* maindir = new File(TESTDATA, "VersionFiles");
+        Assignment secondAssignment = new Assignment(assignmentids.get("addingFile"), "addingFile",
+                Assignment.State.SUBMISSION, true);
+
+        for (int i = 2; i <= 3; i++) {
+            File dir = new File(maindir, "Version" + i);
+            assertDoesNotThrow(() -> { 
+                submit(dir, secondAssignment);
+                Thread.sleep(4000);
+              //cause svn doesnt like fast changes
+            });
+            
+        } */
     }
 
     @AfterAll
@@ -112,6 +128,38 @@ public class ReplayerIT {
     public void getVersionListTest() {
         
         Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
+                Assignment.State.SUBMISSION, true);
+
+       
+        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
+        fackto.withAuthUrl(docker.getAuthUrl());
+        fackto.withMgmtUrl(docker.getStuMgmtUrl());
+        fackto.withSvnUrl(docker.getSvnUrl());
+        fackto.withUsername("student1");
+        fackto.withPassword("123456");
+        fackto.withCourse("java-wise2021");
+
+        assertDoesNotThrow(() -> {
+
+            ExerciseSubmitterManager manager = fackto.build();
+
+            Replayer replayer = manager.getReplayer(assignment);
+            List<Version> versions = replayer.getVersions();
+            
+            assertAll(
+                ()->assertTrue(versions.size() == 2),
+                ()->assertTrue(versions.get(0).getAuthor().equals("student1")),
+                ()-> assertTrue(versions.get(1).getAuthor().equals("student1"))
+            );
+
+        });
+
+    }
+    //TODO: better test
+    @Disabled
+    public void getVersionListTestwithMoreFiles() {
+        
+        Assignment assignment = new Assignment(assignmentids.get("addingFile"), "addingFile",
                 Assignment.State.SUBMISSION, true);
 
        
@@ -227,8 +275,107 @@ public class ReplayerIT {
         
         
     }
-    //TODO: fix test
+    
     @Disabled
+    public void replayTestwithchangingFile() {
+        
+        Assignment assignment = new Assignment(assignmentids.get("addingFile"), "addingFile",
+                Assignment.State.SUBMISSION, true);
+
+        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
+        fackto.withAuthUrl(docker.getAuthUrl());
+        fackto.withMgmtUrl(docker.getStuMgmtUrl());
+        fackto.withSvnUrl(docker.getSvnUrl());
+        fackto.withUsername("student1");
+        fackto.withPassword("123456");
+        fackto.withCourse("java-wise2021");
+        
+        assertDoesNotThrow(() -> {
+
+            ExerciseSubmitterManager manager = fackto.build();
+
+            Replayer replayer = manager.getReplayer(assignment);
+            List<Version> versions = replayer.getVersions();
+            
+            File result = replayer.replay(versions.get(0));
+            
+            File classpath = new File(result, ".classpath");
+            File projekt = new File(result, ".project");
+            File main = new File(result, "Main.java");
+            File filehandler = new File(result, "FileHandler.java");
+            
+            String classpathdata = "";
+            try (BufferedReader reader = new BufferedReader(new FileReader(classpath))) {
+                classpathdata = reader.lines().collect(Collectors.joining("\n", "", "\n"));
+            }
+            String projektdata = "";
+            try (BufferedReader reader = new BufferedReader(new FileReader(projekt))) {
+                projektdata = reader.lines().collect(Collectors.joining("\n", "", "\n"));
+            }
+            String maindata = "";
+            try (BufferedReader reader = new BufferedReader(new FileReader(main))) {
+                maindata = reader.lines().collect(Collectors.joining("\n", "", "\n"));
+            }
+            String filehandlerdata = "";
+            try (BufferedReader reader = new BufferedReader(new FileReader(filehandler))) {
+                filehandlerdata = reader.lines().collect(Collectors.joining("\n", "", "\n"));
+            }
+                    
+            assertEquals(classpathdata,
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                    + "<classpath>\n"
+                    + "    <classpathentry kind=\"src\" path=\"\"/>\n"
+                    + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER"
+                        + "/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
+                    + "    <classpathentry kind=\"output\" path=\"\"/>\n"
+                    + "</classpath>\n");
+            
+            
+            assertEquals(projektdata,
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                    + "<projectDescription>\n"
+                    + "    <name>Version2</name>\n"
+                    + "    <comment></comment>\n"
+                    + "    <projects>\n"
+                    + "    </projects>\n"
+                    + "    <buildSpec>\n"
+                    + "        <buildCommand>\n"
+                    + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
+                    + "            <arguments>\n"
+                    + "            </arguments>\n"
+                    + "        </buildCommand>\n"
+                    + "    </buildSpec>\n"
+                    + "    <natures>\n"
+                    + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
+                    + "    </natures>\n"
+                    + "</projectDescription>\n");
+           
+            assertEquals(maindata, "\n"
+                    + "public class Main {\n"
+                    + "    \n"
+                    + "    public static void main(String[] args) {\n"
+                    + "        System.out.println(\"Hello Revision2!\");\n"
+                    + "    }\n"
+                    + "}\n"
+                    + "");
+            
+            assertEquals(filehandlerdata, "public class FileHandler() {\r\n"
+                    + "    public FileHandler() {\r\n"
+                    + "        \r\n"
+                    + "    }    \r\n"
+                    + "}");
+            
+            main.delete();
+            projekt.delete();
+            classpath.delete();
+            filehandler.delete();
+            result.deleteOnExit();
+
+        });
+        
+        
+    }
+    @Test
     public void compareTestwithSameContent() {
         Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
                 Assignment.State.SUBMISSION, true);
@@ -251,13 +398,13 @@ public class ReplayerIT {
             Replayer replayer = manager.getReplayer(assignment);
             
             List<Version> versions = replayer.getVersions();
-            assertTrue(replayer.isSameContent(version, versions.get(1)));
+            assertTrue(replayer.isSameContent(version, versions.get(0)));
             
         });
         
     }
-  //TODO: fix test
-    @Disabled
+  
+    @Test
     public void compareTestwithAddedDir() {
         Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
                 Assignment.State.SUBMISSION, true);
