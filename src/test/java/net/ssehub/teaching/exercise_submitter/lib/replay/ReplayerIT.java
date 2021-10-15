@@ -375,7 +375,7 @@ public class ReplayerIT {
         
         
     }
-    @Test
+    @Disabled
     public void compareTestwithSameContent() {
         Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
                 Assignment.State.SUBMISSION, true);
@@ -404,7 +404,7 @@ public class ReplayerIT {
         
     }
   
-    @Test
+    @Disabled
     public void compareTestwithAddedDir() {
         Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
                 Assignment.State.SUBMISSION, true);
