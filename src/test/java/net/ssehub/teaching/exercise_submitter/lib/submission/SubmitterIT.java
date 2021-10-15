@@ -538,7 +538,7 @@ public class SubmitterIT {
        
             File dir = new File(TESTDATA, "error");
             //create file above 10mb
-            Preparator prep = new Preparator();
+            SubmissionDirectory prep = new SubmissionDirectory();
             prep.prepareDir(dir);
             File fileresult = prep.getResult();
             File bigFile = new File(fileresult, "bigfile.txt");

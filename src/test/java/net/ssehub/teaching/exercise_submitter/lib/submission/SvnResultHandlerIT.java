@@ -79,7 +79,7 @@ public class SvnResultHandlerIT {
     public void convertPreErrorMessageToStringTest() {
 
         assertDoesNotThrow(() -> {
-            try (Preparator prep = new Preparator()) {
+            try (SubmissionDirectory prep = new SubmissionDirectory()) {
                 prep.prepareDir(new File(TESTDATA, "notcompiling"));
                 File testdir = prep.getResult();
 
@@ -149,7 +149,7 @@ public class SvnResultHandlerIT {
     public void convertPostErrorMessageToStringTest() {
 
         assertDoesNotThrow(() -> {
-            try (Preparator prep = new Preparator()) {
+            try (SubmissionDirectory prep = new SubmissionDirectory()) {
                 prep.prepareDir(new File(TESTDATA, "notcompiling"));
                 File testdir = prep.getResult();
 
@@ -218,7 +218,7 @@ public class SvnResultHandlerIT {
     @Test
     public void convertPostSvnErrorMessageToProblem() {
         assertDoesNotThrow(() -> {
-            try (Preparator prep = new Preparator()) {
+            try (SubmissionDirectory prep = new SubmissionDirectory()) {
                 prep.prepareDir(new File(TESTDATA, "checkstyleError"));
                 File testdir = prep.getResult();
 

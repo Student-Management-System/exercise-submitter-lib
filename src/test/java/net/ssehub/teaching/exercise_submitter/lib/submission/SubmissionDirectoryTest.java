@@ -22,15 +22,15 @@ import org.junit.jupiter.api.Test;
 
 
 
-public class PreparatorTest {
+public class SubmissionDirectoryTest {
 
     private static final File TESTDATA = new File("src/test/resources/PreparatorTest");
 
     @Test
     public void throwsIfDirDoesntExist() {
         IOException ex = assertThrows(IOException.class, () -> {
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(new File("doesnt_exist"));
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(new File("doesnt_exist"));
             }
         });
         assertEquals("doesnt_exist is not a directory", ex.getMessage());
@@ -39,8 +39,8 @@ public class PreparatorTest {
     @Test
     public void throwsIfDirIsFile() {
         IOException ex = assertThrows(IOException.class, () -> {
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(new File(TESTDATA, "file.txt"));
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(new File(TESTDATA, "file.txt"));
             }
         });
         assertEquals("file.txt is not a directory", ex.getMessage());
@@ -53,9 +53,9 @@ public class PreparatorTest {
         assertTrue(source.isDirectory(), "precondition: empty test directory exists");
 
         assertDoesNotThrow(() -> {
-            try (Preparator preparator = new Preparator()) {
-                File result = preparator.getResult();
-                preparator.prepareDir(source);
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                File result = submissionDirectory.getResult();
+                submissionDirectory.prepareDir(source);
 
                 assertAll(
                     () -> assertTrue(result.isDirectory()),
@@ -78,9 +78,9 @@ public class PreparatorTest {
 
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(source);
-                result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(source);
+                result = submissionDirectory.getResult();
                 assertTrue(result.isDirectory());
             }
 
@@ -95,9 +95,9 @@ public class PreparatorTest {
 
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(source);
-                result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(source);
+                result = submissionDirectory.getResult();
                 
                 assertAll(
                     () -> assertTrue(result.isDirectory()),
@@ -126,9 +126,9 @@ public class PreparatorTest {
 
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(source);
-                result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(source);
+                result = submissionDirectory.getResult();
                 assertTrue(result.isDirectory());
             }
 
@@ -143,9 +143,9 @@ public class PreparatorTest {
 
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(source);
-                result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(source);
+                result = submissionDirectory.getResult();
                 File subDir = new File(result, "notEmptyDir");
                 File classpath = new File(result, ".classpath");
                 File project = new File(result, ".project");
@@ -182,9 +182,9 @@ public class PreparatorTest {
 
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(source);
-                result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(source);
+                result = submissionDirectory.getResult();
                 assertTrue(result.isDirectory());
 
                 File utf8file = new File(result, "ISO-8859-1.txt");
@@ -206,9 +206,9 @@ public class PreparatorTest {
         
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(source);
-                result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(source);
+                result = submissionDirectory.getResult();
                 assertTrue(result.isDirectory());
                 
                 File utf8file = new File(result, "cp1252.txt");
@@ -232,9 +232,9 @@ public class PreparatorTest {
         
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(source);
-                result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(source);
+                result = submissionDirectory.getResult();
                 assertTrue(result.isDirectory());
                 
                 File copiedPicture = new File(result, "picture.png");
@@ -272,9 +272,9 @@ public class PreparatorTest {
         
         assertDoesNotThrow(() -> {
             File result;
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(source);
-                result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(source);
+                result = submissionDirectory.getResult();
                 assertTrue(result.isDirectory());
                 
                 File copied = new File(result, "invalid.txt");
@@ -311,25 +311,25 @@ public class PreparatorTest {
         
         assertAll(
             () -> assertTrue(assertDoesNotThrow(
-                () -> Preparator.checkEncoding(utf8.toPath(), StandardCharsets.UTF_8))),
+                () -> SubmissionDirectory.checkEncoding(utf8.toPath(), StandardCharsets.UTF_8))),
             () -> assertTrue(assertDoesNotThrow(
-                () -> Preparator.checkEncoding(cp1252.toPath(), Charset.forName("cp1252")))),
+                () -> SubmissionDirectory.checkEncoding(cp1252.toPath(), Charset.forName("cp1252")))),
             () -> assertTrue(assertDoesNotThrow(
-                () -> Preparator.checkEncoding(iso88591.toPath(), StandardCharsets.ISO_8859_1))),
+                () -> SubmissionDirectory.checkEncoding(iso88591.toPath(), StandardCharsets.ISO_8859_1))),
             () -> assertTrue(assertDoesNotThrow(
-                () -> Preparator.checkEncoding(utf8Long.toPath(), StandardCharsets.UTF_8))),
+                () -> SubmissionDirectory.checkEncoding(utf8Long.toPath(), StandardCharsets.UTF_8))),
             
             () -> assertFalse(assertDoesNotThrow(
-                () -> Preparator.checkEncoding(cp1252.toPath(), StandardCharsets.UTF_8))),
+                () -> SubmissionDirectory.checkEncoding(cp1252.toPath(), StandardCharsets.UTF_8))),
             () -> assertFalse(assertDoesNotThrow(
-                () -> Preparator.checkEncoding(iso88591.toPath(), StandardCharsets.UTF_8))),
+                () -> SubmissionDirectory.checkEncoding(iso88591.toPath(), StandardCharsets.UTF_8))),
             
             () -> assertFalse(assertDoesNotThrow(
-                () -> Preparator.checkEncoding(invalid.toPath(), StandardCharsets.UTF_8))),
+                () -> SubmissionDirectory.checkEncoding(invalid.toPath(), StandardCharsets.UTF_8))),
 //                () -> assertFalse(assertDoesNotThrow(
             //() -> Preparator.checkEncoding(invalid.toPath(), StandardCharsets.ISO_8859_1))),
             () -> assertFalse(assertDoesNotThrow(
-                () -> Preparator.checkEncoding(invalid.toPath(), Charset.forName("cp1252"))))
+                () -> SubmissionDirectory.checkEncoding(invalid.toPath(), Charset.forName("cp1252"))))
         );
         
     }
@@ -341,9 +341,9 @@ public class PreparatorTest {
         assertTrue(source.isDirectory(), "precondition: empty test directory exists");
         
         assertDoesNotThrow(() -> {
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(source);
-                File result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(source);
+                File result = submissionDirectory.getResult();
 
                 File classpath = new File(result, ".classpath");
                 File project = new File(result, ".project");
@@ -394,9 +394,9 @@ public class PreparatorTest {
         File source = new File(TESTDATA, "existingClasspath");
         
         assertDoesNotThrow(() -> {
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(source);
-                File result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(source);
+                File result = submissionDirectory.getResult();
 
                 // classpath should be copied
                 File classpath = new File(result, ".classpath");
@@ -422,9 +422,9 @@ public class PreparatorTest {
         File source = new File(TESTDATA, "existingProject");
         
         assertDoesNotThrow(() -> {
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(source);
-                File result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(source);
+                File result = submissionDirectory.getResult();
                 
                 // classpath is generated
                 File classpath = new File(result, ".classpath");
@@ -450,10 +450,10 @@ public class PreparatorTest {
         File source = new File(TESTDATA, "notEmptyDirWithSubDir");
         
         assertDoesNotThrow(() -> {
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(source);
-                preparator.deleteOldFiles();
-                File result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(source);
+                submissionDirectory.deleteOldFiles();
+                File result = submissionDirectory.getResult();
                 assertTrue(result.list().length == 0);
                 
             }
@@ -466,13 +466,13 @@ public class PreparatorTest {
         File source = new File(TESTDATA, "notEmptyDirWithSubDir");
         
         assertDoesNotThrow(() -> {
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(source);
-                File result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(source);
+                File result = submissionDirectory.getResult();
                 File svn = new File(result, ".svn");
                 svn.mkdir();
                 
-                preparator.deleteOldFiles();
+                submissionDirectory.deleteOldFiles();
              
                 assertTrue(result.list().length == 1);
                 assertTrue(svn.exists());
@@ -487,13 +487,13 @@ public class PreparatorTest {
         File source = new File(TESTDATA, "WorksEclipse");
         
         assertDoesNotThrow(() -> {
-            try (Preparator preparator = new Preparator()) {
-                preparator.prepareDir(source);
-                File result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                submissionDirectory.prepareDir(source);
+                File result = submissionDirectory.getResult();
                 File svn = new File(result, ".svn");
                 svn.mkdir();
                 
-                preparator.deleteOldFiles();
+                submissionDirectory.deleteOldFiles();
              
                 assertTrue(result.list().length == 1);
                 assertTrue(svn.exists());
@@ -506,8 +506,8 @@ public class PreparatorTest {
         File source = new File(TESTDATA, "notEmptyDirWithSubDir");
         
         assertDoesNotThrow(() -> {
-            try (Preparator preparator = new Preparator()) {
-                File result = preparator.getResult();
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                File result = submissionDirectory.getResult();
                 File svn = new File(result, ".svn");
                 result.mkdir();
                 svn.mkdir();
@@ -516,7 +516,7 @@ public class PreparatorTest {
                 File classpath = new File(result, ".classpath");
                 File project = new File(result, ".project");
                 
-                preparator.prepareDir(source);
+                submissionDirectory.prepareDir(source);
                 
                 assertAll(
                     () -> assertTrue(result.isDirectory()), 
@@ -555,9 +555,9 @@ public class PreparatorTest {
         sourceSubDir.mkdir();
         
         assertDoesNotThrow(() -> {
-            try (Preparator preparator = new Preparator()) {
-                File result = preparator.getResult();
-                preparator.prepareDir(source);
+            try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
+                File result = submissionDirectory.getResult();
+                submissionDirectory.prepareDir(source);
                 File subdir = new File(result, "emptyDir");
                 
                 assertAll(

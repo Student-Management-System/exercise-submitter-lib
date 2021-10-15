@@ -72,9 +72,9 @@ public class Submitter {
         }
         SubmissionResult submissionresult = null;
 
-        try (Preparator preparator = new Preparator()) {
+        try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
 
-            File result = preparator.getResult();
+            File result = submissionDirectory.getResult();
 
             this.clientmanager = SVNClientManager.newInstance(null,
                     BasicAuthenticationManager.newInstance(this.cred.getUsername(), this.cred.getPassword()));
@@ -85,7 +85,7 @@ public class Submitter {
 
             SVNURL svnurl = SVNURL.parseURIEncoded(this.url);
 
-            this.doCheckout(directory, svnurl, preparator);
+            this.doCheckout(directory, svnurl, submissionDirectory);
 
             SVNCommitInfo info = null;
 
@@ -163,7 +163,7 @@ public class Submitter {
      * @throws SVNException the SVN exception
      * @throws SubmissionException the submission exception
      */
-    private void doCheckout(File directory, SVNURL svnurl, Preparator checkoutprep)
+    private void doCheckout(File directory, SVNURL svnurl, SubmissionDirectory checkoutprep)
             throws SVNException, SubmissionException {
         SVNUpdateClient update = this.clientmanager.getUpdateClient();
         update.doCheckout(svnurl, checkoutprep.getResult(),
@@ -193,7 +193,7 @@ public class Submitter {
      * @param checkoutprep the current temp preparator
      * @throws SubmissionException
      */
-    private void prepareFilesForCommit(File directory, Preparator checkoutprep) throws SubmissionException {
+    private void prepareFilesForCommit(File directory, SubmissionDirectory checkoutprep) throws SubmissionException {
         try {
             checkoutprep.deleteOldFiles();
             checkoutprep.prepareDir(directory);

@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  * @author Adam
  * @author Lukas
  */
-class Preparator implements Closeable {
+public class SubmissionDirectory implements Closeable {
 
     /**
      * List of {@link Charset}s to check when reading files that are not UTF-8. If a non-UTF-8 file is found, but can
@@ -67,7 +67,7 @@ class Preparator implements Closeable {
      * @throws IOException If IO fails during preparation.
      */
     @Deprecated
-    public Preparator(File directory) throws IOException {
+    public SubmissionDirectory(File directory) throws IOException {
 
         if (!directory.isDirectory()) {
             throw new IOException(directory.getName() + " is not a directory");
@@ -85,7 +85,7 @@ class Preparator implements Closeable {
      * Instantiates a new Preparator which creates a empty temp dir.
      * @throws IOException
      */
-    public Preparator() throws IOException {
+    public SubmissionDirectory() throws IOException {
 
         this.result = File.createTempFile("exercise_submission", null);
         this.result.delete();
@@ -152,24 +152,27 @@ class Preparator implements Closeable {
      * @param fileToDelete
      * @throws IOException
      */
-    private void deleteFileOrDir(File fileToDelete) throws IOException {
-        
-        if (fileToDelete.isFile()) {
-            Files.delete(fileToDelete.toPath());
-        } else if (fileToDelete.list().length == 0) {
-            Files.delete(fileToDelete.toPath());
-        } else {
-            File[] oldFiles = fileToDelete.listFiles((pathname)
-                -> !(pathname.isDirectory() && pathname.getName().equalsIgnoreCase(".svn")));
-            if (oldFiles != null) {
-                for (int i = 0; i < oldFiles.length; i++) {
-                    deleteFileOrDir(oldFiles[i]);
-                    if (oldFiles[i].exists()) {
+    public static void deleteFileOrDir(File fileToDelete) throws IOException {
+        try {
+            if (fileToDelete.isFile()) {
+                Files.delete(fileToDelete.toPath());
+            } else if (fileToDelete.list().length == 0) {
+                Files.delete(fileToDelete.toPath());
+            } else {
+                File[] oldFiles = fileToDelete.listFiles((pathname)
+                    -> !(pathname.isDirectory() && pathname.getName().equalsIgnoreCase(".svn")));
+                if (oldFiles != null) {
+                    for (int i = 0; i < oldFiles.length; i++) {
                         deleteFileOrDir(oldFiles[i]);
+                        if (oldFiles[i].exists()) {
+                            deleteFileOrDir(oldFiles[i]);
+                        }
                     }
+                    
                 }
-                
             }
+        } catch (NullPointerException e) {
+            System.out.println("Exception");
         }
     }
     
@@ -277,7 +280,7 @@ class Preparator implements Closeable {
         Path classpath = destination.resolve(".classpath");
         
         if (!Files.exists(classpath)) {
-            try (InputStream input = Preparator.class.getClassLoader()
+            try (InputStream input = SubmissionDirectory.class.getClassLoader()
                     .getResourceAsStream(RESOURCE_PATH + ".classpath")) {
                 Files.copy(input, classpath);
             }
@@ -286,7 +289,7 @@ class Preparator implements Closeable {
         Path project = destination.resolve(".project");
         if (!Files.exists(project)) {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    Preparator.class.getClassLoader().getResourceAsStream(RESOURCE_PATH + ".project"),
+                    SubmissionDirectory.class.getClassLoader().getResourceAsStream(RESOURCE_PATH + ".project"),
                     StandardCharsets.UTF_8))) {
                 
                 String data = reader.lines()
