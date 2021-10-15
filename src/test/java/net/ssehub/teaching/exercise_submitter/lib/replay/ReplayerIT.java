@@ -23,6 +23,7 @@ import net.ssehub.studentmgmt.docker.StuMgmtDocker.AssignmentState;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker.Collaboration;
 import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterFactory;
 import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager;
+import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager.Credentials;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.replay.Replayer.Version;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiException;
@@ -438,5 +439,24 @@ public class ReplayerIT {
         addedDir.delete();
         
     }
+    @Test
+    public void replayTestwithCaching() {
+        Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
+                Assignment.State.SUBMISSION, true);
+        
+        assertDoesNotThrow(() -> {
+            Replayer replayer = new Replayer(docker.getSvnUrl() + assignment.getName() + "/JP001/", 
+                    new Credentials("student1", "123456".toCharArray()));
+            File firstDir = replayer.replay(replayer.getVersions().get(0));
+            File secondDir = replayer.replay(replayer.getVersions().get(0));
+            
+            assertEquals(firstDir, secondDir);
+                        
+            replayer.close();
+        });
+        
+        
+    }
+    
 
 }
