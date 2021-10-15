@@ -74,7 +74,7 @@ public class Submitter {
 
         try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
 
-            File result = submissionDirectory.getResult();
+            File result = submissionDirectory.getDirectory();
 
             this.clientmanager = SVNClientManager.newInstance(null,
                     BasicAuthenticationManager.newInstance(this.cred.getUsername(), this.cred.getPassword()));
@@ -166,14 +166,14 @@ public class Submitter {
     private void doCheckout(File directory, SVNURL svnurl, SubmissionDirectory checkoutprep)
             throws SVNException, SubmissionException {
         SVNUpdateClient update = this.clientmanager.getUpdateClient();
-        update.doCheckout(svnurl, checkoutprep.getResult(),
+        update.doCheckout(svnurl, checkoutprep.getDirectory(),
                 SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, true);
 
         prepareFilesForCommit(directory, checkoutprep);
         
         SVNWCClient wcClient = this.clientmanager.getWCClient();
 
-        this.clientmanager.getStatusClient().doStatus(checkoutprep.getResult(), SVNRevision.HEAD, SVNDepth.INFINITY,
+        this.clientmanager.getStatusClient().doStatus(checkoutprep.getDirectory(), SVNRevision.HEAD, SVNDepth.INFINITY,
             false, false, false, false, status -> {
                 SVNStatusType type = status.getNodeStatus();
                 File file = status.getFile();

@@ -54,7 +54,7 @@ public class SubmissionDirectoryTest {
 
         assertDoesNotThrow(() -> {
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
-                File result = submissionDirectory.getResult();
+                File result = submissionDirectory.getDirectory();
                 submissionDirectory.prepareDir(source);
 
                 assertAll(
@@ -80,7 +80,7 @@ public class SubmissionDirectoryTest {
             File result;
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
                 submissionDirectory.prepareDir(source);
-                result = submissionDirectory.getResult();
+                result = submissionDirectory.getDirectory();
                 assertTrue(result.isDirectory());
             }
 
@@ -97,7 +97,7 @@ public class SubmissionDirectoryTest {
             File result;
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
                 submissionDirectory.prepareDir(source);
-                result = submissionDirectory.getResult();
+                result = submissionDirectory.getDirectory();
                 
                 assertAll(
                     () -> assertTrue(result.isDirectory()),
@@ -128,7 +128,7 @@ public class SubmissionDirectoryTest {
             File result;
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
                 submissionDirectory.prepareDir(source);
-                result = submissionDirectory.getResult();
+                result = submissionDirectory.getDirectory();
                 assertTrue(result.isDirectory());
             }
 
@@ -145,7 +145,7 @@ public class SubmissionDirectoryTest {
             File result;
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
                 submissionDirectory.prepareDir(source);
-                result = submissionDirectory.getResult();
+                result = submissionDirectory.getDirectory();
                 File subDir = new File(result, "notEmptyDir");
                 File classpath = new File(result, ".classpath");
                 File project = new File(result, ".project");
@@ -184,7 +184,7 @@ public class SubmissionDirectoryTest {
             File result;
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
                 submissionDirectory.prepareDir(source);
-                result = submissionDirectory.getResult();
+                result = submissionDirectory.getDirectory();
                 assertTrue(result.isDirectory());
 
                 File utf8file = new File(result, "ISO-8859-1.txt");
@@ -208,7 +208,7 @@ public class SubmissionDirectoryTest {
             File result;
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
                 submissionDirectory.prepareDir(source);
-                result = submissionDirectory.getResult();
+                result = submissionDirectory.getDirectory();
                 assertTrue(result.isDirectory());
                 
                 File utf8file = new File(result, "cp1252.txt");
@@ -234,7 +234,7 @@ public class SubmissionDirectoryTest {
             File result;
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
                 submissionDirectory.prepareDir(source);
-                result = submissionDirectory.getResult();
+                result = submissionDirectory.getDirectory();
                 assertTrue(result.isDirectory());
                 
                 File copiedPicture = new File(result, "picture.png");
@@ -274,7 +274,7 @@ public class SubmissionDirectoryTest {
             File result;
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
                 submissionDirectory.prepareDir(source);
-                result = submissionDirectory.getResult();
+                result = submissionDirectory.getDirectory();
                 assertTrue(result.isDirectory());
                 
                 File copied = new File(result, "invalid.txt");
@@ -343,7 +343,7 @@ public class SubmissionDirectoryTest {
         assertDoesNotThrow(() -> {
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
                 submissionDirectory.prepareDir(source);
-                File result = submissionDirectory.getResult();
+                File result = submissionDirectory.getDirectory();
 
                 File classpath = new File(result, ".classpath");
                 File project = new File(result, ".project");
@@ -396,7 +396,7 @@ public class SubmissionDirectoryTest {
         assertDoesNotThrow(() -> {
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
                 submissionDirectory.prepareDir(source);
-                File result = submissionDirectory.getResult();
+                File result = submissionDirectory.getDirectory();
 
                 // classpath should be copied
                 File classpath = new File(result, ".classpath");
@@ -424,7 +424,7 @@ public class SubmissionDirectoryTest {
         assertDoesNotThrow(() -> {
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
                 submissionDirectory.prepareDir(source);
-                File result = submissionDirectory.getResult();
+                File result = submissionDirectory.getDirectory();
                 
                 // classpath is generated
                 File classpath = new File(result, ".classpath");
@@ -453,7 +453,7 @@ public class SubmissionDirectoryTest {
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
                 submissionDirectory.prepareDir(source);
                 submissionDirectory.deleteOldFiles();
-                File result = submissionDirectory.getResult();
+                File result = submissionDirectory.getDirectory();
                 assertTrue(result.list().length == 0);
                 
             }
@@ -468,7 +468,7 @@ public class SubmissionDirectoryTest {
         assertDoesNotThrow(() -> {
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
                 submissionDirectory.prepareDir(source);
-                File result = submissionDirectory.getResult();
+                File result = submissionDirectory.getDirectory();
                 File svn = new File(result, ".svn");
                 svn.mkdir();
                 
@@ -489,7 +489,7 @@ public class SubmissionDirectoryTest {
         assertDoesNotThrow(() -> {
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
                 submissionDirectory.prepareDir(source);
-                File result = submissionDirectory.getResult();
+                File result = submissionDirectory.getDirectory();
                 File svn = new File(result, ".svn");
                 svn.mkdir();
                 
@@ -507,7 +507,7 @@ public class SubmissionDirectoryTest {
         
         assertDoesNotThrow(() -> {
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
-                File result = submissionDirectory.getResult();
+                File result = submissionDirectory.getDirectory();
                 File svn = new File(result, ".svn");
                 result.mkdir();
                 svn.mkdir();
@@ -556,7 +556,7 @@ public class SubmissionDirectoryTest {
         
         assertDoesNotThrow(() -> {
             try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
-                File result = submissionDirectory.getResult();
+                File result = submissionDirectory.getDirectory();
                 submissionDirectory.prepareDir(source);
                 File subdir = new File(result, "emptyDir");
                 

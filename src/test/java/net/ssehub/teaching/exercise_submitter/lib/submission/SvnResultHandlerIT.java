@@ -81,7 +81,7 @@ public class SvnResultHandlerIT {
         assertDoesNotThrow(() -> {
             try (SubmissionDirectory prep = new SubmissionDirectory()) {
                 prep.prepareDir(new File(TESTDATA, "notcompiling"));
-                File testdir = prep.getResult();
+                File testdir = prep.getDirectory();
 
                 File classpath = new File(testdir, ".classpath");
                 classpath.delete();
@@ -151,7 +151,7 @@ public class SvnResultHandlerIT {
         assertDoesNotThrow(() -> {
             try (SubmissionDirectory prep = new SubmissionDirectory()) {
                 prep.prepareDir(new File(TESTDATA, "notcompiling"));
-                File testdir = prep.getResult();
+                File testdir = prep.getDirectory();
 
                 String buildurl = docker.getSvnUrl() + "Homework02/JP001/";
                 SVNURL url = SVNURL.parseURIEncoded(buildurl);
@@ -220,7 +220,7 @@ public class SvnResultHandlerIT {
         assertDoesNotThrow(() -> {
             try (SubmissionDirectory prep = new SubmissionDirectory()) {
                 prep.prepareDir(new File(TESTDATA, "checkstyleError"));
-                File testdir = prep.getResult();
+                File testdir = prep.getDirectory();
 
                 String buildurl = docker.getSvnUrl() + "Homework02/JP001/";
                 SVNURL url = SVNURL.parseURIEncoded(buildurl);

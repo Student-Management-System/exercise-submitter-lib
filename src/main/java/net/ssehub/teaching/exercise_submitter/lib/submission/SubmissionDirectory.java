@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Prepares a folder for submission. Creates a copy of the folder in a temporary location, see {@link #getResult()}.
+ * Prepares a folder for submission. Creates a copy of the folder in a temporary location, see {@link #getDirectory()}.
  * This temporary folder can be submitted.
  * <p>
  * Preparation does the following tasks:
@@ -57,7 +57,7 @@ public class SubmissionDirectory implements Closeable {
     
     private static final String RESOURCE_PATH = "net/ssehub/teaching/exercise_submitter/lib/submission/";
 
-    private File result;
+    private File directory;
 
     /**
      * Instantiates a new preparator.
@@ -74,23 +74,23 @@ public class SubmissionDirectory implements Closeable {
 
         }
 
-        this.result = File.createTempFile("exercise_submission", null);
-        this.result.delete();
-        copyDirectoryWithCorrectEncoding(directory.toPath(), this.result.toPath());
-        createEclipseProjectFiles(this.result.toPath(), directory.getName());
-        this.result.deleteOnExit();
+        this.directory = File.createTempFile("exercise_submission", null);
+        this.directory.delete();
+        copyDirectoryWithCorrectEncoding(directory.toPath(), this.directory.toPath());
+        createEclipseProjectFiles(this.directory.toPath(), directory.getName());
+        this.directory.deleteOnExit();
 
     }
     /**
-     * Instantiates a new Preparator which creates a empty temp dir.
+     * Instantiates a new Submissiondirectory which creates a empty temp dir.
      * @throws IOException
      */
     public SubmissionDirectory() throws IOException {
 
-        this.result = File.createTempFile("exercise_submission", null);
-        this.result.delete();
+        this.directory = File.createTempFile("exercise_submission", null);
+        this.directory.delete();
         
-        this.result.deleteOnExit();
+        this.directory.deleteOnExit();
 
     }
     
@@ -105,28 +105,28 @@ public class SubmissionDirectory implements Closeable {
             throw new IOException(directory.getName() + " is not a directory");
             
         }
-        copyDirectoryWithCorrectEncoding(directory.toPath(), this.result.toPath());
-        createEclipseProjectFiles(this.result.toPath(), directory.getName());
+        copyDirectoryWithCorrectEncoding(directory.toPath(), this.directory.toPath());
+        createEclipseProjectFiles(this.directory.toPath(), directory.getName());
     }
     
     /**
-     * Gets the temporary directory where the preparation result is located.
+     * Gets the temporary directory.
      *
-     * @return The prepared folder.
+     * @return The temp folder.
      */
-    public File getResult() {
-        return this.result;
+    public File getDirectory() {
+        return this.directory;
     }
 
     /**
-     * Removes the temporary copy created by this preparator.
+     * Removes the temporary directory and deletes the content.
      *
      * @throws IOException If deleting the temporary copy fails.
      */
     @Override
     public void close() throws IOException {
         try {
-            Files.walk(this.result.toPath()).sorted(Comparator.reverseOrder()).forEach(t -> {
+            Files.walk(this.directory.toPath()).sorted(Comparator.reverseOrder()).forEach(t -> {
                 try {
                     Files.delete(t);
                 } catch (IOException e) {
@@ -144,7 +144,7 @@ public class SubmissionDirectory implements Closeable {
      */
     public void deleteOldFiles() throws IOException {
        
-        deleteFileOrDir(result);
+        deleteFileOrDir(directory);
             
     }
     /**
