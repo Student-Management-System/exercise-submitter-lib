@@ -3,6 +3,7 @@ package net.ssehub.teaching.exercise_submitter.lib.replay;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedReader;
@@ -453,6 +454,47 @@ public class ReplayerIT {
             assertEquals(firstDir, secondDir);
                         
             replayer.close();
+        });
+    }
+    
+    @Test
+    public void replayTestwithCachingwithFalseVersion() {
+        Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
+                Assignment.State.SUBMISSION, true);
+        
+        assertDoesNotThrow(() -> {
+            Replayer replayer = new Replayer(docker.getSvnUrl() + assignment.getName() + "/JP001/", 
+                    new Credentials("student1", "123456".toCharArray()));
+            File firstDir = replayer.replay(replayer.getVersions().get(0));
+            File secondDir = replayer.replay(replayer.getVersions().get(1));
+                        
+            assertNotEquals(firstDir, secondDir);
+            
+            replayer.close();
+        });
+        
+        
+    }
+    
+    @Test
+    public void replayTestwithCachingwithClosing() {
+        Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
+                Assignment.State.SUBMISSION, true);
+        
+        assertDoesNotThrow(() -> {
+            Replayer replayer = new Replayer(docker.getSvnUrl() + assignment.getName() + "/JP001/", 
+                    new Credentials("student1", "123456".toCharArray()));
+            File firstDir = replayer.replay(replayer.getVersions().get(0));
+            replayer.close();
+            
+            Replayer replayer2 = new Replayer(docker.getSvnUrl() + assignment.getName() + "/JP001/", 
+                    new Credentials("student1", "123456".toCharArray()));
+            File secondDir = replayer2.replay(replayer2.getVersions().get(0));
+            replayer2.close();    
+            
+            assertNotEquals(firstDir, secondDir);
+            
+           
         });
         
         
