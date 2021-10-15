@@ -12,9 +12,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.tmatesoft.svn.core.SVNDepth;
@@ -41,6 +44,8 @@ public class Replayer implements Closeable {
     private SVNURL url;
     private ExerciseSubmitterManager.Credentials credentials;
     private SVNClientManager clientmanager;
+    
+    private Map<Version, File> cachedFiles = new HashMap<Version, File>();
 
     /**
      * Creates a new replayer for the given SVN URL.
@@ -191,14 +196,21 @@ public class Replayer implements Closeable {
      * @throws ReplayException
      */
     public File replay(Version version) throws IOException, ReplayException {
-        File temp = this.createTempDir();
-
-        SVNUpdateClient client = this.clientmanager.getUpdateClient();
-        try {
-            client.doCheckout(this.url, temp, SVNRevision.HEAD, SVNRevision.create(version.revision), SVNDepth.INFINITY,
-                    true);
-        } catch (SVNException e) {
-            throw new ReplayException("Cant make checkout", e);
+        File temp = null;
+        if (this.checkIfCached(version).isPresent()) {
+            temp = this.checkIfCached(version).get();
+        } else {
+            
+            temp = this.createTempDir();
+    
+            SVNUpdateClient client = this.clientmanager.getUpdateClient();
+            try {
+                client.doCheckout(this.url, temp, SVNRevision.HEAD,
+                        SVNRevision.create(version.revision), SVNDepth.INFINITY, true);
+                this.cacheVersion(version, temp);
+            } catch (SVNException e) {
+                throw new ReplayException("Cant make checkout", e);
+            }
         }
 
         return temp;
@@ -234,7 +246,9 @@ public class Replayer implements Closeable {
      */
     @Override
     public void close() throws IOException {
-
+        for (Map.Entry<Version, File> entry : this.cachedFiles.entrySet()) {
+            Replayer.deleteDir(entry.getValue(), null);
+        }
     }
 
     /**
@@ -364,6 +378,22 @@ public class Replayer implements Closeable {
 
         }
 
+    }
+    /**
+     * Caches the version.
+     * @param version
+     * @param dir
+     */
+    private void cacheVersion(Version version, File dir) {
+        this.cachedFiles.put(version, dir);
+    }
+    /**
+     * Checks if the version is cached. And gives when its cached give the dir back.
+     * @param version
+     * @return Optional<File>
+     */
+    private Optional<File> checkIfCached(Version version) {
+        return Optional.ofNullable(this.cachedFiles.get(version));
     }
 
 }
