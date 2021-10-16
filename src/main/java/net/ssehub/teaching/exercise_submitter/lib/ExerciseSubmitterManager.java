@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
@@ -38,6 +39,10 @@ public class ExerciseSubmitterManager {
     
    
     private Credentials credentials;
+    
+    private Replayer replayer;
+    
+    private Assignment currentReplayerAssignment;
     
     
     
@@ -198,7 +203,21 @@ public class ExerciseSubmitterManager {
             throw new IllegalArgumentException("Assignment " + assignment.getName() + " is not replayable");
         }
         
-        return new Replayer(getSvnUrl(assignment), this.credentials);
+        if (replayer  == null) {
+       
+            this.replayer = new Replayer(getSvnUrl(assignment), this.credentials);
+            currentReplayerAssignment = assignment;
+            
+        } else {
+            if (currentReplayerAssignment == null || (!currentReplayerAssignment.equals(assignment))) {
+                
+                this.replayer = new Replayer(getSvnUrl(assignment), this.credentials);
+                currentReplayerAssignment = assignment;
+            }
+        }
+        // TODO: this returns null if init failed and thus causes NullPointerExceptions all over the place
+        return replayer;
+     
     }
     
     /**

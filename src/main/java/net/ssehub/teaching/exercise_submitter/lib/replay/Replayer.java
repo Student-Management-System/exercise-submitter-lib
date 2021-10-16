@@ -235,7 +235,6 @@ public class Replayer implements Closeable {
 
         boolean sameContent = this.compareTwoFiles(directory.toPath(), result.toPath(), directory, true);
 
-        Replayer.deleteDir(result, result);
 
         return sameContent;
 
