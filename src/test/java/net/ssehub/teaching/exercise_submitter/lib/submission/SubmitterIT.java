@@ -162,109 +162,98 @@ public class SubmitterIT {
     }
     @Test 
     public void submitTestWithEclipseProjectStructure() {
+        File dir = new File(TESTDATA, "WorksEclipse");
         
-        assertDoesNotThrow(() -> {
-            
-            File dir = new File(TESTDATA, "WorksEclipse");
-            
-            ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
-            fackto.withAuthUrl(docker.getAuthUrl());
-            fackto.withMgmtUrl(docker.getStuMgmtUrl());
-            fackto.withSvnUrl(docker.getSvnUrl());
-            fackto.withUsername("student1");
-            fackto.withPassword("123456");
-            fackto.withCourse("java-wise2021");
-            
-            ExerciseSubmitterManager manager = fackto.build();
-            
-            String homeworkname = "submitTestEclipse";
-            String homeworkid = assignmentids.get(homeworkname);
-            Assignment assignment = new Assignment(homeworkid, homeworkname, Assignment.State.SUBMISSION, true);
-            
-            Submitter submitter = manager.getSubmitter(assignment);
+        String homeworkname = "submitTestEclipse";
+        
+        Submitter submitter = new Submitter(docker.getSvnUrl() + homeworkname + "/JP001/",
+                new Credentials("student1", "123456".toCharArray()));
+        
+     
             //check result
-            SubmissionResult result = submitter.submit(dir);
-            List<Problem> emptylist = new ArrayList<Problem>();
-            SubmissionResult resultTest = new SubmissionResult(true, emptylist);
-            
-            assertEquals(result, resultTest);
-            
-           //check files on server
-            Set<String> testFileList = new HashSet<>();
-            testFileList.add(".settings/");
-            testFileList.add("bin/");
-            testFileList.add("src/");
-            testFileList.add(".classpath");
-            testFileList.add(".project");
-                 
-            Set<String> reponselist = docker.getSvnDirectoryContent(homeworkname + "/JP001");
-            
-            Set<String> testFileListinSRC = new HashSet<>();
-            testFileListinSRC.add("test/");
+        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(dir));
+        List<Problem> emptylist = new ArrayList<Problem>();
+        SubmissionResult resultTest = new SubmissionResult(true, emptylist);
+        
+        assertEquals(result, resultTest);
+        
+       //check files on server
+        Set<String> testFileList = new HashSet<>();
+        testFileList.add(".settings/");
+        testFileList.add("bin/");
+        testFileList.add("src/");
+        testFileList.add(".classpath");
+        testFileList.add(".project");
              
-            Set<String> reponselistinSRC = docker.getSvnDirectoryContent(homeworkname + "/JP001/src");
-            
-            Set<String> testFileListinTest = new HashSet<>();
-            testFileListinTest.add("Main.java");
-            testFileListinTest.add("Test.java");
-            
-             
-            Set<String> reponselistinTest = docker.getSvnDirectoryContent(homeworkname + "/JP001/src/test");
-            
-            assertEquals(testFileList, reponselist);
-            assertEquals(testFileListinSRC, reponselistinSRC);
-            assertEquals(testFileListinTest, reponselistinTest);
-            assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.classpath"), 
-                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                    + "<classpath>\n"
-                    + "    <classpathentry kind=\"src\" path=\"\"/>\n"
-                    + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER"
-                        + "/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
-                    + "    <classpathentry kind=\"output\" path=\"\"/>\n"
-                    + "</classpath>\n");
-                   
-            assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.project"),
-                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                    + "<projectDescription>\n"
-                    + "    <name>test</name>\n"
-                    + "    <comment></comment>\n"
-                    + "    <projects>\n"
-                    + "    </projects>\n"
-                    + "    <buildSpec>\n"
-                    + "        <buildCommand>\n"
-                    + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
-                    + "            <arguments>\n"
-                    + "            </arguments>\n"
-                    + "        </buildCommand>\n"
-                    + "    </buildSpec>\n"
-                    + "    <natures>\n"
-                    + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
-                    + "    </natures>\n"
-                    + "</projectDescription>\n"
-                    + "");
-                    
-            assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/src/test/Main.java"),
-                  "package test;\n"
-                  + "\n"
-                  + "public class Main {\n"
-                  + "    public static void main(String[] args) {\n"
-                  + "        System.out.println(\"test\");\n"
-                  + "        System.out.println(\"test2\");\n"
-                  + "        System.out.println(\"test3\");\n"
-                  + "        System.out.println(\"test4\"); \n"
-                  + "    }\n"
-                  + "\n"
-                  + "}\n"
-                  + "");
-            
-            assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/src/test/Test.java"),
-                   "package test;\n"
-                   + "\n"
-                   + "public class Test {\n"
-                   + "    private int test = 10;\n"
-                   + "}\n"
-                   + "");
-        });
+        Set<String> reponselist = docker.getSvnDirectoryContent(homeworkname + "/JP001");
+        
+        Set<String> testFileListinSRC = new HashSet<>();
+        testFileListinSRC.add("test/");
+         
+        Set<String> reponselistinSRC = docker.getSvnDirectoryContent(homeworkname + "/JP001/src");
+        
+        Set<String> testFileListinTest = new HashSet<>();
+        testFileListinTest.add("Main.java");
+        testFileListinTest.add("Test.java");
+        
+         
+        Set<String> reponselistinTest = docker.getSvnDirectoryContent(homeworkname + "/JP001/src/test");
+        
+        assertEquals(testFileList, reponselist);
+        assertEquals(testFileListinSRC, reponselistinSRC);
+        assertEquals(testFileListinTest, reponselistinTest);
+       
+        assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.classpath"), 
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<classpath>\n"
+                + "    <classpathentry kind=\"src\" path=\"\"/>\n"
+                + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER"
+                    + "/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
+                + "    <classpathentry kind=\"output\" path=\"\"/>\n"
+                + "</classpath>\n");
+               
+        assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.project"),
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<projectDescription>\n"
+                + "    <name>test</name>\n"
+                + "    <comment></comment>\n"
+                + "    <projects>\n"
+                + "    </projects>\n"
+                + "    <buildSpec>\n"
+                + "        <buildCommand>\n"
+                + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
+                + "            <arguments>\n"
+                + "            </arguments>\n"
+                + "        </buildCommand>\n"
+                + "    </buildSpec>\n"
+                + "    <natures>\n"
+                + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
+                + "    </natures>\n"
+                + "</projectDescription>\n"
+                + "");
+                
+        assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/src/test/Main.java"),
+              "package test;\n"
+              + "\n"
+              + "public class Main {\n"
+              + "    public static void main(String[] args) {\n"
+              + "        System.out.println(\"test\");\n"
+              + "        System.out.println(\"test2\");\n"
+              + "        System.out.println(\"test3\");\n"
+              + "        System.out.println(\"test4\"); \n"
+              + "    }\n"
+              + "\n"
+              + "}\n"
+              + "");
+        
+        assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/src/test/Test.java"),
+               "package test;\n"
+               + "\n"
+               + "public class Test {\n"
+               + "    private int test = 10;\n"
+               + "}\n"
+               + "");
+ 
         
         
     }

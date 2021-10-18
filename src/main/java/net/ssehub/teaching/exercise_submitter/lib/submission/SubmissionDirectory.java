@@ -60,7 +60,7 @@ public class SubmissionDirectory implements Closeable {
     private File directory;
 
     /**
-     * Instantiates a new preparator.
+     * Instantiates a new Submissiondirectory.
      *
      * @param directory The directory to prepare for submission.
      *
