@@ -129,94 +129,58 @@ public class ReplayerIT {
     @Test
     public void getVersionListTest() {
         
-        Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
-                Assignment.State.SUBMISSION, true);
+        String homeworkname = "Homework01";
 
-       
-        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
-        fackto.withAuthUrl(docker.getAuthUrl());
-        fackto.withMgmtUrl(docker.getStuMgmtUrl());
-        fackto.withSvnUrl(docker.getSvnUrl());
-        fackto.withUsername("student1");
-        fackto.withPassword("123456");
-        fackto.withCourse("java-wise2021");
+        Replayer replayer = assertDoesNotThrow(() -> new Replayer(docker.getSvnUrl() + homeworkname + "/JP001/",
+            new Credentials("student1", "123456".toCharArray())));
+        List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+        
+        assertAll(
+            ()->assertTrue(versions.size() == 2),
+            ()->assertTrue(versions.get(0).getAuthor().equals("student1")),
+            ()-> assertTrue(versions.get(1).getAuthor().equals("student1"))
+        );
 
-        assertDoesNotThrow(() -> {
-
-            ExerciseSubmitterManager manager = fackto.build();
-
-            Replayer replayer = manager.getReplayer(assignment);
-            List<Version> versions = replayer.getVersions();
-            
-            assertAll(
-                ()->assertTrue(versions.size() == 2),
-                ()->assertTrue(versions.get(0).getAuthor().equals("student1")),
-                ()-> assertTrue(versions.get(1).getAuthor().equals("student1"))
-            );
-
-        });
+     
 
     }
     //TODO: better test
     @Disabled
     public void getVersionListTestwithMoreFiles() {
         
-        Assignment assignment = new Assignment(assignmentids.get("addingFile"), "addingFile",
-                Assignment.State.SUBMISSION, true);
+        String homeworkname = "addingFile";
 
-       
-        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
-        fackto.withAuthUrl(docker.getAuthUrl());
-        fackto.withMgmtUrl(docker.getStuMgmtUrl());
-        fackto.withSvnUrl(docker.getSvnUrl());
-        fackto.withUsername("student1");
-        fackto.withPassword("123456");
-        fackto.withCourse("java-wise2021");
+        Replayer replayer = assertDoesNotThrow(() -> new Replayer(docker.getSvnUrl() + homeworkname + "/JP001/",
+                new Credentials("student1", "123456".toCharArray())));
 
-        assertDoesNotThrow(() -> {
+        List<Version> versions = assertDoesNotThrow(() ->  replayer.getVersions());
+        
+        assertAll(
+            ()->assertTrue(versions.size() == 2),
+            ()->assertTrue(versions.get(0).getAuthor().equals("student1")),
+            ()-> assertTrue(versions.get(1).getAuthor().equals("student1"))
+        );
 
-            ExerciseSubmitterManager manager = fackto.build();
-
-            Replayer replayer = manager.getReplayer(assignment);
-            List<Version> versions = replayer.getVersions();
-            
-            assertAll(
-                ()->assertTrue(versions.size() == 2),
-                ()->assertTrue(versions.get(0).getAuthor().equals("student1")),
-                ()-> assertTrue(versions.get(1).getAuthor().equals("student1"))
-            );
-
-        });
+  
 
     }
     
     @Test
     public void replayTest() {
         
-        Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
-                Assignment.State.SUBMISSION, true);
-
-        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
-        fackto.withAuthUrl(docker.getAuthUrl());
-        fackto.withMgmtUrl(docker.getStuMgmtUrl());
-        fackto.withSvnUrl(docker.getSvnUrl());
-        fackto.withUsername("student1");
-        fackto.withPassword("123456");
-        fackto.withCourse("java-wise2021");
+        String homeworkname = "Homework01";
         
+        Replayer replayer = assertDoesNotThrow(() -> new Replayer(docker.getSvnUrl() + homeworkname + "/JP001/",
+                new Credentials("student1", "123456".toCharArray())));
+
+        List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+        
+        File result = assertDoesNotThrow(() -> replayer.replay(versions.get(0)));
+        
+        File classpath = new File(result, ".classpath");
+        File projekt = new File(result, ".project");
+        File main = new File(result, "Main.java");
         assertDoesNotThrow(() -> {
-
-            ExerciseSubmitterManager manager = fackto.build();
-
-            Replayer replayer = manager.getReplayer(assignment);
-            List<Version> versions = replayer.getVersions();
-            
-            File result = replayer.replay(versions.get(0));
-            
-            File classpath = new File(result, ".classpath");
-            File projekt = new File(result, ".project");
-            File main = new File(result, "Main.java");
-            
             String classpathdata = "";
             try (BufferedReader reader = new BufferedReader(new FileReader(classpath))) {
                 classpathdata = reader.lines().collect(Collectors.joining("\n", "", "\n"));
@@ -274,37 +238,26 @@ public class ReplayerIT {
             result.deleteOnExit();
 
         });
-        
-        
     }
     
     @Disabled
     public void replayTestwithchangingFile() {
         
-        Assignment assignment = new Assignment(assignmentids.get("addingFile"), "addingFile",
-                Assignment.State.SUBMISSION, true);
-
-        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
-        fackto.withAuthUrl(docker.getAuthUrl());
-        fackto.withMgmtUrl(docker.getStuMgmtUrl());
-        fackto.withSvnUrl(docker.getSvnUrl());
-        fackto.withUsername("student1");
-        fackto.withPassword("123456");
-        fackto.withCourse("java-wise2021");
+        String homeworkname = "addingFile";
         
+        Replayer replayer = assertDoesNotThrow(() -> new Replayer(docker.getSvnUrl() + homeworkname + "/JP001/",
+              new Credentials("student1", "123456".toCharArray())));
+
+        List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+        
+        File result = assertDoesNotThrow(() -> replayer.replay(versions.get(0)));
+        
+        File classpath = new File(result, ".classpath");
+        File projekt = new File(result, ".project");
+        File main = new File(result, "Main.java");
+        File filehandler = new File(result, "FileHandler.java");
+            
         assertDoesNotThrow(() -> {
-
-            ExerciseSubmitterManager manager = fackto.build();
-
-            Replayer replayer = manager.getReplayer(assignment);
-            List<Version> versions = replayer.getVersions();
-            
-            File result = replayer.replay(versions.get(0));
-            
-            File classpath = new File(result, ".classpath");
-            File projekt = new File(result, ".project");
-            File main = new File(result, "Main.java");
-            File filehandler = new File(result, "FileHandler.java");
             
             String classpathdata = "";
             try (BufferedReader reader = new BufferedReader(new FileReader(classpath))) {
@@ -375,41 +328,28 @@ public class ReplayerIT {
 
         });
         
-        
     }
     @Disabled
     public void compareTestwithSameContent() {
-        Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
-                Assignment.State.SUBMISSION, true);
-
+        
         File testdir = new File(TESTDATA, "Versionfiles");
         File version = new File(testdir, "Version2");
         
-        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
-        fackto.withAuthUrl(docker.getAuthUrl());
-        fackto.withMgmtUrl(docker.getStuMgmtUrl());
-        fackto.withSvnUrl(docker.getSvnUrl());
-        fackto.withUsername("student1");
-        fackto.withPassword("123456");
-        fackto.withCourse("java-wise2021");
+        String homeworkname = "Homework01";
         
-        assertDoesNotThrow(() -> {
-
-            ExerciseSubmitterManager manager = fackto.build();
-
-            Replayer replayer = manager.getReplayer(assignment);
-            
-            List<Version> versions = replayer.getVersions();
-            assertTrue(replayer.isSameContent(version, versions.get(0)));
-            
-        });
+        Replayer replayer = assertDoesNotThrow(() -> new Replayer(docker.getSvnUrl() + homeworkname + "/JP001/",
+              new Credentials("student1", "123456".toCharArray())));
         
+            
+        List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+        assertTrue(assertDoesNotThrow(() -> replayer.isSameContent(version, versions.get(0))));
+        
+       
     }
   
     @Disabled
     public void compareTestwithAddedDir() {
-        Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
-                Assignment.State.SUBMISSION, true);
+       
 
         File testdir = new File(TESTDATA, "Versionfiles");
         File version = new File(testdir, "Version2");
@@ -417,26 +357,16 @@ public class ReplayerIT {
         addedDir.mkdir();
         
         
-        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
-        fackto.withAuthUrl(docker.getAuthUrl());
-        fackto.withMgmtUrl(docker.getStuMgmtUrl());
-        fackto.withSvnUrl(docker.getSvnUrl());
-        fackto.withUsername("student1");
-        fackto.withPassword("123456");
-        fackto.withCourse("java-wise2021");
+        String homeworkname = "Homework01";
         
-        assertDoesNotThrow(() -> {
-
-            ExerciseSubmitterManager manager = fackto.build();
-
-            Replayer replayer = manager.getReplayer(assignment);
-            
-            List<Version> versions = replayer.getVersions();
-            assertTrue(!replayer.isSameContent(version, versions.get(1)));
-            
-            
-        });
+        Replayer replayer = assertDoesNotThrow(() -> new Replayer(docker.getSvnUrl() + homeworkname + "/JP001/",
+              new Credentials("student1", "123456".toCharArray())));
         
+            
+        List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+        assertTrue(!assertDoesNotThrow(() -> replayer.isSameContent(version, versions.get(1))));
+            
+            
         addedDir.delete();
         
     }
