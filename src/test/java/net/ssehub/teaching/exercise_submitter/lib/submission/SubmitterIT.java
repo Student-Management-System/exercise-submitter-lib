@@ -16,7 +16,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import net.ssehub.studentmgmt.docker.StuMgmtDocker;
@@ -215,7 +214,6 @@ public class SubmitterIT {
             assertEquals(testFileList, reponselist);
             assertEquals(testFileListinSRC, reponselistinSRC);
             assertEquals(testFileListinTest, reponselistinTest);
-            String test = docker.getSvnFileOverHttp(homeworkname + "/JP001/.project");
             assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.classpath"), 
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<classpath>\n"
