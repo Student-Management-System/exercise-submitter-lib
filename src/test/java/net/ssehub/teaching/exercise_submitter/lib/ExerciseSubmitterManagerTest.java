@@ -18,6 +18,7 @@ import net.ssehub.teaching.exercise_submitter.lib.submission.Submitter;
 
 public class ExerciseSubmitterManagerTest {
 
+    @Test
     @Disabled //TODO: change test
     public void svnUrlGroupAssignment() {
         Assignment assignment = DummyApiConnection.DUMMY_ASSIGNMENTS.get(4);
@@ -33,6 +34,7 @@ public class ExerciseSubmitterManagerTest {
                 assertDoesNotThrow(() -> manager.getSvnUrl(assignment)));
     }
     
+    @Test
     @Disabled //TODO: change Test
     public void svnUrlSingleAssignment() {
         Assignment assignment = DummyApiConnection.DUMMY_ASSIGNMENTS.get(3);

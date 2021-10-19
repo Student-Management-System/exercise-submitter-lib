@@ -144,7 +144,9 @@ public class ReplayerIT {
      
 
     }
+    
     //TODO: better test
+    @Test
     @Disabled
     public void getVersionListTestwithMoreFiles() {
         
@@ -240,6 +242,7 @@ public class ReplayerIT {
         });
     }
     
+    @Test
     @Disabled
     public void replayTestwithchangingFile() {
         
@@ -329,6 +332,8 @@ public class ReplayerIT {
         });
         
     }
+    
+    @Test
     @Disabled
     public void compareTestwithSameContent() {
         
@@ -347,6 +352,7 @@ public class ReplayerIT {
        
     }
   
+    @Test
     @Disabled
     public void compareTestwithAddedDir() {
        
