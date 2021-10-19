@@ -113,24 +113,41 @@ public class SubmitterIT {
 
         assertEquals(testFileList, reponselist);
         assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.classpath"),
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<classpath>\n"
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" 
+                        + "<classpath>\n"
                         + "    <classpathentry kind=\"src\" path=\"\"/>\n"
                         + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER"
                         + "/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
-                        + "    <classpathentry kind=\"output\" path=\"\"/>\n" + "</classpath>\n");
+                        + "    <classpathentry kind=\"output\" path=\"\"/>\n" 
+                        + "</classpath>\n");
 
         assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.project"),
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<projectDescription>\n" + "    <name>Works</name>\n"
-                        + "    <comment></comment>\n" + "    <projects>\n" + "    </projects>\n" + "    <buildSpec>\n"
-                        + "        <buildCommand>\n" + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
-                        + "            <arguments>\n" + "            </arguments>\n" + "        </buildCommand>\n"
-                        + "    </buildSpec>\n" + "    <natures>\n"
-                        + "        <nature>org.eclipse.jdt.core.javanature</nature>\n" + "    </natures>\n"
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" 
+                        + "<projectDescription>\n" 
+                        + "    <name>Works</name>\n"
+                        + "    <comment></comment>\n" 
+                        + "    <projects>\n" 
+                        + "    </projects>\n" 
+                        + "    <buildSpec>\n"
+                        + "        <buildCommand>\n" 
+                        + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
+                        + "            <arguments>\n" 
+                        + "            </arguments>\n" 
+                        + "        </buildCommand>\n"
+                        + "    </buildSpec>\n" 
+                        + "    <natures>\n"
+                        + "        <nature>org.eclipse.jdt.core.javanature</nature>\n" 
+                        + "    </natures>\n"
                         + "</projectDescription>\n");
 
         assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/Main.java"),
-                "\n" + "public class Main {\n" + "    \n" + "    public static void main(String[] args) {\n"
-                        + "        System.out.println(\"Hello world!\");\n" + "    }\n" + "}\n");
+                "\n" 
+                        + "public class Main {\n" 
+                        + "    \n" 
+                        + "    public static void main(String[] args) {\n"
+                        + "        System.out.println(\"Hello world!\");\n" 
+                        + "    }\n" 
+                        + "}\n");
     }
 
     @Test
@@ -231,24 +248,39 @@ public class SubmitterIT {
 
         assertEquals(testFileList, reponselist);
         assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.classpath"),
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<classpath>\n"
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" 
+                        + "<classpath>\n"
                         + "    <classpathentry kind=\"src\" path=\"\"/>\n"
                         + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/"
                         + "org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
-                        + "    <classpathentry kind=\"output\" path=\"\"/>\n" + "</classpath>\n");
+                        + "    <classpathentry kind=\"output\" path=\"\"/>\n" 
+                        + "</classpath>\n");
 
         assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.project"),
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<projectDescription>\n" + "    <name>Works</name>\n"
-                        + "    <comment></comment>\n" + "    <projects>\n" + "    </projects>\n" + "    <buildSpec>\n"
-                        + "        <buildCommand>\n" + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
-                        + "            <arguments>\n" + "            </arguments>\n" + "        </buildCommand>\n"
-                        + "    </buildSpec>\n" + "    <natures>\n"
-                        + "        <nature>org.eclipse.jdt.core.javanature</nature>\n" + "    </natures>\n"
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<projectDescription>\n" 
+                        + "    <name>Works</name>\n"
+                        + "    <comment></comment>\n" 
+                        + "    <projects>\n" + "    </projects>\n" 
+                        + "    <buildSpec>\n"
+                        + "        <buildCommand>\n" 
+                        + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
+                        + "            <arguments>\n" 
+                        + "            </arguments>\n" 
+                        + "        </buildCommand>\n"
+                        + "    </buildSpec>\n" 
+                        + "    <natures>\n"
+                        + "        <nature>org.eclipse.jdt.core.javanature</nature>\n" 
+                        + "    </natures>\n"
                         + "</projectDescription>\n");
 
         assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/Main.java"),
-                "\n" + "public class Main {\n" + "    \n" + "    public static void main(String[] args) {\n"
-                        + "        System.out.println(\"Hello world!\");\n" + "    }\n" + "}\n");
+                "\n" 
+                        + "public class Main {\n" 
+                        + "    \n" 
+                        + "    public static void main(String[] args) {\n"
+                        + "        System.out.println(\"Hello world!\");\n" 
+                        + "    }\n" 
+                        + "}\n");
 
     }
 
@@ -284,27 +316,51 @@ public class SubmitterIT {
 
         assertEquals(testFileList, reponselist);
         assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.classpath"),
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<classpath>\n"
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" 
+                        + "<classpath>\n"
                         + "    <classpathentry kind=\"src\" path=\"\"/>\n"
                         + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/"
                         + "org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
-                        + "    <classpathentry kind=\"output\" path=\"\"/>\n" + "</classpath>\n");
+                        + "    <classpathentry kind=\"output\" path=\"\"/>\n" 
+                        + "</classpath>\n");
 
         assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.project"),
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<projectDescription>\n"
-                        + "    <name>WorksAdded</name>\n" + "    <comment></comment>\n" + "    <projects>\n"
-                        + "    </projects>\n" + "    <buildSpec>\n" + "        <buildCommand>\n"
-                        + "            <name>org.eclipse.jdt.core.javabuilder</name>\n" + "            <arguments>\n"
-                        + "            </arguments>\n" + "        </buildCommand>\n" + "    </buildSpec>\n"
-                        + "    <natures>\n" + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
-                        + "    </natures>\n" + "</projectDescription>\n");
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" 
+                        + "<projectDescription>\n"
+                        + "    <name>WorksAdded</name>\n" 
+                        + "    <comment></comment>\n" 
+                        + "    <projects>\n"
+                        + "    </projects>\n" 
+                        + "    <buildSpec>\n" 
+                        + "        <buildCommand>\n"
+                        + "            <name>org.eclipse.jdt.core.javabuilder</name>\n" 
+                        + "            <arguments>\n"
+                        + "            </arguments>\n" 
+                        + "        </buildCommand>\n" 
+                        + "    </buildSpec>\n"
+                        + "    <natures>\n" 
+                        + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
+                        + "    </natures>\n" 
+                        + "</projectDescription>\n");
 
         assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/Main.java"),
-                "\n" + "public class Main {\n" + "    \n" + "    public static void main(String[] args) {\n"
-                        + "        System.out.println(\"Hello world!\");\n" + "    }\n" + "}\n");
+                "\n" 
+                        + "public class Main {\n" 
+                        + "    \n" 
+                        + "    public static void main(String[] args) {\n"
+                        + "        System.out.println(\"Hello world!\");\n" 
+                        + "    }\n" 
+                        + "}\n");
 
-        assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/Second.java"), "\n" + "public class Second {\n"
-                + "    \n" + "    public Second() {\n" + "        \n" + "    }\n" + "}\n" + "");
+        assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/Second.java"), 
+                "\n" 
+                        + "public class Second {\n"
+                        + "    \n" 
+                        + "    public Second() {\n" 
+                        + "        \n" 
+                        + "    }\n" 
+                        + "}\n" 
+                        + "");
 
     }
 
@@ -338,24 +394,40 @@ public class SubmitterIT {
 
         assertEquals(testFileList, reponselist);
         assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.classpath"),
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<classpath>\n"
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" 
+                        + "<classpath>\n"
                         + "    <classpathentry kind=\"src\" path=\"\"/>\n"
                         + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/"
                         + "org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
-                        + "    <classpathentry kind=\"output\" path=\"\"/>\n" + "</classpath>\n");
+                        + "    <classpathentry kind=\"output\" path=\"\"/>\n" 
+                        + "</classpath>\n");
 
         assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/.project"),
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<projectDescription>\n" + "    <name>Works</name>\n"
-                        + "    <comment></comment>\n" + "    <projects>\n" + "    </projects>\n" + "    <buildSpec>\n"
-                        + "        <buildCommand>\n" + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
-                        + "            <arguments>\n" + "            </arguments>\n" + "        </buildCommand>\n"
-                        + "    </buildSpec>\n" + "    <natures>\n"
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" 
+                        + "<projectDescription>\n" 
+                        + "    <name>Works</name>\n"
+                        + "    <comment></comment>\n" 
+                        + "    <projects>\n" 
+                        + "    </projects>\n" 
+                        + "    <buildSpec>\n"
+                        + "        <buildCommand>\n" 
+                        + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
+                        + "            <arguments>\n" 
+                        + "            </arguments>\n"
+                        + "        </buildCommand>\n"
+                        + "    </buildSpec>\n" 
+                        + "    <natures>\n"
                         + "        <nature>org.eclipse.jdt.core.javanature</nature>\n" + "    </natures>\n"
                         + "</projectDescription>\n");
 
         assertEquals(docker.getSvnFileOverHttp(homeworkname + "/JP001/Main.java"),
-                "\n" + "public class Main {\n" + "    \n" + "    public static void main(String[] args) {\n"
-                        + "        System.out.println(\"Hello world!\");\n" + "    }\n" + "}\n");
+                "\n" 
+                        + "public class Main {\n" 
+                        + "    \n" 
+                        + "    public static void main(String[] args) {\n"
+                        + "        System.out.println(\"Hello world!\");\n" 
+                        + "    }\n"
+                        + "}\n");
 
     }
 
@@ -449,7 +521,6 @@ public class SubmitterIT {
         Submitter submitter = new Submitter(docker.getSvnUrl() + homeworkname + "/JP001/",
                 new Credentials("falseauth", "123456".toCharArray()));
 
-      
         assertThrows(AuthenticationException.class, () -> {
             submitter.submit(dir);
         });
