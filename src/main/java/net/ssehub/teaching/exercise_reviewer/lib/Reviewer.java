@@ -7,7 +7,7 @@ import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager.Crede
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 
 /**
- * ddfas.
+ * This class handles reviewer.
  * @author lukas
  *
  */

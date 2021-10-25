@@ -2,7 +2,7 @@ package net.ssehub.teaching.exercise_reviewer.lib.data;
 
 import java.util.Optional;
 
-// TODO: Auto-generated Javadoc
+
 /**
  * This class is a submission.
  * @author lukas
@@ -10,22 +10,22 @@ import java.util.Optional;
  */
 public class Submission {
     
-    /** The assignment id. */
+    
     private String assignmentId;
     
-    /** The user id. */
+ 
     private String userId;
     
-    /** The user display name. */
+ 
     private String userDisplayName;
     
-    /** The date. */
+   
     private String date;
     
-    /** The group id. */
+  
     private Optional<String> groupId = Optional.empty();
     
-    /** The group name. */
+   
     private Optional<String> groupName = Optional.empty();
     
     
