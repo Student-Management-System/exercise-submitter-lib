@@ -85,8 +85,8 @@
 					<failOnViolation>true</failOnViolation>
 					<includeResources>false</includeResources>
 					<includeTestResources>false</includeTestResources>
-                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                    <suppressionsLocation>checkstyle-test-suppressions.xml</suppressionsLocation>
+					<includeTestSourceDirectory>true</includeTestSourceDirectory>
+					<suppressionsLocation>checkstyle-test-suppressions.xml</suppressionsLocation>
 				</configuration>
 				<executions>
 					<execution>
@@ -132,9 +132,9 @@
 			<version>1.1.1</version>
 		</dependency>
 		<dependency>
-			<groupId>org.tmatesoft.svnkit</groupId>
-			<artifactId>svnkit</artifactId>
-			<version>1.10.3</version>
+			<groupId>net.ssehub.teaching.exercise_submitter</groupId>
+			<artifactId>exercise-submitter-server-api</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>

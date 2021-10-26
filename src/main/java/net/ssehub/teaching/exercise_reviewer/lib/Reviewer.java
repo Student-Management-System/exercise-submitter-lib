@@ -1,9 +1,5 @@
 package net.ssehub.teaching.exercise_reviewer.lib;
 
-import java.util.List;
-
-import net.ssehub.teaching.exercise_reviewer.lib.data.Submission;
-import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager.Credentials;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 
 /**
@@ -13,18 +9,20 @@ import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
  */
 public class Reviewer {
     private Assignment currentAssignment;
-    private Credentials credentials;
-    
+    private String username;
+    private String password;
     private String courseId;
     /**
      * Creates an instance of Reviewer.
      * @param assignment
-     * @param credentials
+     * @param username
+     * @param password
      * @param courseId
      */
-    public Reviewer(Assignment assignment, Credentials credentials, String courseId) {
+    public Reviewer(Assignment assignment, String username, String password, String courseId) {
         this.currentAssignment = assignment;
-        this.credentials = credentials;
+        this.username = username;
+        this.password = password;
         this.courseId = courseId;
     }
     

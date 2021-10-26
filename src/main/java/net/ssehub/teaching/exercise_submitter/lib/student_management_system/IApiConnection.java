@@ -25,6 +25,20 @@ public interface IApiConnection {
     public void login(String username, String password) throws NetworkException, AuthenticationException, ApiException;
     
     /**
+     * Returns the username of the logged-in user.
+     * 
+     * @return The username.
+     */
+    public String getUsername();
+    
+    /**
+     * Returns the authentication token of the logged-in user.
+     * 
+     * @return The token.
+     */
+    public String getToken();
+    
+    /**
      * Gets the given {@link Course}.
      *
      * @param courseId The ID of the course, e.g. <code>java-wise2021</code>.

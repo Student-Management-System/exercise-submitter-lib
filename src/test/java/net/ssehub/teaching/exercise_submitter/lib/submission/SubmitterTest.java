@@ -19,7 +19,7 @@ public class SubmitterTest {
         factory.withDummyApiConnection()
                .withAuthUrl("localhost:5555")
                .withMgmtUrl("localhost:5555")
-               .withSvnUrl("localhost:5555")
+               .withExerciseSubmitterServerUrl("localhost:5555")
                .withUsername("username")
                .withPassword("username")
                .withCourse("java-wise2021");

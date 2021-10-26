@@ -1,7 +1,7 @@
 package net.ssehub.teaching.exercise_submitter.lib.replay;
 
 /**
- * Represents an exception during a Replay of the SVN repository.
+ * Represents an exception during a replay of a submission.
  * 
  * @author Lukas
  *

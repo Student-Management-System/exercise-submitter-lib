@@ -24,7 +24,6 @@ import net.ssehub.studentmgmt.docker.StuMgmtDocker.AssignmentState;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker.Collaboration;
 import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterFactory;
 import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager;
-import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager.Credentials;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.replay.Replayer.Version;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiException;
@@ -46,14 +45,14 @@ public class ReplayerIT {
     @BeforeAll
     public static void setupServers() {
         docker = new StuMgmtDocker();
-        docker.createUser("svn", "abcdefgh");
         docker.createUser("adam", "123456");
         docker.createUser("student1", "123456");
         docker.createUser("student2", "123456");
         docker.createUser("student3", "123456");
         docker.createUser("student4", "123456");
 
-        courseId = docker.createCourse("java", "wise2021", "Programmierpraktikum: Java", "adam", "svn");
+        courseId = docker.createCourse("java", "wise2021", "Programmierpraktikum: Java", "adam");
+        docker.enableExerciseSubmissionServer(courseId);
 
         docker.enrollStudent(courseId, "student1");
         docker.enrollStudent(courseId, "student2");
@@ -64,16 +63,11 @@ public class ReplayerIT {
         docker.createGroup(courseId, "JP002", "student2", "student4");
 
         assignmentids.put("Homework01",
-                docker.createAssignment(courseId, "Homework01", AssignmentState.INVISIBLE, Collaboration.GROUP));
+                docker.createAssignment(courseId, "Homework01", AssignmentState.SUBMISSION, Collaboration.GROUP));
         
         assignmentids.put("addingFile",
                 docker.createAssignment(courseId, "addingFile", AssignmentState.SUBMISSION, Collaboration.GROUP));
-        // start svn
 
-        docker.startSvn(courseId, "svn");
-
-        docker.changeAssignmentState(courseId, assignmentids.get("Homework01"), AssignmentState.SUBMISSION);
-        
         //create submission with more revisions
         File maindir = new File(TESTDATA, "VersionFiles");
         Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
@@ -114,7 +108,7 @@ public class ReplayerIT {
         ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
         fackto.withAuthUrl(docker.getAuthUrl());
         fackto.withMgmtUrl(docker.getStuMgmtUrl());
-        fackto.withSvnUrl(docker.getSvnUrl());
+        fackto.withExerciseSubmitterServerUrl(docker.getExerciseSubmitterServerUrl());
         fackto.withUsername("student1");
         fackto.withPassword("123456");
         fackto.withCourse("java-wise2021");
@@ -131,8 +125,9 @@ public class ReplayerIT {
         
         String homeworkname = "Homework01";
 
-        Replayer replayer = assertDoesNotThrow(() -> new Replayer(docker.getSvnUrl() + homeworkname + "/JP001/",
-            new Credentials("student1", "123456".toCharArray())));
+        Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
+                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
+        
         List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
         
         assertAll(
@@ -152,8 +147,8 @@ public class ReplayerIT {
         
         String homeworkname = "addingFile";
 
-        Replayer replayer = assertDoesNotThrow(() -> new Replayer(docker.getSvnUrl() + homeworkname + "/JP001/",
-                new Credentials("student1", "123456".toCharArray())));
+        Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
+                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
 
         List<Version> versions = assertDoesNotThrow(() ->  replayer.getVersions());
         
@@ -172,59 +167,20 @@ public class ReplayerIT {
         
         String homeworkname = "Homework01";
         
-        Replayer replayer = assertDoesNotThrow(() -> new Replayer(docker.getSvnUrl() + homeworkname + "/JP001/",
-                new Credentials("student1", "123456".toCharArray())));
+        Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
+                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
 
         List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
         
         File result = assertDoesNotThrow(() -> replayer.replay(versions.get(0)));
         
-        File classpath = new File(result, ".classpath");
-        File projekt = new File(result, ".project");
         File main = new File(result, "Main.java");
         assertDoesNotThrow(() -> {
-            String classpathdata = "";
-            try (BufferedReader reader = new BufferedReader(new FileReader(classpath))) {
-                classpathdata = reader.lines().collect(Collectors.joining("\n", "", "\n"));
-            }
-            String projektdata = "";
-            try (BufferedReader reader = new BufferedReader(new FileReader(projekt))) {
-                projektdata = reader.lines().collect(Collectors.joining("\n", "", "\n"));
-            }
             String maindata = "";
             try (BufferedReader reader = new BufferedReader(new FileReader(main))) {
                 maindata = reader.lines().collect(Collectors.joining("\n", "", "\n"));
             }
                     
-            assertEquals(classpathdata,
-                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                    + "<classpath>\n"
-                    + "    <classpathentry kind=\"src\" path=\"\"/>\n"
-                    + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER"
-                        + "/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
-                    + "    <classpathentry kind=\"output\" path=\"\"/>\n"
-                    + "</classpath>\n");
-            
-            
-            assertEquals(projektdata,
-                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                    + "<projectDescription>\n"
-                    + "    <name>Version2</name>\n"
-                    + "    <comment></comment>\n"
-                    + "    <projects>\n"
-                    + "    </projects>\n"
-                    + "    <buildSpec>\n"
-                    + "        <buildCommand>\n"
-                    + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
-                    + "            <arguments>\n"
-                    + "            </arguments>\n"
-                    + "        </buildCommand>\n"
-                    + "    </buildSpec>\n"
-                    + "    <natures>\n"
-                    + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
-                    + "    </natures>\n"
-                    + "</projectDescription>\n");
-           
             assertEquals(maindata, "\n"
                     + "public class Main {\n"
                     + "    \n"
@@ -235,8 +191,6 @@ public class ReplayerIT {
                     + "");
             
             main.delete();
-            projekt.delete();
-            classpath.delete();
             result.deleteOnExit();
 
         });
@@ -248,8 +202,8 @@ public class ReplayerIT {
         
         String homeworkname = "addingFile";
         
-        Replayer replayer = assertDoesNotThrow(() -> new Replayer(docker.getSvnUrl() + homeworkname + "/JP001/",
-              new Credentials("student1", "123456".toCharArray())));
+        Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
+                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
 
         List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
         
@@ -342,8 +296,8 @@ public class ReplayerIT {
         
         String homeworkname = "Homework01";
         
-        Replayer replayer = assertDoesNotThrow(() -> new Replayer(docker.getSvnUrl() + homeworkname + "/JP001/",
-              new Credentials("student1", "123456".toCharArray())));
+        Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
+                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
         
             
         List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
@@ -365,8 +319,8 @@ public class ReplayerIT {
         
         String homeworkname = "Homework01";
         
-        Replayer replayer = assertDoesNotThrow(() -> new Replayer(docker.getSvnUrl() + homeworkname + "/JP001/",
-              new Credentials("student1", "123456".toCharArray())));
+        Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
+                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
         
             
         List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
@@ -382,8 +336,8 @@ public class ReplayerIT {
                 Assignment.State.SUBMISSION, true);
         
         assertDoesNotThrow(() -> {
-            Replayer replayer = new Replayer(docker.getSvnUrl() + assignment.getName() + "/JP001/", 
-                    new Credentials("student1", "123456".toCharArray()));
+            Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
+                    courseId, assignment.getName(), "JP001", docker.getAuthToken("student1"));
             File firstDir = replayer.replay(replayer.getVersions().get(0));
             File secondDir = replayer.replay(replayer.getVersions().get(0));
             
@@ -399,8 +353,8 @@ public class ReplayerIT {
                 Assignment.State.SUBMISSION, true);
         
         assertDoesNotThrow(() -> {
-            Replayer replayer = new Replayer(docker.getSvnUrl() + assignment.getName() + "/JP001/", 
-                    new Credentials("student1", "123456".toCharArray()));
+            Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
+                    courseId, assignment.getName(), "JP001", docker.getAuthToken("student1"));
             File firstDir = replayer.replay(replayer.getVersions().get(0));
             File secondDir = replayer.replay(replayer.getVersions().get(1));
                         
@@ -418,13 +372,13 @@ public class ReplayerIT {
                 Assignment.State.SUBMISSION, true);
         
         assertDoesNotThrow(() -> {
-            Replayer replayer = new Replayer(docker.getSvnUrl() + assignment.getName() + "/JP001/", 
-                    new Credentials("student1", "123456".toCharArray()));
+            Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
+                    courseId, assignment.getName(), "JP001", docker.getAuthToken("student1"));
             File firstDir = replayer.replay(replayer.getVersions().get(0));
             replayer.close();
             
-            Replayer replayer2 = new Replayer(docker.getSvnUrl() + assignment.getName() + "/JP001/", 
-                    new Credentials("student1", "123456".toCharArray()));
+            Replayer replayer2 = new Replayer(docker.getExerciseSubmitterServerUrl(),
+                    courseId, assignment.getName(), "JP001", docker.getAuthToken("student1"));
             File secondDir = replayer2.replay(replayer2.getVersions().get(0));
             replayer2.close();    
             

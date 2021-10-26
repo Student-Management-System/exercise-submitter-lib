@@ -25,21 +25,34 @@ public class DummyApiConnection implements IApiConnection {
     
     private Course course = new Course("Programmierpraktikum I: Java", "java-wise2021");
     
-    private boolean loggedIn;
+    private String loggedInUser;
+    
+    private String token;
     
     @Override
     public void login(String username, String password) throws NetworkException, AuthenticationException, ApiException {
         if (!username.equals(password)) {
             throw new AuthenticationException("Invalid credentials (username must equal password)");
         }
-        loggedIn = true;
+        loggedInUser = username;
+        token = password;
+    }
+    
+    @Override
+    public String getUsername() {
+        return loggedInUser;
+    }
+    
+    @Override
+    public String getToken() {
+        return token;
     }
 
     @Override
     public Course getCourse(String courseId)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         
-        if (!loggedIn) {
+        if (loggedInUser == null) {
             throw new AuthenticationException("Not logged in");
         }
         
@@ -54,7 +67,7 @@ public class DummyApiConnection implements IApiConnection {
     public List<Assignment> getAssignments(Course course)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         
-        if (!loggedIn) {
+        if (loggedInUser == null) {
             throw new AuthenticationException("Not logged in");
         }
         
@@ -70,7 +83,7 @@ public class DummyApiConnection implements IApiConnection {
             throws NetworkException, AuthenticationException, UserNotInCourseException, GroupNotFoundException,
             ApiException {
         
-        if (!loggedIn) {
+        if (loggedInUser == null) {
             throw new AuthenticationException("Not logged in");
         }
         

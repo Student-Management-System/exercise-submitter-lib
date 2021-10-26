@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Arrays;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
@@ -18,38 +17,6 @@ import net.ssehub.teaching.exercise_submitter.lib.submission.Submitter;
 
 public class ExerciseSubmitterManagerTest {
 
-    @Test
-    @Disabled //TODO: change test
-    public void svnUrlGroupAssignment() {
-        Assignment assignment = DummyApiConnection.DUMMY_ASSIGNMENTS.get(4);
-        
-        ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
-                .withUsername("teststudent1")
-                .withPassword("teststudent1")
-                .withCourse("java-wise2021")
-                .withDummyApiConnection()
-                .build());
-        
-        assertEquals("http://127.0.0.1/java/abgabe/Homework03/Group01/",
-                assertDoesNotThrow(() -> manager.getSvnUrl(assignment)));
-    }
-    
-    @Test
-    @Disabled //TODO: change Test
-    public void svnUrlSingleAssignment() {
-        Assignment assignment = DummyApiConnection.DUMMY_ASSIGNMENTS.get(3);
-        
-        ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
-                .withUsername("teststudent1")
-                .withPassword("teststudent1")
-                .withCourse("java-wise2021")
-                .withDummyApiConnection()
-                .build());
-        
-        assertEquals("http://127.0.0.1/java/abgabe/Test02/teststudent1/",
-                assertDoesNotThrow(() -> manager.getSvnUrl(assignment)));
-    }
-    
     @Test
     public void isSubmittableSimpleStudent() {
         Assignment as1 = new Assignment("001", "some-assignment", State.SUBMISSION, true);
@@ -142,7 +109,7 @@ public class ExerciseSubmitterManagerTest {
                 .withPassword("teststudent1")
                 .withCourse("java-wise2021")
                 .withDummyApiConnection()
-                .withSvnUrl("http://localhost:8888/svn/submission")
+                .withExerciseSubmitterServerUrl("http://localhost:8001")
                 .build());
         
         Replayer replayer = assertDoesNotThrow(() -> manager.getReplayer(assignment));

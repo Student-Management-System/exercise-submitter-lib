@@ -1,12 +1,11 @@
 package net.ssehub.teaching.exercise_submitter.lib;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
-import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
+import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 import net.ssehub.teaching.exercise_submitter.lib.replay.Replayer;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.AuthenticationException;
@@ -27,66 +26,15 @@ import net.ssehub.teaching.exercise_submitter.lib.submission.Submitter;
  */
 public class ExerciseSubmitterManager {
     
- 
-    private String svnBaseUrl; 
-    
-  
     private Course course;
     
-
     private IApiConnection mgmtConnection;
     
-   
-    private Credentials credentials;
+    private String exerciseSubmitterServerUrl;
     
     private Replayer replayer;
     
     private Assignment currentReplayerAssignment;
-    
-    
-    
-    /**
-     * The Class Credentials is for save the current username and password for communicating with the Svn server.
-     * 
-     * TODO: move to data package.
-     */
-    public static class Credentials {
-        
-   
-        private String username;
-        
-        
-        private char[] password;
-        
-        /**
-         * Instantiates new Credentials which will contain username and password of the current user.
-         *
-         * @param username the username
-         * @param password the password
-         */
-        public Credentials(String username, char[] password) {
-            this.username = username;
-            this.password = password;
-        }
-        
-        /**
-         * Gets the username.
-         *
-         * @return the username
-         */
-        public String getUsername() {
-            return this.username;
-        }
-        
-        /**
-         * Gets the password.
-         *
-         * @return the password as char
-         */
-        public char[] getPassword() {
-            return this.password;
-        }
-    }
     
     /**
      * Creates a new connection to the student management system with the given username and password.
@@ -95,21 +43,20 @@ public class ExerciseSubmitterManager {
      * @param password The password.
      * @param courseId The ID of the course, e.g. <code>java-wise2021</code>.
      * @param apiConnection The {@link IApiConnection} to use.
-     * @param svnBaseUrl The SVN base URL.
+     * @param exerciseSubmitterServerUrl The URL to the API of the exercise-submitter-server.
      * @throws NetworkException If the network communication fails.
      * @throws AuthenticationException If the authentication fails.
      * @throws UserNotInCourseException If the user is not enrolled in the course or the course does not exist.
      * @throws ApiException If a generic API exception occurs.
      */
     ExerciseSubmitterManager(String username, String password, String courseId, IApiConnection apiConnection,
-                String svnBaseUrl)
+                String exerciseSubmitterServerUrl)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
-        this.credentials = new Credentials(username, password.toCharArray());
         
         mgmtConnection = apiConnection;
         mgmtConnection.login(username, password);
         course = mgmtConnection.getCourse(courseId);
-        this.svnBaseUrl = svnBaseUrl;
+        this.exerciseSubmitterServerUrl = exerciseSubmitterServerUrl;
     }
     
     /**
@@ -178,7 +125,8 @@ public class ExerciseSubmitterManager {
             throw new IllegalArgumentException("Assignment " + assignment.getName() + " is not in submittable");
         }
         
-        return new Submitter(getSvnUrl(assignment), this.credentials);
+        return new Submitter(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
+                getGroupName(assignment), mgmtConnection.getToken());
     }
     
     /**
@@ -192,25 +140,26 @@ public class ExerciseSubmitterManager {
      * @throws UserNotInCourseException the user not in course exception
      * @throws GroupNotFoundException the group not found exception
      * @throws ApiException If the group name of a group assignment cannot be retrieved.
-     * @throws IOException 
      * @see #isReplayable(Assignment)
      */
     public Replayer getReplayer(Assignment assignment)
             throws IllegalArgumentException, NetworkException, AuthenticationException, UserNotInCourseException,
-            GroupNotFoundException, ApiException, IOException {
+            GroupNotFoundException, ApiException {
         if (!isReplayable(assignment)) {
             throw new IllegalArgumentException("Assignment " + assignment.getName() + " is not replayable");
         }
         
         if (replayer  == null) {
        
-            this.replayer = new Replayer(getSvnUrl(assignment), this.credentials);
+            this.replayer = new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
+                    getGroupName(assignment), mgmtConnection.getToken());
             currentReplayerAssignment = assignment;
             
         } else {
             if (currentReplayerAssignment == null || (!currentReplayerAssignment.equals(assignment))) {
                 
-                this.replayer = new Replayer(getSvnUrl(assignment), this.credentials);
+                this.replayer = new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
+                        getGroupName(assignment), mgmtConnection.getToken());
                 currentReplayerAssignment = assignment;
             }
         }
@@ -247,19 +196,6 @@ public class ExerciseSubmitterManager {
     
 
     /**
-     * Creates the SVN URL for the given assignment. Package visiblity for test cases.
-     * 
-     * @param assignment The assignment.
-     * 
-     * @return The URL for the SVN location of the submission. Ends with a slash.
-     * 
-     * @throws ApiException If the group name of a group assignment cannot be retrieved. 
-     */
-    String getSvnUrl(Assignment assignment) throws ApiException {
-        return svnBaseUrl + '/' + assignment.getName() + '/' + getGroupName(assignment) + '/';
-    }
-    
-    /**
      * Return the group name for the given assignment. May be the username if this is not a group work.
      *
      * @param assignment The assignment.
@@ -278,7 +214,7 @@ public class ExerciseSubmitterManager {
             
             groupName = mgmtConnection.getGroupName(course, assignment);
         } else {
-            groupName = this.credentials.getUsername();
+            groupName = mgmtConnection.getUsername();
         }
         return groupName;
     }

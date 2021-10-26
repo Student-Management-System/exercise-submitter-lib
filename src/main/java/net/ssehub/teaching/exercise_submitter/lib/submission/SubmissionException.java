@@ -2,7 +2,7 @@ package net.ssehub.teaching.exercise_submitter.lib.submission;
 
 
 /**
- * Represents an exception during a submission to the SVN repository.
+ * Represents an exception during a submission to the server.
  * 
  * @author Adam
  */

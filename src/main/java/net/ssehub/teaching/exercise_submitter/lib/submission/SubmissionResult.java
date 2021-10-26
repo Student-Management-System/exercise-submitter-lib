@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * The result of a submission to the SVN repository.
+ * The result of a submission to the server.
  * 
  * @author Adam
  */

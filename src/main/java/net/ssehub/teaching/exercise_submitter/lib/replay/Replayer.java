@@ -5,89 +5,79 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
+import java.time.Instant;
+import java.util.Base64;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-
-import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager;
+import net.ssehub.teaching.exercise_submitter.server.api.ApiClient;
+import net.ssehub.teaching.exercise_submitter.server.api.ApiException;
+import net.ssehub.teaching.exercise_submitter.server.api.api.SubmissionApi;
+import net.ssehub.teaching.exercise_submitter.server.api.model.FileDto;
 
 /**
- * Replays versions from the SVN version history of an exercise submission.
+ * Replays versions from the exercise-submitter-server version history of an exercise submission.
  *
- * @author Lukas
  * @author Adam
+ * @author Lukas
  */
 public class Replayer implements Closeable {
 
-    private SVNURL url;
-    private ExerciseSubmitterManager.Credentials credentials;
-    private SVNClientManager clientmanager;
+    private String courseId;
+    
+    private String assignmentName;
+    
+    private String groupName;
+    
+    private SubmissionApi api;
     
     private Map<Version, File> cachedFiles = new HashMap<Version, File>();
 
     /**
-     * Creates a new replayer for the given SVN URL.
+     * Creates a new replayer for the given assignment.
+     * 
+     * @param baseUrl The URL of the exercise-submitter-server API.
+     * @param courseId the ID of the course to submit to.
+     * @param assignmentName The name of the assignment to submit to.
+     * @param groupName The name of the group to submit to. May be the students name for non-group assignments.
+     * @param token The token to authenticate with. This is the same as used for the student management system. 
      *
-     * @param url         The URL to the homework submission folder.
-     * @param credentials The username and password
-     * @throws IOException
      */
-    public Replayer(String url, ExerciseSubmitterManager.Credentials credentials) throws IOException {
-        this.credentials = credentials;
-        try {
-            this.createSVNURL(url);
-        } catch (SVNException e) {
-            throw new IOException("Urltype is not supported");
-        }
-        this.createClientmanager();
-
+    public Replayer(String baseUrl, String courseId, String assignmentName, String groupName, String token) {
+        ApiClient client = new ApiClient();
+        client.setBasePath(baseUrl);
+        client.setAccessToken(token);
+        this.api = new SubmissionApi(client);
+        
+        this.courseId = courseId;
+        this.assignmentName = assignmentName;
+        this.groupName = groupName;
     }
-
+    
     /**
      * Represents a version in the homework submission history.
      */
     public static class Version {
 
-
         private String author;
 
-        private LocalDateTime timestamp;
-
-        private long revision;
+        private Instant timestamp;
 
         /**
          * Creates a new version.
          *
          * @param author    The author that created this version.
          * @param timestamp The timestamp of this version.
-         * @param revision  The SVNrevisionid of this version
          */
-        Version(String author, LocalDateTime timestamp, long revision) {
+        Version(String author, Instant timestamp) {
             this.author = author;
             this.timestamp = timestamp;
-            this.revision = revision;
         }
 
         /**
@@ -105,22 +95,13 @@ public class Replayer implements Closeable {
          *
          * @return The timestamp of this version.
          */
-        public LocalDateTime getTimestamp() {
+        public Instant getTimestamp() {
             return this.timestamp;
         }
 
-        /**
-         * Return the revisionid from this version.
-         *
-         * @return the revisionid from this version
-         */
-        public long getRevision() {
-            return this.revision;
-        }
-       
         @Override
         public int hashCode() {
-            return Objects.hash(author, revision, timestamp);
+            return Objects.hash(author, timestamp);
         }
 
         @Override
@@ -135,14 +116,12 @@ public class Replayer implements Closeable {
                 return false;
             }
             Version other = (Version) obj;
-            return Objects.equals(author, other.author) && revision == other.revision
-                    && Objects.equals(timestamp, other.timestamp);
+            return Objects.equals(author, other.author) && Objects.equals(timestamp, other.timestamp);
         }
 
         @Override
         public String toString() {
-            return "Version [author=" + this.author + ", timestamp=" + this.timestamp + ", revision=" + this.revision
-                    + "]";
+            return "Version [author=" + this.author + ", timestamp=" + this.timestamp + "]";
         }
 
     }
@@ -156,32 +135,12 @@ public class Replayer implements Closeable {
      */
     public List<Version> getVersions() throws ReplayException {
         try {
-            SVNRepository repository = this.clientmanager.createRepository(this.url, false);
-            SVNNodeKind nodeKind = repository.checkPath("", -1);
-            if (nodeKind == SVNNodeKind.NONE) {
-                throw new ReplayException("Not a valid repository url");
-            } else if (nodeKind == SVNNodeKind.FILE) {
-                throw new ReplayException("Url points to a file not a directory");
-            }
-            List<Version> list = convertSVNRevisionListEntriesToVersion(repository, "", new ArrayList<Version>())
-                    .stream().distinct().collect(Collectors.toList());
+            return api.listVersions(courseId, assignmentName, groupName).stream()
+                    .map(dto -> new Version(dto.getAuthor(), Instant.ofEpochSecond(dto.getTimestamp())))
+                    .collect(Collectors.toList());
             
-            Comparator<Version> titleComparator = new Comparator<Version>() {
-                /**
-                 * Compares the to version for the earlier time.
-                 */
-                public int compare(Version version1, Version version2) {
-                    return version1.getTimestamp().compareTo(version2.getTimestamp());
-                }
-            };
-            
-            Collections.sort(list, titleComparator);
-            
-            Collections.reverse(list);
-            
-            return list;
-        } catch (SVNException e) {
-            throw new ReplayException(e);
+        } catch (ApiException e) {
+            throw new ReplayException("Failed to retrieve version list", e);
         }
     }
 
@@ -192,24 +151,39 @@ public class Replayer implements Closeable {
      * @param version The version to replay. See {@link #getVersions()}.
      *
      * @return A temporary directory with the submission content.
-     * @throws IOException
      * @throws ReplayException
      */
-    public File replay(Version version) throws IOException, ReplayException {
+    public File replay(Version version) throws ReplayException {
         File temp = null;
         if (this.checkIfCached(version).isPresent()) {
             temp = this.checkIfCached(version).get();
         } else {
             
-            temp = this.createTempDir();
-    
-            SVNUpdateClient client = this.clientmanager.getUpdateClient();
             try {
-                client.doCheckout(this.url, temp, SVNRevision.HEAD,
-                        SVNRevision.create(version.revision), SVNDepth.INFINITY, true);
-                this.cacheVersion(version, temp);
-            } catch (SVNException e) {
-                throw new ReplayException("Cant make checkout", e);
+                temp = this.createTempDir();
+            } catch (IOException e) {
+                throw new ReplayException("Failed to create temporary directory", e);
+            }
+            Path dir = temp.toPath();
+    
+            try {
+                List<FileDto> files = api.getVersion(
+                        courseId, assignmentName, groupName, version.getTimestamp().getEpochSecond());
+                
+                for (FileDto dto : files) {
+                    
+                    Path filepath = dir.resolve(dto.getPath());
+                    byte[] content = Base64.getDecoder().decode(dto.getContent());
+                    Files.write(filepath, content);
+                }
+                
+                cacheVersion(version, temp);
+                
+            } catch (IOException e) {
+                throw new ReplayException("Failed to write file", e);
+                
+            } catch (ApiException e) {
+                throw new ReplayException("Failed to retrieve submission version", e);
             }
         }
 
@@ -248,52 +222,6 @@ public class Replayer implements Closeable {
         for (Map.Entry<Version, File> entry : this.cachedFiles.entrySet()) {
             Replayer.deleteDir(entry.getValue(), null);
         }
-    }
-
-    /**
-     * Create the clientmanager for the SVN connection.
-     */
-    private void createClientmanager() {
-        this.clientmanager = SVNClientManager.newInstance(null,
-                BasicAuthenticationManager.newInstance(this.credentials.getUsername(), this.credentials.getPassword()));
-    }
-
-    /**
-     * Parses a string url into a SVNURL.
-     *
-     * @param url The url that should be parsed
-     * @throws SVNException
-     */
-    private void createSVNURL(String url) throws SVNException {
-        this.url = SVNURL.parseURIEncoded(url);
-    }
-
-    /**
-     * Downloads and converts the SVNRevisionList into Version.
-     *
-     * @param repository  The current repository.
-     * @param path        , default: ""
-     * @param versionlist , empty list
-     * @return List<Version> the versions from the repository which are on the
-     *         server
-     * @throws SVNException
-     */
-    @SuppressWarnings("rawtypes")
-    private static List<Version> convertSVNRevisionListEntriesToVersion(SVNRepository repository, String path,
-            List<Version> versionlist) throws SVNException {
-        Collection entries = repository.getDir(path, -1, null, (Collection) null);
-        Iterator iterator = entries.iterator();
-        while (iterator.hasNext()) {
-            SVNDirEntry entry = (SVNDirEntry) iterator.next();
-            versionlist.add(new Version(entry.getAuthor(),
-                    entry.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(), entry.getRevision()));
-            if (entry.getKind() == SVNNodeKind.DIR) {
-                versionlist = convertSVNRevisionListEntriesToVersion(repository,
-                        path.equals("") ? entry.getName() : path + "/" + entry.getName(), versionlist);
-            }
-        }
-        return versionlist;
-
     }
 
     /**

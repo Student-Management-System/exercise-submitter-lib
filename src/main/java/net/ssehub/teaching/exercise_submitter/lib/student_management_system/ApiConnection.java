@@ -36,6 +36,8 @@ public class ApiConnection implements IApiConnection {
     private ApiClient mgmtClient;
     
     private UserDto loggedInUser;
+    
+    private String token;
 
     /**
      * Instantiates a new API connection.
@@ -50,7 +52,7 @@ public class ApiConnection implements IApiConnection {
         this.mgmtClient = new ApiClient();
         this.mgmtClient.setBasePath(mgmtUrl);
     }
-
+    
     @Override
     public void login(String username, String password) throws NetworkException, AuthenticationException, ApiException {
         AuthControllerApi api = new AuthControllerApi(this.authClient);
@@ -61,7 +63,8 @@ public class ApiConnection implements IApiConnection {
         
         try {
             AuthenticationInfoDto authinfo = api.authenticate(credentials);
-            this.mgmtClient.setAccessToken(authinfo.getToken().getToken());
+            this.token = authinfo.getToken().getToken();
+            this.mgmtClient.setAccessToken(this.token);
             
         } catch (net.ssehub.studentmgmt.sparkyservice_api.ApiException e) {
             if (e.getCode() == 401) {
@@ -83,6 +86,16 @@ public class ApiConnection implements IApiConnection {
         } catch (JsonParseException e) {
             throw new ApiException("Invalid JSON response", e);
         }
+    }
+    
+    @Override
+    public String getUsername() {
+        return loggedInUser.getUsername();
+    }
+    
+    @Override
+    public String getToken() {
+        return token;
     }
 
     @Override

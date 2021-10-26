@@ -2,57 +2,115 @@ package net.ssehub.teaching.exercise_submitter.lib.submission;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Base64;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.tmatesoft.svn.core.SVNAuthenticationException;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
-import org.tmatesoft.svn.core.wc.DefaultSVNCommitParameters;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNCommitClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.xml.sax.SAXException;
-
-import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager;
-import net.ssehub.teaching.exercise_submitter.lib.student_management_system.AuthenticationException;
+import net.ssehub.teaching.exercise_submitter.lib.submission.Problem.Severity;
+import net.ssehub.teaching.exercise_submitter.server.api.ApiClient;
+import net.ssehub.teaching.exercise_submitter.server.api.ApiException;
+import net.ssehub.teaching.exercise_submitter.server.api.api.SubmissionApi;
+import net.ssehub.teaching.exercise_submitter.server.api.model.CheckMessageDto.TypeEnum;
+import net.ssehub.teaching.exercise_submitter.server.api.model.CheckMessageDto;
+import net.ssehub.teaching.exercise_submitter.server.api.model.FileDto;
+import net.ssehub.teaching.exercise_submitter.server.api.model.SubmissionResultDto;
 
 /**
- * Submits solutions to a given SVN exercise submission location.
+ * Submits solutions to a given assignment.
  *
- * @author Lukas
  * @author Adam
+ * @author Lukas
  */
 public class Submitter {
 
-    private SVNClientManager clientmanager;
-    private SVNCommitClient commitclient;
-
-    private String url;
-    private ExerciseSubmitterManager.Credentials cred;
-
+    private String courseId;
+    
+    private String assignmentName;
+    
+    private String groupName;
+    
+    private SubmissionApi api;
+    
     /**
-     * Creates a new submitter for the given SVN location.
+     * Creates a new submitter for the given assignment.
+     * 
+     * @param baseUrl The URL of the exercise-submitter-server API.
+     * @param courseId the ID of the course to submit to.
+     * @param assignmentName The name of the assignment to submit to.
+     * @param groupName The name of the group to submit to. May be the students name for non-group assignments.
+     * @param token The token to authenticate with. This is the same as used for the student management system. 
      *
-     * @param url  The URL of the homework folder that should be submitted to.
-     * @param cred the credentials
      */
-    public Submitter(String url, ExerciseSubmitterManager.Credentials cred) {
-        this.url = url;
-        this.cred = cred;
-
+    public Submitter(String baseUrl, String courseId, String assignmentName, String groupName, String token) {
+        ApiClient client = new ApiClient();
+        client.setBasePath(baseUrl);
+        client.setAccessToken(token);
+        this.api = new SubmissionApi(client);
+        
+        this.courseId = courseId;
+        this.assignmentName = assignmentName;
+        this.groupName = groupName;
     }
 
+    /**
+     * Converts the given file to a {@link FileDto} for submission.
+     * 
+     * @param file The file to submit, relative to the submissionDirectory.
+     * @param submissionDirectory The base submission directory.
+     * 
+     * @return The {@link FileDto} with correct content and path.
+     * 
+     * @throws UncheckedIOException If reading the file content fails.
+     */
+    private static FileDto pathToFileDto(Path file, Path submissionDirectory) throws UncheckedIOException {
+        try {
+            FileDto result = new FileDto();
+            result.setPath(file.toString().replace('\\', '/'));
+            
+            byte[] rawContent = Files.readAllBytes(submissionDirectory.resolve(file));
+            String base64Content = Base64.getEncoder().encodeToString(rawContent);
+            result.setContent(base64Content);
+            
+            return result;
+            
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+    
+    /**
+     * Converts a {@link SubmissionResultDto} with {@link CheckMessageDto}s
+     * to {@link SubmissionResult} with {@link Problem}s.
+     * 
+     * @param dto The DTO to convert.
+     * 
+     * @return The converted {@link SubmissionResult} with all messages.
+     */
+    private static SubmissionResult dtoToSubmissionResult(SubmissionResultDto dto) {
+        var problems = dto.getMessages().stream()
+            .map(message -> {
+                Problem problem = new Problem(message.getCheckName(), message.getMessage(),
+                        message.getType() == TypeEnum.WARNING ? Severity.WARNING : Severity.ERROR);
+                
+                if (message.getFile() != null) {
+                    problem.setFile(new File(message.getFile()));
+                }
+                if (message.getLine() != null) {
+                    problem.setLine(message.getLine());
+                }
+                if (message.getColumn() != null) {
+                    problem.setColumn(message.getColumn());
+                }
+                return problem;
+            })
+            .collect(Collectors.toList());
+        
+        return new SubmissionResult(dto.isAccepted(), problems);
+    }
+    
     /**
      * Submits the given directory.
      *
@@ -62,144 +120,47 @@ public class Submitter {
      *
      * @throws SubmissionException      If the submission fails.
      * @throws IllegalArgumentException If the given directory is not a directory.
-     * @throws AuthenticationException
      */
     public SubmissionResult submit(File directory)
-            throws SubmissionException, IllegalArgumentException, AuthenticationException {
+            throws SubmissionException, IllegalArgumentException {
 
-        if (!directory.isDirectory()) {
+        Path submissionDir = directory.toPath();
+        
+        if (!Files.isDirectory(submissionDir)) {
             throw new IllegalArgumentException(directory + " is not a directory");
         }
-        SubmissionResult submissionresult = null;
-
-        try (SubmissionDirectory submissionDirectory = new SubmissionDirectory()) {
-
-            File result = submissionDirectory.getDirectory();
-
-            this.clientmanager = SVNClientManager.newInstance(null,
-                    BasicAuthenticationManager.newInstance(this.cred.getUsername(), this.cred.getPassword()));
-
-            this.commitclient = this.clientmanager.getCommitClient();
-
-            this.setCommitParameters();
-
-            SVNURL svnurl = SVNURL.parseURIEncoded(this.url);
-
-            this.doCheckout(directory, svnurl, submissionDirectory);
-
-            SVNCommitInfo info = null;
-
-            try {
-                info = this.commitclient.doCommit(new File[] {result}, false,
-                        "ExerciseSubmitter", null, null, false, false,
-                        SVNDepth.INFINITY);
-
-            } catch (SVNAuthenticationException e) {
-                throw new AuthenticationException("SVN cant authenticate succesfully");
-
-            } catch (SVNException e) {
-                SVNErrorMessage errorMsg = e.getErrorMessage();
-                if (errorMsg.hasChildWithErrorCode(SVNErrorCode.REPOS_HOOK_FAILURE)) {
-                    SvnResultHandler handler = new SvnResultHandler(SvnResultHandler.svnErrorMessageToString(errorMsg));
-                    submissionresult = new SubmissionResult(false, handler.parseXmlToProblem());
-                } else {
-                    throw new SubmissionException("Response parse Error");
-                }
-            }
-            if (submissionresult == null) {  
-                if (info.getErrorMessage() != null) {
-                    SvnResultHandler handler = new SvnResultHandler(
-                            SvnResultHandler.svnErrorMessageToString(info.getErrorMessage()));
-                    submissionresult = new SubmissionResult(
-                            info.getErrorMessage().getErrorCode().equals(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED),
-                            handler.parseXmlToProblem());
-                } else {
-                    List<Problem> emptylist = new ArrayList<Problem>();
-                    if (info.getNewRevision() == -1) {
-                        throw new SubmissionException("Version is already submitted");
-                    } else {
-                        submissionresult = new SubmissionResult(true, emptylist);
-                    }
-                }
-            }
-
-        } catch (IOException e) {
-            throw new SubmissionException("cant create temp dir", e);
-            
-        } catch (SVNAuthenticationException e) {
-            throw new AuthenticationException();
-            
-        } catch (SVNException | ParserConfigurationException | SAXException e) {
-            throw new SubmissionException("cant do checkout", e);
-        }
-        return submissionresult;
-
-    }
-
-    /**
-     * Sets the commit parameters which are needed for the checkout.
-     */
-    private void setCommitParameters() {
-        this.commitclient.setCommitParameters(new DefaultSVNCommitParameters() {
-            @Override
-            public Action onMissingFile(File file) {
-                return DELETE;
-            }
-
-            @Override
-            public Action onMissingDirectory(File file) {
-                return DELETE;
-            }
-        });
-    }
-
-    /**
-     * Does a SVN checkout for the project files in the directory from the
-     * repository behind the URL.
-     *
-     * @param directory the directory
-     * @param svnurl the svnurl where the repository is located
-     * @param checkoutprep the checkoutprep
-     * @throws SVNException the SVN exception
-     * @throws SubmissionException the submission exception
-     */
-    private void doCheckout(File directory, SVNURL svnurl, SubmissionDirectory checkoutprep)
-            throws SVNException, SubmissionException {
-        SVNUpdateClient update = this.clientmanager.getUpdateClient();
-        update.doCheckout(svnurl, checkoutprep.getDirectory(),
-                SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, true);
-
-        prepareFilesForCommit(directory, checkoutprep);
         
-        SVNWCClient wcClient = this.clientmanager.getWCClient();
-
-        this.clientmanager.getStatusClient().doStatus(checkoutprep.getDirectory(), SVNRevision.HEAD, SVNDepth.INFINITY,
-            false, false, false, false, status -> {
-                SVNStatusType type = status.getNodeStatus();
-                File file = status.getFile();
-
-                if (type == SVNStatusType.STATUS_UNVERSIONED) {
-                    wcClient.doAdd(file, true, false, false, SVNDepth.INFINITY, false, false);
-
-                } else if (type == SVNStatusType.STATUS_MISSING) {
-                    wcClient.doDelete(file, true, false, false);
-                }
-            }, null);
-    }
-    /**
-     * Prepare the files for commit.
-     * 
-     * @param directory the source directory
-     * @param checkoutprep the current temp preparator
-     * @throws SubmissionException
-     */
-    private void prepareFilesForCommit(File directory, SubmissionDirectory checkoutprep) throws SubmissionException {
+        List<FileDto> files;
         try {
-            checkoutprep.deleteOldFiles();
-            checkoutprep.prepareDir(directory);
+            files = Files.walk(submissionDir)
+                    .filter(p -> Files.isRegularFile(p))
+                    .map(p -> submissionDir.relativize(p))
+                    
+                    // remove unwanted eclipse project files
+                    .filter(p -> !p.equals(Path.of(".classpath")))
+                    .filter(p -> !p.equals(Path.of(".project")))
+                    .filter(p -> !p.equals(Path.of(".checkstyle")))
+                    .filter(p -> !p.startsWith(".settings"))
+                    
+                    .map(filepath -> pathToFileDto(filepath, submissionDir))
+                    
+                    .collect(Collectors.toList());
+            
         } catch (IOException e) {
-            throw new SubmissionException(e);
+            throw new SubmissionException("Failed to list submission directory content", e.getCause());
+            
+        } catch (UncheckedIOException e) {
+            throw new SubmissionException("Failed to read file content", e.getCause());
+        }
+
+        SubmissionResultDto dto;
+        try {
+            dto = api.submit(courseId, assignmentName, groupName, files);
+        } catch (ApiException e) {
+            throw new SubmissionException("Failed to upload submission", e);
         }
         
+        return dtoToSubmissionResult(dto);
     }
+
 }
