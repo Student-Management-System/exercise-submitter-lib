@@ -1,6 +1,9 @@
 package net.ssehub.teaching.exercise_reviewer.lib.data;
 
+import java.util.List;
 import java.util.Optional;
+
+import net.ssehub.teaching.exercise_submitter.lib.submission.Problem;
 
 
 /**
@@ -27,6 +30,9 @@ public class Submission {
     
    
     private Optional<String> groupName = Optional.empty();
+    
+    
+    private Optional<List<Problem>> problems = Optional.empty();
     
     
     /**
@@ -63,6 +69,16 @@ public class Submission {
      */
     public Submission withGroupName(String groupName) {
         this.groupName = Optional.ofNullable(groupName);
+        return this;
+    }
+    /**
+     * Sets the problems if existing.
+     *
+     * @param problems the problems
+     * @return Submission
+     */
+    public Submission withProblems(List<Problem> problems) {
+        this.problems = Optional.ofNullable(problems);
         return this;
     }
     
