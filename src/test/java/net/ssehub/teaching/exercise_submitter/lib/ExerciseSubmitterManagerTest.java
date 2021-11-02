@@ -3,6 +3,8 @@ package net.ssehub.teaching.exercise_submitter.lib;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Arrays;
@@ -117,6 +119,43 @@ public class ExerciseSubmitterManagerTest {
     }
     
     @Test
+    public void getReplayerCachedForSameAssignment() {
+        Assignment assignment = DummyApiConnection.DUMMY_ASSIGNMENTS.get(0);
+        
+        ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
+                .withUsername("teststudent1")
+                .withPassword("teststudent1")
+                .withCourse("java-wise2021")
+                .withDummyApiConnection()
+                .withExerciseSubmitterServerUrl("http://localhost:8001")
+                .build());
+        
+        Replayer replayer1 = assertDoesNotThrow(() -> manager.getReplayer(assignment));
+        Replayer replayer2 = assertDoesNotThrow(() -> manager.getReplayer(assignment));
+        
+        assertSame(replayer1, replayer2);
+    }
+    
+    @Test
+    public void getReplayerNotCachedForDifferentAssignment() {
+        Assignment assignment1 = DummyApiConnection.DUMMY_ASSIGNMENTS.get(0);
+        Assignment assignment2 = new Assignment("010", "Homework10", State.REVIEWED, false);
+        
+        ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
+                .withUsername("teststudent1")
+                .withPassword("teststudent1")
+                .withCourse("java-wise2021")
+                .withDummyApiConnection()
+                .withExerciseSubmitterServerUrl("http://localhost:8001")
+                .build());
+        
+        Replayer replayer1 = assertDoesNotThrow(() -> manager.getReplayer(assignment1));
+        Replayer replayer2 = assertDoesNotThrow(() -> manager.getReplayer(assignment2));
+        
+        assertNotSame(replayer1, replayer2);
+    }
+    
+    @Test
     public void getAllAssignmentsDummyData() {
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
                 .withUsername("teststudent1")
@@ -157,6 +196,32 @@ public class ExerciseSubmitterManagerTest {
                 new Assignment("004", "Test02", State.SUBMISSION, false),
                 new Assignment("005", "Homework03", State.SUBMISSION, true)
                 ), assertDoesNotThrow(() -> manager.getAllReplayableAssignments()));
+    }
+    
+    @Test
+    public void getGroupNameGroupAssignment() {
+        ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
+                .withUsername("teststudent1")
+                .withPassword("teststudent1")
+                .withCourse("java-wise2021")
+                .withDummyApiConnection()
+                .build());
+        
+        assertEquals("Group01",
+                assertDoesNotThrow(() -> manager.getGroupName(DummyApiConnection.DUMMY_ASSIGNMENTS.get(0))));
+    }
+    
+    @Test
+    public void getGroupNameSingleAssignment() {
+        ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
+                .withUsername("teststudent1")
+                .withPassword("teststudent1")
+                .withCourse("java-wise2021")
+                .withDummyApiConnection()
+                .build());
+        
+        assertEquals("teststudent1",
+                assertDoesNotThrow(() -> manager.getGroupName(DummyApiConnection.DUMMY_ASSIGNMENTS.get(2))));
     }
     
 }

@@ -1,6 +1,7 @@
 package net.ssehub.teaching.exercise_submitter.lib;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
@@ -32,9 +33,9 @@ public class ExerciseSubmitterManager {
     
     private String exerciseSubmitterServerUrl;
     
-    private Replayer replayer;
+    private Optional<Replayer> cachedReplayer;
     
-    private Assignment currentReplayerAssignment;
+    private Optional<Assignment> cachedReplayerAssignment;
     
     /**
      * Creates a new connection to the student management system with the given username and password.
@@ -53,10 +54,13 @@ public class ExerciseSubmitterManager {
                 String exerciseSubmitterServerUrl)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         
-        mgmtConnection = apiConnection;
-        mgmtConnection.login(username, password);
-        course = mgmtConnection.getCourse(courseId);
+        this.mgmtConnection = apiConnection;
+        this.mgmtConnection.login(username, password);
+        this.course = mgmtConnection.getCourse(courseId);
         this.exerciseSubmitterServerUrl = exerciseSubmitterServerUrl;
+        
+        this.cachedReplayer = Optional.empty();
+        this.cachedReplayerAssignment = Optional.empty();
     }
     
     /**
@@ -149,22 +153,20 @@ public class ExerciseSubmitterManager {
             throw new IllegalArgumentException("Assignment " + assignment.getName() + " is not replayable");
         }
         
-        if (replayer  == null) {
-       
-            this.replayer = new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
-                    getGroupName(assignment), mgmtConnection.getToken());
-            currentReplayerAssignment = assignment;
+        Replayer result;
+        
+        if (cachedReplayer.isPresent() && cachedReplayerAssignment.map(a -> a.equals(assignment)).orElse(false)) {
+            result = cachedReplayer.get();
             
         } else {
-            if (currentReplayerAssignment == null || (!currentReplayerAssignment.equals(assignment))) {
-                
-                this.replayer = new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
-                        getGroupName(assignment), mgmtConnection.getToken());
-                currentReplayerAssignment = assignment;
-            }
+            result = new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
+                    getGroupName(assignment), mgmtConnection.getToken());
+            
+            cachedReplayer = Optional.of(result);
+            cachedReplayerAssignment = Optional.of(assignment);
         }
-        // TODO: this returns null if init failed and thus causes NullPointerExceptions all over the place
-        return replayer;
+        
+        return result;
      
     }
     
@@ -197,6 +199,8 @@ public class ExerciseSubmitterManager {
 
     /**
      * Return the group name for the given assignment. May be the username if this is not a group work.
+     * <p>
+     * Package visibility for test cases.
      *
      * @param assignment The assignment.
      * @return The group name for the given assignment.
@@ -206,7 +210,7 @@ public class ExerciseSubmitterManager {
      * @throws GroupNotFoundException the group not found exception
      * @throws ApiException If the group name of a group assignment cannot be retrieved.
      */
-    private String getGroupName(Assignment assignment)
+    String getGroupName(Assignment assignment)
             throws NetworkException, AuthenticationException, UserNotInCourseException, GroupNotFoundException,
             ApiException {
         String groupName;
