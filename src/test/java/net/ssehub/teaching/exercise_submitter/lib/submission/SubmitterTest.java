@@ -69,7 +69,7 @@ public class SubmitterTest {
             Path submissionDir = TESTDATA.resolve("SingleFile");
             
             assertThrows(UncheckedIOException.class,
-                    () -> Submitter.pathToFileDto(Path.of("DoesntExist.java"), submissionDir));
+                () -> Submitter.pathToFileDto(Path.of("DoesntExist.java"), submissionDir));
         }
         
         @Test
@@ -77,7 +77,7 @@ public class SubmitterTest {
             Path submissionDir = TESTDATA.resolve("EclipseStructure");
             
             assertThrows(UncheckedIOException.class,
-                    () -> Submitter.pathToFileDto(Path.of("src"), submissionDir));
+                () -> Submitter.pathToFileDto(Path.of("src"), submissionDir));
         }
         
         @Test
@@ -95,7 +95,7 @@ public class SubmitterTest {
             Path submissionDir = TESTDATA.resolve("SingleFile");
             
             FileDto result = assertDoesNotThrow(
-                    () -> Submitter.pathToFileDto(Path.of("Main.java"), submissionDir));
+                () -> Submitter.pathToFileDto(Path.of("Main.java"), submissionDir));
             
             assertEquals("CnB1YmxpYyBjbGFzcyBNYWluIHsKICAgIAogICAgcHVibGljIHN0YXRpYyB2b2lkIG1haW4oU3Ry"
                     + "aW5nW10gYXJncykgewogICAgICAgIFN5c3RlbS5vdXQucHJpbnRsbigiSGVsbG8gd29ybGQhIik7"
