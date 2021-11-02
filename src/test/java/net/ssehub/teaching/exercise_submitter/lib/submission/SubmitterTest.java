@@ -121,7 +121,7 @@ public class SubmitterTest {
             Path submissionDir = TESTDATA.resolve("Encoding");
             
             FileDto result = assertDoesNotThrow(
-                    () -> Submitter.pathToFileDto(Path.of("utf-8.txt"), submissionDir));
+                () -> Submitter.pathToFileDto(Path.of("utf-8.txt"), submissionDir));
             
             byte[] decodedContent = Base64.getDecoder().decode(result.getContent());
             
@@ -133,7 +133,7 @@ public class SubmitterTest {
             Path submissionDir = TESTDATA.resolve("Encoding");
             
             FileDto result = assertDoesNotThrow(
-                    () -> Submitter.pathToFileDto(Path.of("non-text.png"), submissionDir));
+                () -> Submitter.pathToFileDto(Path.of("non-text.png"), submissionDir));
             
             assertEquals(
                     "iVBORw0KGgoAAAANSUhEUgAAAG4AAAAOCAYAAADOrymhAAABhWlDQ1BJQ0MgcHJvZmlsZQAAKJF9"

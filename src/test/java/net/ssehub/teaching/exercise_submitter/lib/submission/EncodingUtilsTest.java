@@ -48,7 +48,7 @@ public class EncodingUtilsTest {
             byte[] result = assertDoesNotThrow(() -> EncodingUtils.getUtf8ConvertedContent(file));
             
             assertThrows(MalformedInputException.class,
-                    () ->StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(result)));
+                () ->StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(result)));
         }
         
     }
