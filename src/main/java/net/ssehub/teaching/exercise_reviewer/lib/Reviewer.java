@@ -10,7 +10,6 @@ import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.AuthenticationException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.NetworkException;
-import net.ssehub.teaching.exercise_submitter.lib.student_management_system.UserNotInCourseException;
 
 /**
  * This class handles reviewer.
