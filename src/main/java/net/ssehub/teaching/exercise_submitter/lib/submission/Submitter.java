@@ -3,6 +3,7 @@ package net.ssehub.teaching.exercise_submitter.lib.submission;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
@@ -13,8 +14,8 @@ import net.ssehub.teaching.exercise_submitter.lib.submission.Problem.Severity;
 import net.ssehub.teaching.exercise_submitter.server.api.ApiClient;
 import net.ssehub.teaching.exercise_submitter.server.api.ApiException;
 import net.ssehub.teaching.exercise_submitter.server.api.api.SubmissionApi;
-import net.ssehub.teaching.exercise_submitter.server.api.model.CheckMessageDto.TypeEnum;
 import net.ssehub.teaching.exercise_submitter.server.api.model.CheckMessageDto;
+import net.ssehub.teaching.exercise_submitter.server.api.model.CheckMessageDto.TypeEnum;
 import net.ssehub.teaching.exercise_submitter.server.api.model.FileDto;
 import net.ssehub.teaching.exercise_submitter.server.api.model.SubmissionResultDto;
 
@@ -72,7 +73,20 @@ public class Submitter {
             FileDto result = new FileDto();
             result.setPath(file.toString().replace('\\', '/'));
             
-            byte[] rawContent = Files.readAllBytes(submissionDirectory.resolve(file));
+            Path absoluteFile = submissionDirectory.resolve(file);
+            
+            byte[] rawContent;
+            
+            String contentType = Files.probeContentType(absoluteFile);
+            if (contentType != null && contentType.startsWith("text")
+                    && !EncodingUtils.checkEncoding(absoluteFile, StandardCharsets.UTF_8)) {
+                
+                rawContent = EncodingUtils.getUtf8ConvertedContent(absoluteFile);
+                
+            } else {
+                rawContent = Files.readAllBytes(absoluteFile);
+            }
+            
             String base64Content = Base64.getEncoder().encodeToString(rawContent);
             result.setContent(base64Content);
             

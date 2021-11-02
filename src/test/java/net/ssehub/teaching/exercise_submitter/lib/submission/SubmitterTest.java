@@ -8,8 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Nested;
@@ -100,6 +102,63 @@ public class SubmitterTest {
             assertEquals("CnB1YmxpYyBjbGFzcyBNYWluIHsKICAgIAogICAgcHVibGljIHN0YXRpYyB2b2lkIG1haW4oU3Ry"
                     + "aW5nW10gYXJncykgewogICAgICAgIFN5c3RlbS5vdXQucHJpbnRsbigiSGVsbG8gd29ybGQhIik7"
                     + "CiAgICB9Cn0K", result.getContent());
+        }
+        
+        @Test
+        public void cp1252TextContentConvertedToUtf8() {
+            Path submissionDir = TESTDATA.resolve("Encoding");
+            
+            FileDto result = assertDoesNotThrow(
+                () -> Submitter.pathToFileDto(Path.of("cp1252.txt"), submissionDir));
+            
+            byte[] decodedContent = Base64.getDecoder().decode(result.getContent());
+            
+            assertEquals("cp 1252\nöäüÖÄÜß\n", new String(decodedContent, StandardCharsets.UTF_8));
+        }
+        
+        @Test
+        public void utf8TextFile() {
+            Path submissionDir = TESTDATA.resolve("Encoding");
+            
+            FileDto result = assertDoesNotThrow(
+                    () -> Submitter.pathToFileDto(Path.of("utf-8.txt"), submissionDir));
+            
+            byte[] decodedContent = Base64.getDecoder().decode(result.getContent());
+            
+            assertEquals("UTF-8\nöäüÖÄÜß\n", new String(decodedContent, StandardCharsets.UTF_8));
+        }
+        
+        @Test
+        public void nonTextFile() {
+            Path submissionDir = TESTDATA.resolve("Encoding");
+            
+            FileDto result = assertDoesNotThrow(
+                    () -> Submitter.pathToFileDto(Path.of("non-text.png"), submissionDir));
+            
+            assertEquals(
+                    "iVBORw0KGgoAAAANSUhEUgAAAG4AAAAOCAYAAADOrymhAAABhWlDQ1BJQ0MgcHJvZmlsZQAAKJF9"
+                    + "kT1Iw0AcxV9TtUUqDnYoopChOlkQFXGUKhbBQmkrtOpgcumH0KQhSXFxFFwLDn4sVh1cnHV1cBUE"
+                    + "wQ8QNzcnRRcp8X9JoUWMB8f9eHfvcfcOEBoVpppd44CqWUY6ERdz+RUx8IogehDCMCISM/VkZiEL"
+                    + "z/F1Dx9f72I8y/vcn6NPKZgM8InEs0w3LOJ14ulNS+e8TxxmZUkhPiceM+iCxI9cl11+41xyWOCZ"
+                    + "YSObniMOE4ulDpY7mJUNlXiKOKqoGuULOZcVzluc1UqNte7JXxgqaMsZrtMcQgKLSCIFETJq2EAF"
+                    + "FmK0aqSYSNN+3MM/6PhT5JLJtQFGjnlUoUJy/OB/8Ltbszg54SaF4kD3i21/jACBXaBZt+3vY9tu"
+                    + "ngD+Z+BKa/urDWDmk/R6W4seAf3bwMV1W5P3gMsdIPKkS4bkSH6aQrEIvJ/RN+WBgVugd9XtrbWP"
+                    + "0wcgS10t3QAHh8BoibLXPN4d7Ozt3zOt/n4AUhhymn38C2YAAAAGYktHRAD/AP8A/6C9p5MAAAAJ"
+                    + "cEhZcwAALiMAAC4jAXilP3YAAAAHdElNRQflCAYMHTBP6ZFYAAAAGXRFWHRDb21tZW50AENyZWF0"
+                    + "ZWQgd2l0aCBHSU1QV4EOFwAAAtVJREFUWMPtWDFv2kAU/lL1X2AEOIMz0X+QDoGBM84UZW5UCYaW"
+                    + "KLYZs7XKVJGobSQfUtUddQIRBpuh+QdhigcfQ/o/Xgcb18EG3ECiVPW33b2799539969Z28RESHD"
+                    + "P4cX2RH85xc3NlV0xdM5/hj2HqzT4dDyEop5FcW8hLYTFQp01fk5YMoNaKoKTVVjsjR4GbGOdv4N"
+                    + "3NNrDJpyML5C7a6DvZVqBLzbp4y3x7D3cJ3j0Qco339hUEmSymh8uQbk+7Ol5nt8rgLichejtTOu"
+                    + "/Aro25gm8uJoBxGiqUYkMh201V2cTW5w1grkZsoQcgxoeSnUOU63abk9wdFWJRQT/YxklODQ8jOb"
+                    + "D+Tg+Fnztgf8OIqfzdj054qvdxOySkZJlhfE0CIOEVAIm0xJJ9NgZNp/xg4REXnEGSPuBUs9i+qh"
+                    + "bLY2Ik+F+zqFxahg2Cn3LrLnEWe5wP/AT2aRCLfpVGAWicC2aafRuRqOkZvTtcSnlXtXcAgQq3G1"
+                    + "d/twR3PhIWwMJgq2ZwEiV6GVXXhr1RgZjeEQjUBnaVvZwGtnYzA5RK0S8RN92DM/Kx182+nj0vyK"
+                    + "wY6OT5Vn2HWs4hCvcZGFty10hX5/vqxA3rCPU27guO/6g8kNcMg2oLWHC9XFRThWoEWkezUFF0cu"
+                    + "tJ+dZ9wzLueQfHGQ0dAVFC+vcBCdnrgQAEobiyyO44/Ayd3Qb34cA8XRJhQf4mS4qKES6J67UE4V"
+                    + "DFoc1WFzc3w2imUcln0OVBgOei7ccvRp7CF8QYWNAfZRXTcFwywW6J731ucb89NBW+VhszXlLf+J"
+                    + "bHZwstPHMRfP785WcFjYnMwaDmExKkQbEM8ikzGqM0Z1pseKuL8+R3UpRwUjXkwTi7bBqCAxqjOL"
+                    + "HM+iupSjesoGZaE9zyKT5agw72eKhurvOSxpTmw9OCtfp8+TkWl5yTyiskUcItjKfnllv7wyZBeX"
+                    + "YRV+A3n/xj14kQXOAAAAAElFTkSuQmCC", result.getContent());
         }
         
     }
