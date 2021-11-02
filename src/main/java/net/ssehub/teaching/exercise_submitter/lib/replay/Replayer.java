@@ -173,6 +173,8 @@ public class Replayer implements Closeable {
                 for (FileDto dto : files) {
                     
                     Path filepath = dir.resolve(dto.getPath());
+                    Files.createDirectories(filepath.getParent());
+                    
                     byte[] content = Base64.getDecoder().decode(dto.getContent());
                     Files.write(filepath, content);
                 }
