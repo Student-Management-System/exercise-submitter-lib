@@ -3,12 +3,14 @@ package net.ssehub.teaching.exercise_reviewer.lib;
 import java.util.List;
 import java.util.Optional;
 
-import net.ssehub.teaching.exercise_reviewer.lib.data.Submission;
+import net.ssehub.teaching.exercise_reviewer.lib.data.Assessment;
 import net.ssehub.teaching.exercise_reviewer.lib.student_management_system.ApiConnection;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
+import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.AuthenticationException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.NetworkException;
+import net.ssehub.teaching.exercise_submitter.lib.student_management_system.UserNotInCourseException;
 
 /**
  * This class handles reviewer.
@@ -17,13 +19,12 @@ import net.ssehub.teaching.exercise_submitter.lib.student_management_system.Netw
  *
  */
 public class Reviewer {
-    private Assignment currentAssignment;
     private String username;
     private char[] password;
     private String courseId;
 
-    private Optional<String> mgmturl = Optional.empty();
-    private Optional<String> authurl = Optional.empty();
+    private String mgmturl;
+    private String authurl;
     private Optional<String> submissionurl = Optional.empty();
 
     private ApiConnection mgmtConnection;
@@ -31,20 +32,23 @@ public class Reviewer {
     /**
      * Creates an instance of Reviewer.
      *
-     * @param assignment
-     * @param username
-     * @param password
-     * @param courseId
-     * @throws ApiException
-     * @throws AuthenticationException
-     * @throws NetworkException
+     * @param username the username
+     * @param password the password
+     * @param courseId the course id
+     * @param mgmturl the mgmturl
+     * @param authurl the authurl
+     * @throws NetworkException the network exception
+     * @throws AuthenticationException the authentication exception
+     * @throws ApiException the api exception
      */
-    public Reviewer(Assignment assignment, String username, String password, String courseId)
+    public Reviewer(String username, String password, String courseId,
+            String mgmturl, String authurl)
             throws NetworkException, AuthenticationException, ApiException {
-        this.currentAssignment = assignment;
         this.username = username;
         this.password = password.toCharArray();
         this.courseId = courseId;
+        this.mgmturl = mgmturl;
+        this.authurl = authurl;
         this.login();
     }
 
@@ -56,31 +60,9 @@ public class Reviewer {
      * @throws ApiException
      */
     private void login() throws NetworkException, AuthenticationException, ApiException {
-        ApiConnection api = new ApiConnection(this.authurl.get(), this.mgmturl.get());
-        api.login(this.username, this.password.toString());
+        ApiConnection api = new ApiConnection(this.authurl, this.mgmturl);
+        api.login(this.username, String.valueOf(this.password));
         this.mgmtConnection = api;
-    }
-
-    /**
-     * adding the mgmturl.
-     *
-     * @param url
-     * @return Reviewer
-     */
-    public Reviewer withMgmtUrl(String url) {
-        this.mgmturl = Optional.ofNullable(url);
-        return this;
-    }
-
-    /**
-     * adding the authurl.
-     *
-     * @param url
-     * @return Reviewer
-     */
-    public Reviewer withAuthUrl(String url) {
-        this.authurl = Optional.ofNullable(url);
-        return this;
     }
 
     /**
@@ -95,14 +77,22 @@ public class Reviewer {
     }
 
     /**
-     * Gets all submission from the assignment.
+     * Gets all assessments from the assignment.
      *
      * @param assignment , submission should be downloaded.
      * @return Reviewer
      * @throws ApiException
      */
-    public List<Submission> getAllSubmissionsFromAssignment(Assignment assignment) throws ApiException {
-        return this.mgmtConnection.getAllSubmissionFromAssignment(this.courseId, assignment);
+    public List<Assessment> getAllSubmissionsFromAssignment(Assignment assignment) throws ApiException {
+        return this.mgmtConnection.getAllAssessmentsFromAssignment(this.courseId, assignment);
+    }
+    /**
+     * Gets all assignments from stuMgmt.
+     * @return List<Assignment>
+     * @throws ApiException
+     */
+    public List<Assignment> getAllAssignments() throws ApiException {
+        return this.mgmtConnection.getAssignments(new Course("java", courseId));    
     }
 
 }
