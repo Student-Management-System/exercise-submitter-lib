@@ -73,11 +73,11 @@ public class ApiConnectionIT {
         //make test submissions
         
        
-        assertDoesNotThrow(() -> submit(new File(TESTDATA, "works"),
+        assertDoesNotThrow(() -> submit(new File(TESTDATA, "SingleFile"),
                     new Assignment(ApiConnectionIT.assignmentids.get("Homework01"), "Homework01",
                     Assignment.State.SUBMISSION, true), "student1"));
         
-        assertDoesNotThrow(() -> submit(new File(TESTDATA, "works"),
+        assertDoesNotThrow(() -> submit(new File(TESTDATA, "SingleFile"),
                 new Assignment(ApiConnectionIT.assignmentids.get("Homework01"), "Homework01",
                 Assignment.State.SUBMISSION, true), "student2"));
 
