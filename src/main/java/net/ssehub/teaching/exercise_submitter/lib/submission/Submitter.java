@@ -57,6 +57,8 @@ public class Submitter {
 
     /**
      * Converts the given file to a {@link FileDto} for submission.
+     * <p>
+     * Package visibility for test cases.
      * 
      * @param file The file to submit, relative to the submissionDirectory.
      * @param submissionDirectory The base submission directory.
@@ -65,7 +67,7 @@ public class Submitter {
      * 
      * @throws UncheckedIOException If reading the file content fails.
      */
-    private static FileDto pathToFileDto(Path file, Path submissionDirectory) throws UncheckedIOException {
+    static FileDto pathToFileDto(Path file, Path submissionDirectory) throws UncheckedIOException {
         try {
             FileDto result = new FileDto();
             result.setPath(file.toString().replace('\\', '/'));
@@ -84,12 +86,14 @@ public class Submitter {
     /**
      * Converts a {@link SubmissionResultDto} with {@link CheckMessageDto}s
      * to {@link SubmissionResult} with {@link Problem}s.
+     * <p>
+     * Package visibility for test cases.
      * 
      * @param dto The DTO to convert.
      * 
      * @return The converted {@link SubmissionResult} with all messages.
      */
-    private static SubmissionResult dtoToSubmissionResult(SubmissionResultDto dto) {
+    static SubmissionResult dtoToSubmissionResult(SubmissionResultDto dto) {
         var problems = dto.getMessages().stream()
             .map(message -> {
                 Problem problem = new Problem(message.getCheckName(), message.getMessage(),
@@ -135,6 +139,9 @@ public class Submitter {
             files = Files.walk(submissionDir)
                     .filter(p -> Files.isRegularFile(p))
                     .map(p -> submissionDir.relativize(p))
+                    
+                    // remove class files
+                    .filter(p -> !p.getFileName().toString().endsWith(".class"))
                     
                     // remove unwanted eclipse project files
                     .filter(p -> !p.equals(Path.of(".classpath")))

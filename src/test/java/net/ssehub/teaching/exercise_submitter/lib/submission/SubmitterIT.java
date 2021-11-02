@@ -1,17 +1,28 @@
 package net.ssehub.teaching.exercise_submitter.lib.submission;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -20,17 +31,27 @@ import org.junit.jupiter.api.Test;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker.AssignmentState;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker.Collaboration;
-import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterFactory;
-import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager;
-import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
-import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiException;
 import net.ssehub.teaching.exercise_submitter.lib.submission.Problem.Severity;
+import net.ssehub.teaching.exercise_submitter.server.api.ApiClient;
+import net.ssehub.teaching.exercise_submitter.server.api.ApiException;
+import net.ssehub.teaching.exercise_submitter.server.api.api.SubmissionApi;
+import net.ssehub.teaching.exercise_submitter.server.api.model.FileDto;
 
 public class SubmitterIT {
 
     private static StuMgmtDocker docker;
 
     private static final File TESTDATA = new File("src/test/resources/SubmitterTest");
+    
+    private static final File SINGLE_FILE_DIR = new File(TESTDATA, "SingleFile");
+    
+    private static final File SINGLE_FILE_OVERWRITTEN_DIR = new File(TESTDATA, "SingleFileDifferent");
+    
+    private static final File TWO_FILE_DIR = new File(TESTDATA, "TwoFiles");
+    
+    private static final File ECLIPSE_DIR = new File(TESTDATA, "EclipseStructure");
+    
+    private static final File COMPILATION_ERROR_DIR = new File(TESTDATA, "CompilationError");
 
     private static String courseId = null;
 
@@ -56,20 +77,38 @@ public class SubmitterIT {
         docker.createGroup(courseId, "JP001", "student1", "student3");
         docker.createGroup(courseId, "JP002", "student2", "student4");
 
-        assignmentids.put("submitTest",
-                docker.createAssignment(courseId, "submitTest", AssignmentState.SUBMISSION, Collaboration.GROUP));
-        assignmentids.put("submitTestEclipse", docker.createAssignment(courseId, "submitTestEclipse",
-                AssignmentState.SUBMISSION, Collaboration.GROUP));
-        assignmentids.put("submitTestExistingFilesOverwritten", docker.createAssignment(courseId,
-                "submitTestExistingFilesOverwritten", AssignmentState.SUBMISSION, Collaboration.GROUP));
-        assignmentids.put("submitTestExistingFilesDeleted", docker.createAssignment(courseId,
-                "submitTestExistingFilesDeleted", AssignmentState.SUBMISSION, Collaboration.GROUP));
-        assignmentids.put("submitTestExistingFilesAdded", docker.createAssignment(courseId,
-                "submitTestExistingFilesAdded", AssignmentState.SUBMISSION, Collaboration.GROUP));
-        assignmentids.put("submitTestwithPreProblems", docker.createAssignment(courseId, "submitTestwithPreProblems",
-                AssignmentState.SUBMISSION, Collaboration.GROUP));
-        assignmentids.put("submitTestwithPostProblem", docker.createAssignment(courseId, "submitTestwithPostProblem",
-                AssignmentState.SUBMISSION, Collaboration.GROUP));
+        assignmentids.put("submitSingleFile",
+                docker.createAssignment(courseId, "submitSingleFile",
+                        AssignmentState.SUBMISSION, Collaboration.GROUP));
+        
+        assignmentids.put("eclipseProjectFilesAndClassFilesIgnored",
+                docker.createAssignment(courseId, "eclipseProjectFilesAndClassFilesIgnored",
+                        AssignmentState.SUBMISSION, Collaboration.GROUP));
+        
+        assignmentids.put("existingFileOverwritten",
+                docker.createAssignment(courseId, "existingFileOverwritten",
+                        AssignmentState.SUBMISSION, Collaboration.GROUP));
+        
+        
+        assignmentids.put("newFileAddedToExistingSubmission",
+                docker.createAssignment(courseId, "newFileAddedToExistingSubmission",
+                        AssignmentState.SUBMISSION, Collaboration.GROUP));
+        
+        assignmentids.put("existingFileDeleted",
+                docker.createAssignment(courseId, "existingFileDeleted",
+                        AssignmentState.SUBMISSION, Collaboration.GROUP));
+        
+        assignmentids.put("tooLargeFileRejected",
+                docker.createAssignment(courseId, "tooLargeFileRejected",
+                        AssignmentState.SUBMISSION, Collaboration.GROUP));
+        
+        assignmentids.put("compilationProblemInResult",
+                docker.createAssignment(courseId, "compilationProblemInResult",
+                        AssignmentState.SUBMISSION, Collaboration.GROUP));
+        
+        assignmentids.put("authFailure",
+                docker.createAssignment(courseId, "authFailure",
+                        AssignmentState.SUBMISSION, Collaboration.GROUP));
     }
 
     @AfterAll
@@ -78,125 +117,156 @@ public class SubmitterIT {
     }
 
     @Test
-    public void submitTest() {
+    public void submitSingleFile() {
         // setup
-        File dir = new File(TESTDATA, "Works");
-        String homeworkname = "submitTest";
+        String homeworkname = "submitSingleFile";
         Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
                 courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
 
         // execute
-        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(dir));
+        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(SINGLE_FILE_DIR));
 
-        // check
+        // check result
         SubmissionResult exptectedEmptyResult = new SubmissionResult(true, Collections.emptyList());
 
         assertEquals(exptectedEmptyResult, result);
 
-        // TODO: check files on server
+        // check files on server
+        List<FileDto> onServer = getLatestSubmission(homeworkname, "JP001");
+        
+        assertAll(
+            () -> assertEquals(1, onServer.size()),
+            () -> assertEquals("Main.java", onServer.get(0).getPath()),
+            () -> assertEquals("\n"
+                    + "public class Main {\n"
+                    + "    \n"
+                    + "    public static void main(String[] args) {\n"
+                    + "        System.out.println(\"Hello world!\");\n"
+                    + "    }\n"
+                    + "}\n",
+                    decodeToUtf8(onServer.get(0).getContent()))
+        );
     }
 
     @Test
-    public void submitTestWithEclipseProjectStructure() {
-        File dir = new File(TESTDATA, "WorksEclipse");
-
-        String homeworkname = "submitTestEclipse";
-        
+    public void eclipseProjectFilesAndClassFilesIgnored() {
+        // setup
+        String homeworkname = "eclipseProjectFilesAndClassFilesIgnored";
         Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
                 courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
+
+        // execute
+        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(ECLIPSE_DIR));
 
         // check result
-        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(dir));
-        List<Problem> emptylist = new ArrayList<Problem>();
-        SubmissionResult resultTest = new SubmissionResult(true, emptylist);
+        SubmissionResult exptectedEmptyResult = new SubmissionResult(true, Collections.emptyList());
 
-        assertEquals(resultTest, result);
+        assertEquals(exptectedEmptyResult, result);
 
-        // TODO: check files on server
+        // check files on server
+        List<FileDto> onServer = getLatestSubmission(homeworkname, "JP001");
+        Set<String> filepaths = onServer.stream().map(FileDto::getPath).collect(Collectors.toSet());
+        
+        assertEquals(Set.of("src/test/Main.java", "src/test/Test.java"), filepaths);
     }
-
+    
     @Test
-    public void submitTestExistingFilesOverwritten() throws InterruptedException {
-
-        File dir = new File(TESTDATA, "Works");
-        File overwrite = new File(TESTDATA, "WorksOverwrite");
-
-        String homeworkname = "submitTestExistingFilesOverwritten";
-
+    public void existingFileOverwritten() throws InterruptedException {
+        // setup
+        String homeworkname = "existingFileOverwritten";
         Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
                 courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
         
-        // simul pre existing file
-        assertDoesNotThrow(() -> submitter.submit(overwrite));
+        // submit pre-existing file
+        assertDoesNotThrow(() -> submitter.submit(SINGLE_FILE_DIR));
         Thread.sleep(1000); // wait a second, since server stores versions by second-based timestamp
-        
+
+        // execute
+        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(SINGLE_FILE_OVERWRITTEN_DIR));
+
         // check result
-        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(dir));
-        List<Problem> emptylist = new ArrayList<Problem>();
-        SubmissionResult resultTest = new SubmissionResult(true, emptylist);
+        SubmissionResult exptectedEmptyResult = new SubmissionResult(true, Collections.emptyList());
 
-        assertEquals(resultTest, result);
+        assertEquals(exptectedEmptyResult, result);
 
-        // TODO: check files on server
+        // check files on server
+        List<FileDto> onServer = getLatestSubmission(homeworkname, "JP001");
+        
+        assertAll(
+            () -> assertEquals(1, onServer.size()),
+            () -> assertEquals("Main.java", onServer.get(0).getPath()),
+            () -> assertEquals("\n"
+                    + "public class Main {\n"
+                    + "    \n"
+                    + "    public static void main(String[] args) {\n"
+                    + "        System.out.println(\"Hello overwritten!\");\n"
+                    + "    }\n"
+                    + "}\n",
+                    decodeToUtf8(onServer.get(0).getContent()))
+        );
     }
 
     @Test
-    public void submitTestExistingFilesAdded() throws InterruptedException {
-
-        File dir = new File(TESTDATA, "Works");
-        File added = new File(TESTDATA, "WorksAdded");
-
-        String homeworkname = "submitTestExistingFilesAdded";
-
+    public void newFileAddedToExistingSubmission() throws InterruptedException {
+        // setup
+        String homeworkname = "newFileAddedToExistingSubmission";
         Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
                 courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
         
-        // making base submit
-        assertDoesNotThrow(() -> submitter.submit(dir));
+        // submit pre-existing file
+        assertDoesNotThrow(() -> submitter.submit(SINGLE_FILE_DIR));
         Thread.sleep(1000); // wait a second, since server stores versions by second-based timestamp
 
-        // adding files
-        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(added));
-        List<Problem> emptylist = new ArrayList<Problem>();
-        SubmissionResult resultTest = new SubmissionResult(true, emptylist);
+        // execute
+        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(TWO_FILE_DIR));
 
-        assertEquals(resultTest, result);
-
-        // TODO: check files on server
-    }
-
-    @Test
-    public void submitTestExistingFilesDeleted() throws InterruptedException {
-
-        File dir = new File(TESTDATA, "Works");
-        File delete = new File(TESTDATA, "WorksDelete");
-
-        String homeworkname = "submitTestExistingFilesDeleted";
-
-        Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
-        
-        // simul pre existing file
-        assertDoesNotThrow(() -> submitter.submit(delete));
-        Thread.sleep(1000); // wait a second, since server stores versions by second-based timestamp
-        
         // check result
-        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(dir));
-        List<Problem> emptylist = new ArrayList<Problem>();
-        SubmissionResult resultTest = new SubmissionResult(true, emptylist);
+        SubmissionResult exptectedEmptyResult = new SubmissionResult(true, Collections.emptyList());
 
-        assertEquals(resultTest, result);
+        assertEquals(exptectedEmptyResult, result);
 
-        // TODO: check files on server
+        // check files on server
+        List<FileDto> onServer = getLatestSubmission(homeworkname, "JP001");
+        Set<String> filepaths = onServer.stream().map(FileDto::getPath).collect(Collectors.toSet());
+        
+        assertEquals(Set.of("Main.java", "Second.java"), filepaths);
     }
 
     @Test
-    public void submitTestwithPreProblems() throws ApiException, IOException {
-        File dir = new File(TESTDATA, "error");
-        File bigFile = new File(dir, "bigfile.txt");
+    public void existingFileDeleted() throws InterruptedException {
+        // setup
+        String homeworkname = "existingFileDeleted";
+        Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
+                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
+        
+        // submit pre-existing file
+        assertDoesNotThrow(() -> submitter.submit(TWO_FILE_DIR));
+        Thread.sleep(1000); // wait a second, since server stores versions by second-based timestamp
+
+        // execute
+        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(SINGLE_FILE_DIR));
+
+        // check result
+        SubmissionResult exptectedEmptyResult = new SubmissionResult(true, Collections.emptyList());
+
+        assertEquals(exptectedEmptyResult, result);
+
+        // check files on server
+        List<FileDto> onServer = getLatestSubmission(homeworkname, "JP001");
+        Set<String> filepaths = onServer.stream().map(FileDto::getPath).collect(Collectors.toSet());
+        
+        assertEquals(Set.of("Main.java"), filepaths);
+    }
+    
+    // #######################################################################
+
+    @Test
+    public void tooLargeFileRejected() throws IOException {
+        File tempDir = Files.createTempDirectory("SubmitterIT.tooLargeFileRejected").toFile();
 
         try {
             // create file above 10mb
+            File bigFile = new File(tempDir, "bigfile.txt");
             bigFile.createNewFile();
             
             FileWriter fw = new FileWriter(bigFile);
@@ -208,94 +278,103 @@ public class SubmitterIT {
             }
             fw.close();
             
-            ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
-            fackto.withAuthUrl(docker.getAuthUrl());
-            fackto.withMgmtUrl(docker.getStuMgmtUrl());
-            fackto.withExerciseSubmitterServerUrl(docker.getExerciseSubmitterServerUrl());
-            fackto.withUsername("student1");
-            fackto.withPassword("123456");
-            fackto.withCourse("java-wise2021");
+            String homeworkname = "tooLargeFileRejected";
+            Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
+                    courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
             
-            ExerciseSubmitterManager manager = fackto.build();
+            // execute
+            SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(tempDir));
             
-            String homeworkname = "submitTestwithPreProblems";
-            String homeworkid = assignmentids.get(homeworkname);
-            Assignment assignment = new Assignment(homeworkid, homeworkname, Assignment.State.SUBMISSION, true);
-            
-            Submitter submitter = manager.getSubmitter(assignment);
-            
-            SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(dir));
-            List<Problem> list = new ArrayList<Problem>();
-            
+            // check result
             Problem p1 = new Problem("file-size", "Submission size is too large", Severity.ERROR);
-            list.add(p1);
-            
             Problem p2 = new Problem("file-size", "File is too large", Severity.ERROR);
             p2.setFile(new File("bigfile.txt"));
-            list.add(p2);
             
-            SubmissionResult resultTest = new SubmissionResult(false, list);
-            
-            assertEquals(resultTest, result);
+            SubmissionResult expectedRejectingResult = new SubmissionResult(false, Arrays.asList(p1, p2));
+            assertEquals(expectedRejectingResult, result);
             
         } finally {
-            bigFile.delete();
+            Files.walkFileTree(tempDir.toPath(), new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    Files.delete(dir);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
         }
-        
     }
-
+    
     @Test
-    public void submitTestwithPostProblems() {
-
-        File dir = new File(TESTDATA, "error");
-
-        String homeworkname = "submitTestwithPostProblem";
-        
+    public void compilationProblemInResult() {
+        // setup
+        String homeworkname = "compilationProblemInResult";
         Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
                 courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
+        
+        // execute
+        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(COMPILATION_ERROR_DIR));
 
-        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(dir));
-        List<Problem> list = new ArrayList<Problem>();
-
+        // check result
         Problem p1 = new Problem("checkstyle", "Empty if block", Severity.ERROR);
         p1.setFile(new File("Main.java"));
         p1.setLine(4);
         p1.setColumn(27);
-        list.add(p1);
         
         Problem p2 = new Problem("checkstyle",
                 "'if rcurly' has incorrect indentation level 12, expected level should be 8", Severity.ERROR);
         p2.setFile(new File("Main.java"));
         p2.setLine(6);
         p2.setColumn(13);
-        list.add(p2);
         
         Problem p3 = new Problem("javac", "cannot find symbol", Severity.ERROR);
         p3.setFile(new File("Main.java"));
         p3.setLine(7);
         p3.setColumn(9);
-        list.add(p3);
 
-        SubmissionResult resultTest = new SubmissionResult(true, list);
+        SubmissionResult expectedResult = new SubmissionResult(true, Arrays.asList(p1, p2, p3));
+        assertEquals(expectedResult, result);
 
-        assertEquals(resultTest, result);
-
-    }
-
-    @Test
-    public void submitTestWithAuthFailure() {
-
-        File dir = new File(TESTDATA, "Works");
+        // check files on server
+        List<FileDto> onServer = getLatestSubmission(homeworkname, "JP001");
+        Set<String> filepaths = onServer.stream().map(FileDto::getPath).collect(Collectors.toSet());
         
-        String homeworkname = "submitTest";
-
+        assertEquals(Set.of("Main.java"), filepaths);
+    }
+    
+    @Test
+    public void authFailure() {
+        // setup
+        String homeworkname = "authFailure";
         Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", "random_token");
+                courseId, homeworkname, "JP001", "invalid_token");
 
-        assertThrows(SubmissionException.class, () -> {
-            submitter.submit(dir);
-        });
-
+        // execute
+        SubmissionException e = assertThrows(SubmissionException.class, () -> submitter.submit(SINGLE_FILE_DIR));
+        
+        assertAll(
+            () -> assertEquals("Failed to upload submission", e.getMessage()),
+            () -> assertInstanceOf(ApiException.class, e.getCause()),
+            () -> assertEquals("Unauthorized", e.getCause().getMessage())
+        );
+    }
+    
+    private List<FileDto> getLatestSubmission(String assignment, String group) {
+        ApiClient client = new ApiClient();
+        client.setBasePath(docker.getExerciseSubmitterServerUrl());
+        client.setAccessToken(docker.getAuthToken("adam"));
+        
+        SubmissionApi api = new SubmissionApi(client);
+        
+        return assertDoesNotThrow(() -> api.getLatest(courseId, assignment, group));
+    }
+    
+    private static String decodeToUtf8(String base64) {
+        return new String(Base64.getDecoder().decode(base64), StandardCharsets.UTF_8);
     }
 
 }
