@@ -3,6 +3,7 @@ package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -302,6 +303,47 @@ public class ApiConnectionIT {
         }
         assertNotNull(assignment, "Precondition: Assignment " + name + " found");
         return assignment;
+    }
+    
+    @Test
+    public void hasTutorRightsFalseForStudent() {
+        ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+        assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
+        
+        assertFalse(assertDoesNotThrow(() -> api.hasTutorRights(new Course("Java", "java-wise2021"))));
+    }
+    
+    @Test
+    public void hasTutorRightsTrueForLecturer() {
+        ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+        assertDoesNotThrow(() -> api.login("adam", "123456"));
+        
+        assertTrue(assertDoesNotThrow(() -> api.hasTutorRights(new Course("Java", "java-wise2021"))));
+    }
+    
+    @Test
+    public void hasTutorRightsNotInCourseThrows() {
+        ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+        assertDoesNotThrow(() -> api.login("notInCourse", "abcdefgh"));
+        
+        assertThrows(UserNotInCourseException.class, () -> api.hasTutorRights(new Course("Java", "java-wise2021")));
+    }
+    
+    @Test
+    public void hasTutorRightsNotLoggedInThrows() {
+        ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+        AuthenticationException e = assertThrows(AuthenticationException.class,
+            () -> api.hasTutorRights(new Course("Java", "java-wise2021")));
+        assertEquals("Not logged in", e.getMessage());
+    }
+    
+    @Test
+    public void getGroupNameNonExistingCourseThrows() {
+        ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+        assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
+        
+        assertThrows(UserNotInCourseException.class,
+            () -> api.hasTutorRights(new Course("NotExisting", "notexisting")));
     }
 
 }

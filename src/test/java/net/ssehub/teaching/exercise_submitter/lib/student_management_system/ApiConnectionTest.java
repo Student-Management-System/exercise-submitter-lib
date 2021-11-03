@@ -224,6 +224,60 @@ public class ApiConnectionTest {
         );
     }
     
+    @Test
+    public void hasTutorRightsInvalidHost() {
+        ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
+        fakeLogin(api);
+        
+        NetworkException e = assertThrows(NetworkException.class,
+            () -> api.hasTutorRights(new Course("", "java-wise2021")));
+        assertTrue(e.getCause() instanceof IOException);
+    }
+    
+    @Test
+    public void hasTutorRightsNoServiceListening() {
+        ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
+        fakeLogin(api);
+        
+        NetworkException e = assertThrows(NetworkException.class,
+            () -> api.hasTutorRights(new Course("", "java-wise2021")));
+        assertTrue(e.getCause() instanceof IOException);
+    }
+    
+    @Test
+    public void hasTutorRightsWrongContentType() {
+        DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
+        dummyServer.start();
+        
+        ApiConnection api = new ApiConnection(
+                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        fakeLogin(api);
+        
+        ApiException e = assertThrows(ApiException.class, () -> api.hasTutorRights(new Course("", "java-wise2021")));
+        assertAll(
+            () -> assertSame(ApiException.class, e.getClass()),
+            () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
+            () -> assertNotNull(e.getCause())
+        );
+    }
+    
+    @Test
+    public void hasTutorRightsInvalidJson() {
+        DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
+        dummyServer.start();
+        
+        ApiConnection api = new ApiConnection(
+                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        fakeLogin(api);
+        
+        ApiException e = assertThrows(ApiException.class, () -> api.hasTutorRights(new Course("", "java-wise2021")));
+        assertAll(
+            () -> assertSame(ApiException.class, e.getClass()),
+            () -> assertEquals("Invalid JSON response", e.getMessage()),
+            () -> assertTrue(e.getCause() instanceof JsonSyntaxException)
+        );
+    }
+    
     private void fakeLogin(ApiConnection api) {
         UserDto user = new UserDto();
         user.setId("123");

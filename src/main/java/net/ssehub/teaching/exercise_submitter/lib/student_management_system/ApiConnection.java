@@ -13,9 +13,12 @@ import net.ssehub.studentmgmt.backend_api.api.AssignmentApi;
 import net.ssehub.studentmgmt.backend_api.api.AssignmentRegistrationApi;
 import net.ssehub.studentmgmt.backend_api.api.AuthenticationApi;
 import net.ssehub.studentmgmt.backend_api.api.CourseApi;
+import net.ssehub.studentmgmt.backend_api.api.CourseParticipantsApi;
 import net.ssehub.studentmgmt.backend_api.model.AssignmentDto.CollaborationEnum;
 import net.ssehub.studentmgmt.backend_api.model.CourseDto;
 import net.ssehub.studentmgmt.backend_api.model.GroupDto;
+import net.ssehub.studentmgmt.backend_api.model.ParticipantDto;
+import net.ssehub.studentmgmt.backend_api.model.ParticipantDto.RoleEnum;
 import net.ssehub.studentmgmt.backend_api.model.UserDto;
 import net.ssehub.studentmgmt.sparkyservice_api.api.AuthControllerApi;
 import net.ssehub.studentmgmt.sparkyservice_api.model.AuthenticationInfoDto;
@@ -207,6 +210,36 @@ public class ApiConnection implements IApiConnection {
         }
         
         return groupName;
+    }
+    
+
+    @Override
+    public boolean hasTutorRights(Course course)
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
+        
+        if (this.loggedInUser == null) {
+            throw new AuthenticationException("Not logged in");
+        }
+        
+        CourseParticipantsApi api = new CourseParticipantsApi(mgmtClient);
+        
+        boolean isTutor;
+        try {
+            ParticipantDto dto = api.getParticipant(course.getId(), this.loggedInUser.getId());
+            isTutor = dto.getRole() == RoleEnum.LECTURER || dto.getRole() == RoleEnum.TUTOR;
+            
+        } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
+            if (e.getCode() == 403) {
+                throw new UserNotInCourseException(parseResponseMessage(e.getResponseBody()));
+            }
+            
+            throw handleMgmtException(e);
+            
+        } catch (JsonParseException e) {
+            throw new ApiException("Invalid JSON response", e);
+        }
+        
+        return isTutor;
     }
     
     /**

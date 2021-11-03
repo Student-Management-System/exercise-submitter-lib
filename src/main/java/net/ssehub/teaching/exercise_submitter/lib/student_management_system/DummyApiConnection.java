@@ -101,5 +101,11 @@ public class DummyApiConnection implements IApiConnection {
         
         return "Group01";
     }
+    
+    @Override
+    public boolean hasTutorRights(Course course)
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
+        return loggedInUser.equals("tutor");
+    }
 
 }

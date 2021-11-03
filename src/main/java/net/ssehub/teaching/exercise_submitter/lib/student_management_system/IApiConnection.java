@@ -85,5 +85,15 @@ public interface IApiConnection {
     public String getGroupName(Course course, Assignment assignment)
             throws NetworkException, AuthenticationException, UserNotInCourseException, GroupNotFoundException,
             ApiException;
+    
+    /**
+     * Checks if the currently logged-in user is a tutor or lecturer in the given course.
+     * 
+     * @param course The course to check the role in.
+     * 
+     * @return Whether the currently logged-in user is a tutor in the given course.
+     */
+    public boolean hasTutorRights(Course course)
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException;
         
 }

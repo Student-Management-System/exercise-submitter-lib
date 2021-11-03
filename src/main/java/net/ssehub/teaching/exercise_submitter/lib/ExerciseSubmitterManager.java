@@ -64,6 +64,24 @@ public class ExerciseSubmitterManager {
     }
     
     /**
+     * Returns the API connection to the student management system.
+     * 
+     * @return The {@link IApiConnection} for the student management system.
+     */
+    public IApiConnection getStudentManagementConnection() {
+        return mgmtConnection;
+    }
+    
+    /**
+     * Returns the {@link Course} that this manager is connected to.
+     * 
+     * @return The course of this manager.
+     */
+    public Course getCourse() {
+        return course;
+    }
+    
+    /**
      * Returns all assignments (all states).
      *
      * @return A list of all assignments.
