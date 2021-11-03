@@ -24,14 +24,14 @@ public class Assessment {
     private Assignment assignment;
     private boolean isDraft;
 
-    private Optional<Integer> achivedPoints;
-    private Optional<String> comment;
-    private Optional<Group> group;
-    private Optional<User> user;
-    private Optional<User> creator;
-    private Optional<User> lastUpdated;
+    private Optional<Integer> achivedPoints = Optional.empty();
+    private Optional<String> comment = Optional.empty();
+    private Optional<Group> group = Optional.empty();
+    private Optional<User> user = Optional.empty();
+    private Optional<User> creator = Optional.empty();
+    private Optional<User> lastUpdated = Optional.empty();
 
-    private Optional<List<Problem>> problems;
+    private Optional<List<Problem>> problems = Optional.empty();
 
     /**
      * Crate a new instance from assessment.
@@ -234,6 +234,13 @@ public class Assessment {
      */
     public Optional<User> getUser() {
         return user;
+    }
+    /**
+     * Gets the assignment.
+     * @return the assignment
+     */
+    public Assignment getAssignment() {
+        return assignment;
     }
 
 }

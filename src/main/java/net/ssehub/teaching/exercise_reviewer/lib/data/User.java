@@ -27,7 +27,10 @@ public class User {
      * @param role the role
      */
     public User(String userId, String username, String displayname, String role) {
-        
+        this.userId = userId;
+        this.username = username;
+        this.displayname = displayname;
+        this.role = role;
     }
     
     /**
