@@ -17,7 +17,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.ThrowingConsumer;
 
 import com.google.gson.JsonSyntaxException;
 
@@ -28,254 +30,167 @@ import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 
 public class ApiConnectionTest {
     
-    @Test
-    public void loginAuthUrlInvalidHost() {
-        ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.matter.local");
-        NetworkException e = assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
-        assertTrue(e.getCause() instanceof IOException);
-    }
-    
-    @Test
-    public void loginAuthUrlNoServiceListening() {
-        ApiConnection api = new ApiConnection("http://localhost:55555", "http://doesnt.matter.local");
-        NetworkException e = assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
-        assertTrue(e.getCause() instanceof IOException);
-    }
-    
-    @Test
-    public void loginAuthResponseWrongContentType() {
-        DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
-        dummyServer.start();
+    @Nested
+    public class Login {
         
-        ApiConnection api = new ApiConnection(
-                "http://localhost:" + dummyServer.getPort(), "http://doesnt.matter.local");
+        @Test
+        public void authUrlInvalidHostThrows() {
+            ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.matter.local");
+            NetworkException e = assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
+            assertTrue(e.getCause() instanceof IOException);
+        }
         
-        ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "123456"));
-        assertAll(
-            () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
-            () -> assertNotNull(e.getCause())
-        );
-    }
-    
-    @Test
-    public void loginAuthResponseInvalidJson() {
-        DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
-        dummyServer.start();
+        @Test
+        public void authUrlNoServiceListeningThrows() {
+            ApiConnection api = new ApiConnection("http://localhost:55555", "http://doesnt.matter.local");
+            NetworkException e = assertThrows(NetworkException.class, () -> api.login("student1", "Bunny123"));
+            assertTrue(e.getCause() instanceof IOException);
+        }
         
-        ApiConnection api = new ApiConnection(
-                "http://localhost:" + dummyServer.getPort(), "http://doesnt.matter.local");
+        @Test
+        public void authResponseWrongContentTypeThrows() {
+            DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
+            dummyServer.start();
+            
+            ApiConnection api = new ApiConnection(
+                    "http://localhost:" + dummyServer.getPort(), "http://doesnt.matter.local");
+            
+            ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "123456"));
+            assertAll(
+                () -> assertSame(ApiException.class, e.getClass()),
+                () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
+                () -> assertNotNull(e.getCause())
+            );
+        }
         
-        ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "123456"));
-        assertAll(
-            () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Invalid JSON response", e.getMessage()),
-            () -> assertTrue(e.getCause() instanceof JsonSyntaxException)
-        );
+        @Test
+        public void authResponseInvalidJsonThrows() {
+            DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
+            dummyServer.start();
+            
+            ApiConnection api = new ApiConnection(
+                    "http://localhost:" + dummyServer.getPort(), "http://doesnt.matter.local");
+            
+            ApiException e = assertThrows(ApiException.class, () -> api.login("student1", "123456"));
+            assertAll(
+                () -> assertSame(ApiException.class, e.getClass()),
+                () -> assertEquals("Invalid JSON response", e.getMessage()),
+                () -> assertTrue(e.getCause() instanceof JsonSyntaxException)
+            );
+        }
+        
     }
 
-    @Test
-    public void getCourseInvalidHost() {
-        ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
-        NetworkException e = assertThrows(NetworkException.class, () -> api.getCourse("java-ise2021"));
-        assertTrue(e.getCause() instanceof IOException);
+    public class StandardExceptionHandlingTests {
+        
+        protected ThrowingConsumer<ApiConnection> sut;
+        
+        public StandardExceptionHandlingTests(ThrowingConsumer<ApiConnection> sut) {
+            this.sut = sut;
+        }
+        
+        @Test
+        public void invalidHostThrows() {
+            ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
+            fakeLogin(api);
+            NetworkException e = assertThrows(NetworkException.class, () -> sut.accept(api));
+            assertTrue(e.getCause() instanceof IOException);
+        }
+        
+        @Test
+        public void noServiceListeningThrows() {
+            ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
+            fakeLogin(api);
+            NetworkException e = assertThrows(NetworkException.class, () -> sut.accept(api));
+            assertTrue(e.getCause() instanceof IOException);
+        }
+        
+        @Test
+        public void wrongContentTypeThrows() {
+            DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
+            dummyServer.start();
+            
+            ApiConnection api = new ApiConnection(
+                    "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+            fakeLogin(api);
+            
+            ApiException e = assertThrows(ApiException.class, () -> sut.accept(api));
+            assertAll(
+                () -> assertSame(ApiException.class, e.getClass()),
+                () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
+                () -> assertNotNull(e.getCause())
+            );
+        }
+        
+        @Test
+        public void invalidJsonThrows() {
+            DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
+            dummyServer.start();
+            
+            ApiConnection api = new ApiConnection(
+                    "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+            fakeLogin(api);
+            
+            ApiException e = assertThrows(ApiException.class, () -> sut.accept(api));
+            assertAll(
+                () -> assertSame(ApiException.class, e.getClass()),
+                () -> assertEquals("Invalid JSON response", e.getMessage()),
+                () -> assertTrue(e.getCause() instanceof JsonSyntaxException)
+            );
+        }
+        
+        
     }
     
-    @Test
-    public void getCourseNoServiceListening() {
-        ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
-        NetworkException e = assertThrows(NetworkException.class, () -> api.getCourse("java-wise2021"));
-        assertTrue(e.getCause() instanceof IOException);
+    @Nested
+    public class GetCourse extends StandardExceptionHandlingTests {
+        
+        public GetCourse() {
+            super(api -> api.getCourse("java-wise2021"));
+        }
     }
     
-    @Test
-    public void getCourseWrongContentType() {
-        DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
-        dummyServer.start();
+    @Nested
+    public class GetAssignments extends StandardExceptionHandlingTests {
         
-        ApiConnection api = new ApiConnection(
-                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
-        
-        ApiException e = assertThrows(ApiException.class, () -> api.getCourse("java-wise2021"));
-        assertAll(
-            () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
-            () -> assertNotNull(e.getCause())
-        );
+        public GetAssignments() {
+            super(api -> api.getAssignments(new Course("Java", "java-wise2021")));
+        }
     }
     
-    @Test
-    public void getCourseInvalidJson() {
-        DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
-        dummyServer.start();
+    @Nested
+    public class GetGroupName extends StandardExceptionHandlingTests {
         
-        ApiConnection api = new ApiConnection(
-                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        public GetGroupName() {
+            super(api -> api.getGroupName(
+                    new Course("Java", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
+        }
         
-        ApiException e = assertThrows(ApiException.class, () -> api.getCourse("java-wise2021"));
-        assertAll(
-            () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Invalid JSON response", e.getMessage()),
-            () -> assertTrue(e.getCause() instanceof JsonSyntaxException)
-        );
+        @Test
+        public void notLoggedInThrows() {
+            ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://doesnt.matter.local");
+            
+            AuthenticationException e = assertThrows(AuthenticationException.class, () -> sut.accept(api));
+            assertEquals("Not logged in", e.getMessage());
+        }
+        
     }
     
-    @Test
-    public void getAssignmentsInvalidHost() {
-        ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
-        NetworkException e = assertThrows(NetworkException.class,
-            () -> api.getAssignments(new Course("Java", "java-wise20210")));
-        assertTrue(e.getCause() instanceof IOException);
-    }
-    
-    @Test
-    public void getAssignmentsNoServiceListening() {
-        ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
-        NetworkException e = assertThrows(NetworkException.class,
-            () -> api.getAssignments(new Course("Java", "java-wise20210")));
-        assertTrue(e.getCause() instanceof IOException);
-    }
-    
-    @Test
-    public void getAssignmentsWrongContentType() {
-        DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
-        dummyServer.start();
+    @Nested
+    public class HasTutorRights extends StandardExceptionHandlingTests {
         
-        ApiConnection api = new ApiConnection(
-                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
+        public HasTutorRights() {
+            super(api -> api.hasTutorRights(new Course("Java", "java-wise2021")));
+        }
         
-        ApiException e = assertThrows(ApiException.class, () -> api.getAssignments(new Course("", "java-wise2021")));
-        assertAll(
-            () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
-            () -> assertNotNull(e.getCause())
-        );
-    }
-    
-    @Test
-    public void getAssignmentsInvalidJson() {
-        DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
-        dummyServer.start();
+        @Test
+        public void notLoggedInThrows() {
+            ApiConnection api = new ApiConnection("http://doesnt.matter.local", "http://doesnt.matter.local");
+            
+            AuthenticationException e = assertThrows(AuthenticationException.class, () -> sut.accept(api));
+            assertEquals("Not logged in", e.getMessage());
+        }
         
-        ApiConnection api = new ApiConnection(
-                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
-        
-        ApiException e = assertThrows(ApiException.class, () -> api.getAssignments(new Course("", "java-wise2021")));
-        assertAll(
-            () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Invalid JSON response", e.getMessage()),
-            () -> assertTrue(e.getCause() instanceof JsonSyntaxException)
-        );
-    }
-    
-    @Test
-    public void getGroupNameInvalidHost() {
-        ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
-        fakeLogin(api);
-        
-        NetworkException e = assertThrows(NetworkException.class, () -> api.getGroupName(
-                new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
-        assertTrue(e.getCause() instanceof IOException);
-    }
-    
-    @Test
-    public void getGroupNameNoServiceListening() {
-        ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
-        fakeLogin(api);
-        
-        NetworkException e = assertThrows(NetworkException.class, () -> api.getGroupName(
-                new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
-        assertTrue(e.getCause() instanceof IOException);
-    }
-    
-    @Test
-    public void getGroupNameWrongContentType() {
-        DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
-        dummyServer.start();
-        
-        ApiConnection api = new ApiConnection(
-                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
-        fakeLogin(api);
-        
-        ApiException e = assertThrows(ApiException.class, () -> api.getGroupName(
-                new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
-        assertAll(
-            () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
-            () -> assertNotNull(e.getCause())
-        );
-    }
-    
-    @Test
-    public void getGroupNameInvalidJson() {
-        DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
-        dummyServer.start();
-        
-        ApiConnection api = new ApiConnection(
-                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
-        fakeLogin(api);
-        
-        ApiException e = assertThrows(ApiException.class, () -> api.getGroupName(
-                new Course("", "java-wise2021"), new Assignment("123", "", State.SUBMISSION, true)));
-        assertAll(
-            () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Invalid JSON response", e.getMessage()),
-            () -> assertTrue(e.getCause() instanceof JsonSyntaxException)
-        );
-    }
-    
-    @Test
-    public void hasTutorRightsInvalidHost() {
-        ApiConnection api = new ApiConnection("http://doesnt.exist.local:8000", "http://doesnt.exist.local:3000");
-        fakeLogin(api);
-        
-        NetworkException e = assertThrows(NetworkException.class,
-            () -> api.hasTutorRights(new Course("", "java-wise2021")));
-        assertTrue(e.getCause() instanceof IOException);
-    }
-    
-    @Test
-    public void hasTutorRightsNoServiceListening() {
-        ApiConnection api = new ApiConnection("http://localhost:55555", "http://localhost:55555");
-        fakeLogin(api);
-        
-        NetworkException e = assertThrows(NetworkException.class,
-            () -> api.hasTutorRights(new Course("", "java-wise2021")));
-        assertTrue(e.getCause() instanceof IOException);
-    }
-    
-    @Test
-    public void hasTutorRightsWrongContentType() {
-        DummyHttpServer dummyServer = new DummyHttpServer("text/plain; charset=utf-8", "Hello World!");
-        dummyServer.start();
-        
-        ApiConnection api = new ApiConnection(
-                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
-        fakeLogin(api);
-        
-        ApiException e = assertThrows(ApiException.class, () -> api.hasTutorRights(new Course("", "java-wise2021")));
-        assertAll(
-            () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Unknown exception: Hello World!", e.getMessage()),
-            () -> assertNotNull(e.getCause())
-        );
-    }
-    
-    @Test
-    public void hasTutorRightsInvalidJson() {
-        DummyHttpServer dummyServer = new DummyHttpServer("application/json; charset=utf-8", "{invalid");
-        dummyServer.start();
-        
-        ApiConnection api = new ApiConnection(
-                "http://doesnt.matter.local", "http://localhost:" + dummyServer.getPort());
-        fakeLogin(api);
-        
-        ApiException e = assertThrows(ApiException.class, () -> api.hasTutorRights(new Course("", "java-wise2021")));
-        assertAll(
-            () -> assertSame(ApiException.class, e.getClass()),
-            () -> assertEquals("Invalid JSON response", e.getMessage()),
-            () -> assertTrue(e.getCause() instanceof JsonSyntaxException)
-        );
     }
     
     private void fakeLogin(ApiConnection api) {
