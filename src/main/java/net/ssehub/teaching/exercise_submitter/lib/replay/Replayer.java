@@ -1,19 +1,22 @@
 package net.ssehub.teaching.exercise_submitter.lib.replay;
 
-import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import net.ssehub.teaching.exercise_submitter.server.api.ApiClient;
@@ -37,7 +40,7 @@ public class Replayer implements Closeable {
     
     private SubmissionApi api;
     
-    private Map<Version, File> cachedFiles = new HashMap<Version, File>();
+    private Map<Version, Path> cachedFiles = new HashMap<>();
 
     /**
      * Creates a new replayer for the given assignment.
@@ -154,17 +157,14 @@ public class Replayer implements Closeable {
      * @throws ReplayException
      */
     public File replay(Version version) throws ReplayException {
-        File temp = null;
-        if (this.checkIfCached(version).isPresent()) {
-            temp = this.checkIfCached(version).get();
-        } else {
-            
+        Path resultCheckout = cachedFiles.get(version);
+        
+        if (resultCheckout == null) {
             try {
-                temp = this.createTempDir();
+                resultCheckout = Files.createTempDirectory("submission_replay");
             } catch (IOException e) {
                 throw new ReplayException("Failed to create temporary directory", e);
             }
-            Path dir = temp.toPath();
     
             try {
                 List<FileDto> files = api.getVersion(
@@ -172,24 +172,35 @@ public class Replayer implements Closeable {
                 
                 for (FileDto dto : files) {
                     
-                    Path filepath = dir.resolve(dto.getPath());
+                    Path filepath = resultCheckout.resolve(dto.getPath());
                     Files.createDirectories(filepath.getParent());
                     
                     byte[] content = Base64.getDecoder().decode(dto.getContent());
                     Files.write(filepath, content);
                 }
                 
-                cacheVersion(version, temp);
                 
             } catch (IOException e) {
+                try {
+                    deleteDirectory(resultCheckout);
+                } catch (IOException e1) {
+                    // ignore
+                }
                 throw new ReplayException("Failed to write file", e);
                 
             } catch (ApiException e) {
+                try {
+                    deleteDirectory(resultCheckout);
+                } catch (IOException e1) {
+                    // ignore
+                }
                 throw new ReplayException("Failed to retrieve submission version", e);
             }
+            
+            cachedFiles.put(version, resultCheckout);
         }
 
-        return temp;
+        return resultCheckout.toFile();
     }
 
     /**
@@ -202,18 +213,14 @@ public class Replayer implements Closeable {
      *
      * @return Whether the given directory and the submitted version have the same
      *         content.
-     * @throws IOException
-     * @throws ReplayException
+     *         
+     * @throws IOException If comparing the file content fails.
+     * @throws ReplayException If retrieving the given version fails.
      */
     public boolean isSameContent(File directory, Version version) throws IOException, ReplayException {
+        File result = replay(version);
 
-        File result = this.replay(version);
-
-        boolean sameContent = this.compareTwoFiles(directory.toPath(), result.toPath(), directory, true);
-
-
-        return sameContent;
-
+        return pathContentEqual(directory.toPath(), result.toPath());
     }
 
     /**
@@ -221,108 +228,91 @@ public class Replayer implements Closeable {
      */
     @Override
     public void close() throws IOException {
-        for (Map.Entry<Version, File> entry : this.cachedFiles.entrySet()) {
-            Replayer.deleteDir(entry.getValue(), null);
-        }
-    }
-
-    /**
-     * Creates a temporay dir.
-     *
-     * @return the temp Dir as File
-     * @throws IOException
-     */
-    private File createTempDir() throws IOException {
-        File temp = File.createTempFile("exercise_submission", null);
-        temp.delete();
-        temp.mkdir();
-        return temp;
-    }
-
-    /**
-     * Compares two directories if they have the same content.
-     *
-     * @param baselocal , first dir
-     * @param basetemp  , second dir
-     * @param firstfile , firstdir as File
-     * @param result    , always set to true
-     * @return true, for same content false for NOT the same content.
-     */
-    private boolean compareTwoFiles(Path baselocal, Path basetemp, File firstfile, boolean result) {
-        if (firstfile.isFile()) {
+        IOException exception = null;
+        
+        for (Path directory : cachedFiles.values()) {
             try {
-                String firstFile = "";
-                try (BufferedReader reader = new BufferedReader(new FileReader(firstfile))) {
-                    firstFile = reader.lines().collect(Collectors.joining("\n", "", "\n"));
-                }
-                String secondFile = "";
-                Path relativized = baselocal.relativize(firstfile.toPath());
-                try (BufferedReader reader = new BufferedReader(
-                        new FileReader(basetemp.resolve(relativized).toFile()))) {
-                    secondFile = reader.lines().collect(Collectors.joining("\n", "", "\n"));
-                }
-                if (!firstFile.equals(secondFile)) {
-                    result = false;
-                }
+                deleteDirectory(directory);
             } catch (IOException e) {
-                result = false;
-            }
-        } else if (firstfile.list().length != 0) {
-            for (int i = 0; i < firstfile.listFiles().length; i++) {
-                result = this.compareTwoFiles(baselocal, basetemp, firstfile.listFiles()[i], result);
-            }
-        } else {
-            Path relativized = baselocal.relativize(firstfile.toPath());
-            File emptydir = basetemp.resolve(relativized).toFile();
-            if (!(emptydir.exists() && emptydir.isDirectory() && emptydir.listFiles().length == 0)) {
-                result = false;
+                exception = e;
             }
         }
+        
+        cachedFiles.clear();
+        
+        if (exception != null) {
+            throw exception;
+        }
+    }
+
+    /**
+     * Checks if the two paths have equal content. If paths are files, their content is compared. If paths are
+     * directories, they must have the same files with equal content (recursive {@link #pathContentEqual(Path, Path)}).
+     * <p>
+     * Package visibility for test cases.
+     * 
+     * @param path1 The first path to compare.
+     * @param path2 The second path to compare.
+     * 
+     * @return Whether the two paths are equal.
+     * 
+     * @throws IOException If reading files or directories fails.
+     */
+    static boolean pathContentEqual(Path path1, Path path2) throws IOException {
+        boolean result = false;
+        
+        if (Files.isRegularFile(path1) && Files.isRegularFile(path2)) {
+            result = Arrays.equals(Files.readAllBytes(path1), Files.readAllBytes(path2));
+            
+        } else if (Files.isDirectory(path1) && Files.isDirectory(path2)) {
+            Set<Path> content1 = Files.list(path1)
+                    .map(p -> path1.relativize(p))
+                    .collect(Collectors.toSet());
+            Set<Path> content2 = Files.list(path2)
+                    .map(p -> path2.relativize(p))
+                    .collect(Collectors.toSet());
+            
+            if (content1.equals(content2)) {
+                try {
+                    result = content1.stream()
+                            .map(nested -> {
+                                try {
+                                    return pathContentEqual(path1.resolve(nested), path2.resolve(nested));
+                                } catch (IOException e) {
+                                    throw new UncheckedIOException(e);
+                                }
+                            })
+                            .reduce(Boolean::logicalAnd)
+                            .orElse(true);
+                } catch (UncheckedIOException e) {
+                    throw e.getCause();
+                }
+            }
+        }
+        
         return result;
     }
-
+    
     /**
-     * Deletes the given dir.
-     *
-     * @param dir         , directory that should be deleted
-     * @param currentfile , the same as above or null
+     * Deletes a directory with all content of it.
+     * 
+     * @param directory The folder to delete.
+     * 
+     * @throws IOException If deleting the directory fails.
      */
-    private static void deleteDir(File dir, File currentfile) {
-        if (currentfile == null) {
-            currentfile = dir;
-        }
-        if (currentfile.isFile() || currentfile.list().length == 0) {
-            currentfile.delete();
-        } else {
-         
-            File[] files  = currentfile.listFiles();
-            for (int i = 0; i < files.length; i++) {
-                deleteDir(dir, files[i]);
-                if (currentfile.list().length == 0) {
-                    currentfile.delete();
-                }
-                
-            
+    private static void deleteDirectory(Path directory) throws IOException {
+        Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
             }
-
-        }
-
-    }
-    /**
-     * Caches the version.
-     * @param version
-     * @param dir
-     */
-    private void cacheVersion(Version version, File dir) {
-        this.cachedFiles.put(version, dir);
-    }
-    /**
-     * Checks if the version is cached. And gives when its cached give the dir back.
-     * @param version
-     * @return Optional<File>
-     */
-    private Optional<File> checkIfCached(Version version) {
-        return Optional.ofNullable(this.cachedFiles.get(version));
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
 }

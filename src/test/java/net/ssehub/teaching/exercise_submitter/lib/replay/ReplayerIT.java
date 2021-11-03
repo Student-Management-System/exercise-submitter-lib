@@ -3,33 +3,29 @@ package net.ssehub.teaching.exercise_submitter.lib.replay;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.util.HashMap;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import net.ssehub.studentmgmt.docker.StuMgmtDocker;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker.AssignmentState;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker.Collaboration;
-import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterFactory;
-import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager;
-import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.replay.Replayer.Version;
-import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiException;
-import net.ssehub.teaching.exercise_submitter.lib.student_management_system.GroupNotFoundException;
-import net.ssehub.teaching.exercise_submitter.lib.student_management_system.NetworkException;
-import net.ssehub.teaching.exercise_submitter.lib.submission.SubmissionException;
+import net.ssehub.teaching.exercise_submitter.lib.submission.SubmissionResult;
 import net.ssehub.teaching.exercise_submitter.lib.submission.Submitter;
 
 public class ReplayerIT {
@@ -37,10 +33,16 @@ public class ReplayerIT {
     private static StuMgmtDocker docker;
 
     private static final File TESTDATA = new File("src/test/resources/ReplayerTest");
-
-    private static String courseId = null;
-
-    private static Map<String, String> assignmentids = new HashMap<String, String>();
+    
+    private static final File VERSION_1 = new File(TESTDATA, "Version1");
+    
+    private static final File VERSION_2 = new File(TESTDATA, "Version2");
+    
+    private static final File TWO_FILES = new File(TESTDATA, "TwoFiles");
+    
+    private static final File SUB_DIRECTORY = new File(TESTDATA, "SubDirectory");
+    
+    private static String courseId;
 
     @BeforeAll
     public static void setupServers() {
@@ -62,40 +64,21 @@ public class ReplayerIT {
         docker.createGroup(courseId, "JP001", "student1", "student3");
         docker.createGroup(courseId, "JP002", "student2", "student4");
 
-        assignmentids.put("Homework01",
-                docker.createAssignment(courseId, "Homework01", AssignmentState.SUBMISSION, Collaboration.GROUP));
+        docker.createAssignment(courseId, "noSubmissions", AssignmentState.SUBMISSION, Collaboration.GROUP);
+        docker.createAssignment(courseId, "twoSubmissions", AssignmentState.SUBMISSION, Collaboration.GROUP);
+        docker.createAssignment(courseId, "twoFiles", AssignmentState.SUBMISSION, Collaboration.GROUP);
+        docker.createAssignment(courseId, "subDirectory", AssignmentState.SUBMISSION, Collaboration.GROUP);
         
-        assignmentids.put("addingFile",
-                docker.createAssignment(courseId, "addingFile", AssignmentState.SUBMISSION, Collaboration.GROUP));
-
-        //create submission with more revisions
-        File maindir = new File(TESTDATA, "VersionFiles");
-        Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
-                Assignment.State.SUBMISSION, true);
-
-        for (int i = 1; i <= 2; i++) {
-            File dir = new File(maindir, "Version" + i);
-            assertDoesNotThrow(() -> { 
-                submit(dir, assignment);
-                Thread.sleep(4000);
-              //cause svn doesnt like fast changes
-            });
-            
-        }
-        //TODO: Solve problem
-       /* maindir = new File(TESTDATA, "VersionFiles");
-        Assignment secondAssignment = new Assignment(assignmentids.get("addingFile"), "addingFile",
-                Assignment.State.SUBMISSION, true);
-
-        for (int i = 2; i <= 3; i++) {
-            File dir = new File(maindir, "Version" + i);
-            assertDoesNotThrow(() -> { 
-                submit(dir, secondAssignment);
-                Thread.sleep(4000);
-              //cause svn doesnt like fast changes
-            });
-            
-        } */
+        submit(VERSION_1, "twoSubmissions", "JP001", "student3");
+        try {
+            Thread.sleep(1000); // wait one second, as server only accepts one submission per second
+        } catch (InterruptedException e) {
+        } 
+        submit(VERSION_2, "twoSubmissions", "JP001", "student1");
+        
+        submit(TWO_FILES, "twoFiles", "JP001", "student1");
+        
+        submit(SUB_DIRECTORY, "subDirectory", "JP001", "student1");
     }
 
     @AfterAll
@@ -103,293 +86,266 @@ public class ReplayerIT {
         docker.close();
     }
 
-    public static void submit(File file, Assignment assignment) throws IllegalArgumentException, SubmissionException,
-            NetworkException, GroupNotFoundException, ApiException {
-        ExerciseSubmitterFactory fackto = new ExerciseSubmitterFactory();
-        fackto.withAuthUrl(docker.getAuthUrl());
-        fackto.withMgmtUrl(docker.getStuMgmtUrl());
-        fackto.withExerciseSubmitterServerUrl(docker.getExerciseSubmitterServerUrl());
-        fackto.withUsername("student1");
-        fackto.withPassword("123456");
-        fackto.withCourse("java-wise2021");
-
-        ExerciseSubmitterManager manager = fackto.build();
-
-        Submitter submitter = manager.getSubmitter(assignment);
-        // check result
-        submitter.submit(file);
-    }
-
-    @Test
-    public void getVersionListTest() {
+    private static void submit(File submissionDirectory, String assignmentName, String groupName, String user) {
         
-        String homeworkname = "Homework01";
-
-        Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
+        Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(), courseId,
+                assignmentName, groupName, docker.getAuthToken(user));
         
-        List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(submissionDirectory));
         
-        assertAll(
-            ()->assertTrue(versions.size() == 2),
-            ()->assertTrue(versions.get(0).getAuthor().equals("student1")),
-            ()-> assertTrue(versions.get(1).getAuthor().equals("student1"))
-        );
-
-     
-
+        assertTrue(result.isAccepted());
     }
     
-    //TODO: better test
-    @Test
-    @Disabled
-    public void getVersionListTestwithMoreFiles() {
+    @Nested
+    public class GetVersions {
         
-        String homeworkname = "addingFile";
-
-        Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
-
-        List<Version> versions = assertDoesNotThrow(() ->  replayer.getVersions());
+        @Test
+        public void unauthorizedThrows() {
+            Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId, "noSubmissions", "JP001",
+                    "invalid_token");
+            
+            assertThrows(ReplayException.class, () -> replayer.getVersions());
+        }
         
-        assertAll(
-            ()->assertTrue(versions.size() == 2),
-            ()->assertTrue(versions.get(0).getAuthor().equals("student1")),
-            ()-> assertTrue(versions.get(1).getAuthor().equals("student1"))
-        );
-
-  
-
+        @Test
+        public void noVersions() {
+            Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId, "noSubmissions", "JP001",
+                    docker.getAuthToken("student1"));
+            
+            List<Version> versionList = assertDoesNotThrow(() -> replayer.getVersions());
+            
+            assertEquals(Collections.emptyList(), versionList);
+        }
+        
+        @Test
+        public void twoVersions() {
+            Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "twoSubmissions", "JP001", docker.getAuthToken("student1"));
+            
+            List<Version> versionList = assertDoesNotThrow(() -> replayer.getVersions());
+            
+            assertAll(
+                () -> assertEquals(2, versionList.size()),
+                () -> assertEquals("student1", versionList.get(0).getAuthor()),
+                () -> assertEquals("student3", versionList.get(1).getAuthor()),
+                
+                // check that there is a reasonable timestamp
+                () -> assertTrue(
+                        Instant.now().getEpochSecond() - versionList.get(0).getTimestamp().getEpochSecond() < 60),
+                () -> assertTrue(
+                        Instant.now().getEpochSecond() - versionList.get(1).getTimestamp().getEpochSecond() < 60)
+            );
+        }
+        
     }
     
-    @Test
-    public void replayTest() {
+    @Nested
+    public class Replay {
         
-        String homeworkname = "Homework01";
+        @Test
+        public void invalidVersionThrows() {
+            Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId, "noSubmissions", "JP001",
+                    docker.getAuthToken("student1"));
+            
+            assertThrows(ReplayException.class, () -> replayer.replay(new Version("student1", Instant.now())));
+        }
         
-        Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
-
-        List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+        @Test
+        public void invalidTokenThrows() {
+            Replayer replayerCorrectToken = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "twoSubmissions", "JP001", docker.getAuthToken("student1"));
+            
+            List<Version> versions = assertDoesNotThrow(() -> replayerCorrectToken.getVersions());
+            
+            Replayer replayerIncorrectToken = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "twoSubmissions", "JP001", "invalid_token");
+            
+            assertThrows(ReplayException.class, () -> replayerIncorrectToken.replay(versions.get(0)));
+        }
         
-        File result = assertDoesNotThrow(() -> replayer.replay(versions.get(0)));
-        
-        File main = new File(result, "Main.java");
-        assertDoesNotThrow(() -> {
-            String maindata = "";
-            try (BufferedReader reader = new BufferedReader(new FileReader(main))) {
-                maindata = reader.lines().collect(Collectors.joining("\n", "", "\n"));
+        @Test
+        public void latestVersionSingleFile() throws IOException {
+            try (Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "twoSubmissions", "JP001", docker.getAuthToken("student1"))) {
+                
+                List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+                
+                File tempDirectory = assertDoesNotThrow(() -> replayer.replay(versions.get(0)));
+                
+                File sourceFile = new File(tempDirectory, "Main.java");
+                assertAll(
+                    () -> assertEquals(1, tempDirectory.listFiles().length),
+                    () -> assertTrue(sourceFile.isFile()),
+                    () -> assertEquals("\n"
+                            + "public class Main {\n"
+                            + "    \n"
+                            + "    public static void main(String[] args) {\n"
+                            + "        System.out.println(\"Hello Revision2!\");\n"
+                            + "    }\n"
+                            + "}\n",
+                            Files.readString(sourceFile.toPath(), StandardCharsets.UTF_8))
+                );
             }
+        }
+        
+        @Test
+        public void previousVersionSingleFile() throws IOException {
+            try (Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "twoSubmissions", "JP001", docker.getAuthToken("student1"))) {
+                
+                List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+                
+                File tempDirectory = assertDoesNotThrow(() -> replayer.replay(versions.get(1)));
+                
+                File sourceFile = new File(tempDirectory, "Main.java");
+                assertAll(
+                    () -> assertEquals(1, tempDirectory.listFiles().length),
+                    () -> assertTrue(sourceFile.isFile()),
+                    () -> assertEquals("\n"
+                            + "public class Main {\n"
+                            + "    \n"
+                            + "    public static void main(String[] args) {\n"
+                            + "        System.out.println(\"Hello Revision1!\");\n"
+                            + "    }\n"
+                            + "}\n",
+                            Files.readString(sourceFile.toPath(), StandardCharsets.UTF_8))
+                );
+            }
+        }
+        
+        @Test
+        public void closeDeletesTemporaryDirectory() throws IOException {
+            File tempDirectory;
+            
+            try (Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "twoSubmissions", "JP001", docker.getAuthToken("student1"))) {
+                
+                List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+                
+                tempDirectory = assertDoesNotThrow(() -> replayer.replay(versions.get(1)));
+            }
+            
+            assertFalse(tempDirectory.exists());
+        }
+        
+        @Test
+        public void sameVersionCached() throws IOException {
+            try (Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "twoSubmissions", "JP001", docker.getAuthToken("student1"))) {
+                
+                List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+                
+                File tempDirectory1 = assertDoesNotThrow(() -> replayer.replay(versions.get(0)));
+                File tempDirectory2 = assertDoesNotThrow(() -> replayer.replay(versions.get(0)));
+                
+                assertEquals(tempDirectory1, tempDirectory2);
+            }
+        }
+        
+        @Test
+        public void differentVersionNotCached() throws IOException {
+            try (Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "twoSubmissions", "JP001", docker.getAuthToken("student1"))) {
+                
+                List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+                
+                File tempDirectory1 = assertDoesNotThrow(() -> replayer.replay(versions.get(0)));
+                File tempDirectory2 = assertDoesNotThrow(() -> replayer.replay(versions.get(1)));
+                
+                assertNotEquals(tempDirectory1, tempDirectory2);
+            }
+        }
+        
+        @Test
+        public void twoFiles() throws IOException {
+            try (Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "twoFiles", "JP001", docker.getAuthToken("student1"))) {
+                
+                List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+                
+                File tempDirectory = assertDoesNotThrow(() -> replayer.replay(versions.get(0)));
+                
+                File main = new File(tempDirectory, "Main.java");
+                File filehandler = new File(tempDirectory, "FileHandler.java");
+                assertAll(
+                    () -> assertEquals(2, tempDirectory.listFiles().length),
+                    () -> assertTrue(main.isFile()),
+                    () -> assertEquals("\n"
+                            + "public class Main {\n"
+                            + "    \n"
+                            + "    public static void main(String[] args) {\n"
+                            + "        System.out.println(\"Hello World!\");\n"
+                            + "    }\n"
+                            + "}\n",
+                            Files.readString(main.toPath(), StandardCharsets.UTF_8)),
                     
-            assertEquals(maindata, "\n"
-                    + "public class Main {\n"
-                    + "    \n"
-                    + "    public static void main(String[] args) {\n"
-                    + "        System.out.println(\"Hello Revision2!\");\n"
-                    + "    }\n"
-                    + "}\n"
-                    + "");
-            
-            main.delete();
-            result.deleteOnExit();
-
-        });
-    }
-    
-    @Test
-    @Disabled
-    public void replayTestwithchangingFile() {
-        
-        String homeworkname = "addingFile";
-        
-        Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
-
-        List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
-        
-        File result = assertDoesNotThrow(() -> replayer.replay(versions.get(0)));
-        
-        File classpath = new File(result, ".classpath");
-        File projekt = new File(result, ".project");
-        File main = new File(result, "Main.java");
-        File filehandler = new File(result, "FileHandler.java");
-            
-        assertDoesNotThrow(() -> {
-            
-            String classpathdata = "";
-            try (BufferedReader reader = new BufferedReader(new FileReader(classpath))) {
-                classpathdata = reader.lines().collect(Collectors.joining("\n", "", "\n"));
+                    () -> assertTrue(filehandler.isFile()),
+                    () -> assertEquals("public class FileHandler() {\n"
+                            + "    public FileHandler() {\n"
+                            + "\n"
+                            + "    }\n"
+                            + "}\n",
+                            Files.readString(filehandler.toPath(), StandardCharsets.UTF_8))
+                );
             }
-            String projektdata = "";
-            try (BufferedReader reader = new BufferedReader(new FileReader(projekt))) {
-                projektdata = reader.lines().collect(Collectors.joining("\n", "", "\n"));
+        }
+        
+        @Test
+        public void subDirectory() throws IOException {
+            try (Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "subDirectory", "JP001", docker.getAuthToken("student1"))) {
+                
+                List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+                
+                File tempDirectory = assertDoesNotThrow(() -> replayer.replay(versions.get(0)));
+                
+                File subdir = new File(tempDirectory, "cli");
+                File main = new File(subdir, "Main.java");
+                assertAll(
+                    () -> assertEquals(1, tempDirectory.listFiles().length),
+                    () -> assertTrue(subdir.isDirectory()),
+                    () -> assertEquals(1, subdir.listFiles().length),
+                    () -> assertTrue(main.isFile()),
+                    () -> assertEquals("package cli;\n"
+                            + "\n"
+                            + "public class Main {\n"
+                            + "    \n"
+                            + "    public static void main(String[] args) {\n"
+                            + "        System.out.println(\"Hello World!\");\n"
+                            + "    }\n"
+                            + "}\n",
+                            Files.readString(main.toPath(), StandardCharsets.UTF_8))
+                );
             }
-            String maindata = "";
-            try (BufferedReader reader = new BufferedReader(new FileReader(main))) {
-                maindata = reader.lines().collect(Collectors.joining("\n", "", "\n"));
+        }
+        
+    }
+    
+    @Nested
+    public class IsSameContent {
+        
+        @Test
+        public void sameContent() throws IOException {
+            try (Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "twoSubmissions", "JP001", docker.getAuthToken("student1"))) {
+                
+                List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+                
+                assertTrue(assertDoesNotThrow(() -> replayer.isSameContent(VERSION_2, versions.get(0))));
             }
-            String filehandlerdata = "";
-            try (BufferedReader reader = new BufferedReader(new FileReader(filehandler))) {
-                filehandlerdata = reader.lines().collect(Collectors.joining("\n", "", "\n"));
+        }
+        
+        @Test
+        public void differentContent() throws IOException {
+            try (Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "twoSubmissions", "JP001", docker.getAuthToken("student1"))) {
+                
+                List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
+                
+                assertFalse(assertDoesNotThrow(() -> replayer.isSameContent(VERSION_1, versions.get(0))));
             }
-                    
-            assertEquals(classpathdata,
-                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                    + "<classpath>\n"
-                    + "    <classpathentry kind=\"src\" path=\"\"/>\n"
-                    + "    <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER"
-                        + "/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11\"/>\n"
-                    + "    <classpathentry kind=\"output\" path=\"\"/>\n"
-                    + "</classpath>\n");
-            
-            
-            assertEquals(projektdata,
-                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                    + "<projectDescription>\n"
-                    + "    <name>Version2</name>\n"
-                    + "    <comment></comment>\n"
-                    + "    <projects>\n"
-                    + "    </projects>\n"
-                    + "    <buildSpec>\n"
-                    + "        <buildCommand>\n"
-                    + "            <name>org.eclipse.jdt.core.javabuilder</name>\n"
-                    + "            <arguments>\n"
-                    + "            </arguments>\n"
-                    + "        </buildCommand>\n"
-                    + "    </buildSpec>\n"
-                    + "    <natures>\n"
-                    + "        <nature>org.eclipse.jdt.core.javanature</nature>\n"
-                    + "    </natures>\n"
-                    + "</projectDescription>\n");
-           
-            assertEquals(maindata, "\n"
-                    + "public class Main {\n"
-                    + "    \n"
-                    + "    public static void main(String[] args) {\n"
-                    + "        System.out.println(\"Hello Revision2!\");\n"
-                    + "    }\n"
-                    + "}\n"
-                    + "");
-            
-            assertEquals(filehandlerdata, "public class FileHandler() {\r\n"
-                    + "    public FileHandler() {\r\n"
-                    + "        \r\n"
-                    + "    }    \r\n"
-                    + "}");
-            
-            main.delete();
-            projekt.delete();
-            classpath.delete();
-            filehandler.delete();
-            result.deleteOnExit();
-
-        });
+        }
         
     }
-    
-    @Test
-    @Disabled
-    public void compareTestwithSameContent() {
-        
-        File testdir = new File(TESTDATA, "Versionfiles");
-        File version = new File(testdir, "Version2");
-        
-        String homeworkname = "Homework01";
-        
-        Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
-        
-            
-        List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
-        assertTrue(assertDoesNotThrow(() -> replayer.isSameContent(version, versions.get(0))));
-        
-       
-    }
-  
-    @Test
-    @Disabled
-    public void compareTestwithAddedDir() {
-       
-
-        File testdir = new File(TESTDATA, "Versionfiles");
-        File version = new File(testdir, "Version2");
-        File addedDir = new File(version, "AddedDir");
-        addedDir.mkdir();
-        
-        
-        String homeworkname = "Homework01";
-        
-        Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
-        
-            
-        List<Version> versions = assertDoesNotThrow(() -> replayer.getVersions());
-        assertTrue(!assertDoesNotThrow(() -> replayer.isSameContent(version, versions.get(1))));
-            
-            
-        addedDir.delete();
-        
-    }
-    @Test
-    public void replayTestwithCaching() {
-        Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
-                Assignment.State.SUBMISSION, true);
-        
-        assertDoesNotThrow(() -> {
-            Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
-                    courseId, assignment.getName(), "JP001", docker.getAuthToken("student1"));
-            File firstDir = replayer.replay(replayer.getVersions().get(0));
-            File secondDir = replayer.replay(replayer.getVersions().get(0));
-            
-            assertEquals(firstDir, secondDir);
-                        
-            replayer.close();
-        });
-    }
-    
-    @Test
-    public void replayTestwithCachingwithFalseVersion() {
-        Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
-                Assignment.State.SUBMISSION, true);
-        
-        assertDoesNotThrow(() -> {
-            Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
-                    courseId, assignment.getName(), "JP001", docker.getAuthToken("student1"));
-            File firstDir = replayer.replay(replayer.getVersions().get(0));
-            File secondDir = replayer.replay(replayer.getVersions().get(1));
-                        
-            assertNotEquals(firstDir, secondDir);
-            
-            replayer.close();
-        });
-        
-        
-    }
-    
-    @Test
-    public void replayTestwithCachingwithClosing() {
-        Assignment assignment = new Assignment(assignmentids.get("Homework01"), "Homework01",
-                Assignment.State.SUBMISSION, true);
-        
-        assertDoesNotThrow(() -> {
-            Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(),
-                    courseId, assignment.getName(), "JP001", docker.getAuthToken("student1"));
-            File firstDir = replayer.replay(replayer.getVersions().get(0));
-            replayer.close();
-            
-            Replayer replayer2 = new Replayer(docker.getExerciseSubmitterServerUrl(),
-                    courseId, assignment.getName(), "JP001", docker.getAuthToken("student1"));
-            File secondDir = replayer2.replay(replayer2.getVersions().get(0));
-            replayer2.close();    
-            
-            assertNotEquals(firstDir, secondDir);
-            
-           
-        });
-        
-        
-    }
-    
-    // TODO: test case: replaying with sub directories
 
 }

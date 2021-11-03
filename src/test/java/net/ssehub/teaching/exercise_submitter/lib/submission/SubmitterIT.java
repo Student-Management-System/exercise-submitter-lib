@@ -53,9 +53,9 @@ public class SubmitterIT {
     
     private static final File COMPILATION_ERROR_DIR = new File(TESTDATA, "CompilationError");
 
-    private static String courseId = null;
+    private static String courseId;
 
-    private static Map<String, String> assignmentids = new HashMap<String, String>();
+    private static Map<String, String> assignmentids = new HashMap<>();
 
     @BeforeAll
     public static void setupServers() {
