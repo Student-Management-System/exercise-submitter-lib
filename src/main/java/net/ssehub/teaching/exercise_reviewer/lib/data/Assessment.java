@@ -1,9 +1,13 @@
 package net.ssehub.teaching.exercise_reviewer.lib.data;
 
+import java.io.File;
 import java.util.List;
 import java.util.Optional;
 
 import net.ssehub.studentmgmt.backend_api.model.AssignmentDto;
+import net.ssehub.studentmgmt.backend_api.model.MarkerDto;
+import net.ssehub.studentmgmt.backend_api.model.MarkerDto.SeverityEnum;
+import net.ssehub.studentmgmt.backend_api.model.UserDto;
 import net.ssehub.studentmgmt.backend_api.model.AssignmentDto.CollaborationEnum;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
@@ -22,10 +26,10 @@ public class Assessment {
 
     private Optional<Integer> achivedPoints;
     private Optional<String> comment;
-    private Optional<String> groupId;
-    private Optional<String> userId;
-    private Optional<String> creatorId;
-    private Optional<String> lastUpdatedById;
+    private Optional<Group> group;
+    private Optional<User> user;
+    private Optional<User> creator;
+    private Optional<User> lastUpdated;
 
     private Optional<List<Problem>> problems;
 
@@ -78,33 +82,33 @@ public class Assessment {
     /**
      * With user id.
      *
-     * @param userId the user id
+     * @param user the user
      * @return the assessment
      */
-    public Assessment withUserId(String userId) {
-        this.userId = Optional.ofNullable(userId);
+    public Assessment withUserId(User user) {
+        this.user = Optional.ofNullable(user);
         return this;
     }
 
     /**
      * With creator id.
      *
-     * @param creatorId the creator id
+     * @param creator the creator
      * @return the assessment
      */
-    public Assessment withCreatorId(String creatorId) {
-        this.creatorId = Optional.ofNullable(creatorId);
+    public Assessment withCreatorId(User creator) {
+        this.creator = Optional.ofNullable(creator);
         return this;
     }
 
     /**
      * With last updated by id.
      *
-     * @param lastUpdatedById the last updated by id
+     * @param lastUpdated the last updated
      * @return the assessment
      */
-    public Assessment withLastUpdatedById(String lastUpdatedById) {
-        this.lastUpdatedById = Optional.ofNullable(lastUpdatedById);
+    public Assessment withLastUpdatedById(User lastUpdated) {
+        this.lastUpdated = Optional.ofNullable(lastUpdated);
         return this;
     }
 
@@ -141,7 +145,34 @@ public class Assessment {
 
         return new Assignment(dto.getId(), dto.getName(), state, groupwork);
     }
-
+    /**
+     * Converts markerDto to Problem.
+     * @param dto
+     * @return Problem
+     */
+    public static Problem markerDtoToProblem(MarkerDto dto) {
+        Problem.Severity sev = dto.getSeverity() == SeverityEnum.ERROR 
+                ? Problem.Severity.ERROR : Problem.Severity.WARNING;
+        Problem problem = new Problem(dto.getComment(), dto.getComment(), sev);
+        problem.setFile(new File(dto.getPath()));
+        problem.setLine(dto.getStartLineNumber().toBigInteger().intValueExact());
+        problem.setColumn(dto.getStartColumn().toBigInteger().intValueExact());
+        return problem;
+    }
+    /**
+     *  Converts userDto to User.
+     * @param dto
+     * @return User
+     */
+    public static User userDtoToUser(UserDto dto) {
+        User user = null;
+        if (dto != null) {
+            user = new User(dto.getId(), dto.getUsername(), dto.getDisplayName(), dto.getRole().toString());
+        } else {
+            user = new User("not available", "not available", "not available", "not available");
+        }
+        return user;
+    }
     /**
      * Gets the assessment id.
      *
@@ -149,6 +180,60 @@ public class Assessment {
      */
     public String getAssessmentId() {
         return assessmentId;
+    }
+
+    /**
+     * Gets the achived points.
+     *
+     * @return the achived points
+     */
+    public Optional<Integer> getAchivedPoints() {
+        return achivedPoints;
+    }
+
+    /**
+     * Sets the achived points.
+     *
+     * @param achivedPoints the new achived points
+     */
+    public void setAchivedPoints(Optional<Integer> achivedPoints) {
+        this.achivedPoints = achivedPoints;
+    }
+
+    /**
+     * Gets the comment.
+     *
+     * @return the comment
+     */
+    public Optional<String> getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment.
+     *
+     * @param comment the new comment
+     */
+    public void setComment(Optional<String> comment) {
+        this.comment = comment;
+    }
+
+    /**
+     * Gets the group.
+     *
+     * @return the group
+     */
+    public Optional<Group> getGroup() {
+        return group;
+    }
+
+    /**
+     * Gets the user.
+     *
+     * @return the user
+     */
+    public Optional<User> getUser() {
+        return user;
     }
 
 }
