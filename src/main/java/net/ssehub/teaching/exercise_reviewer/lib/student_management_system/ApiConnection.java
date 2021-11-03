@@ -15,6 +15,7 @@ import net.ssehub.studentmgmt.backend_api.api.AssignmentApi;
 import net.ssehub.studentmgmt.backend_api.api.AuthenticationApi;
 import net.ssehub.studentmgmt.backend_api.model.AssessmentDto;
 import net.ssehub.studentmgmt.backend_api.model.AssignmentDto.CollaborationEnum;
+import net.ssehub.studentmgmt.backend_api.model.MarkerDto;
 import net.ssehub.studentmgmt.backend_api.model.UserDto;
 import net.ssehub.studentmgmt.sparkyservice_api.api.AuthControllerApi;
 import net.ssehub.studentmgmt.sparkyservice_api.model.AuthenticationInfoDto;
@@ -27,6 +28,7 @@ import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiE
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.AuthenticationException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.NetworkException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.UserNotInCourseException;
+import net.ssehub.teaching.exercise_submitter.lib.submission.Problem;
 
 /**
  * Handles the communication between the plugin and student management.
@@ -116,7 +118,7 @@ public class ApiConnection {
     public List<Assessment> getAllAssessmentsFromAssignment(String courseId, Assignment assignment) 
             throws ApiException {
         AssessmentApi api = new AssessmentApi(this.mgmtClient);
-        AssessmentDto dto;
+        
         
         List<Assessment> assessments = null;
         try {
@@ -127,7 +129,21 @@ public class ApiConnection {
             assessments = new ArrayList<Assessment>();
 
             for (AssessmentDto element : assessmentDto) {
-                Assessment assessment = new Assessment(element.getId(), assignment, false);
+                Assessment assessment = new Assessment(element.getId(), assignment, element.isIsDraft())
+                        .withComment(element.getComment())
+//                       .withAchievedPoints(element.getAchievedPoints().toBigInteger().intValueExact())
+                        .withCreatorId(Assessment.userDtoToUser(element.getCreator()))
+                        .withLastUpdatedById(Assessment.userDtoToUser(element.getLastUpdatedBy()));
+                
+                List<Problem> problems = new ArrayList<Problem>();
+                if (element.getPartialAssessments() != null) {
+                    if (element.getPartialAssessments().get(0) != null) {
+                        for (MarkerDto marker : element.getPartialAssessments().get(0).getMarkers()) {
+                            problems.add(Assessment.markerDtoToProblem(marker));
+                        }
+                    }
+                }
+                assessment.withProblems(problems);                  
                 assessments.add(assessment);
             }
 

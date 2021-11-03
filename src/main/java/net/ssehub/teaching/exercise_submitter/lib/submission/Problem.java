@@ -38,7 +38,7 @@ public class Problem {
      * @param message   the message
      * @param severity  the severity
      */
-    Problem(String checkName, String message, Severity severity) {
+    public Problem(String checkName, String message, Severity severity) {
         this.checkName = checkName;
         this.message = message;
         this.severity = severity;
@@ -85,7 +85,7 @@ public class Problem {
      *
      * @param file the new file
      */
-    void setFile(File file) {
+    public void setFile(File file) {
         this.file = Optional.of(file);
     }
 
@@ -103,7 +103,7 @@ public class Problem {
      *
      * @param line the new line
      */
-    void setLine(int line) {
+    public void setLine(int line) {
         this.line = Optional.of(line);
     }
 
@@ -120,7 +120,7 @@ public class Problem {
      * Sets the column.
      * @param column the new column
      */
-    void setColumn(int column) {
+    public void setColumn(int column) {
         this.column = Optional.of(column);
     }
 
