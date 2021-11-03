@@ -193,6 +193,16 @@ public class ApiConnectionTest {
         
     }
     
+    @Nested
+    public class GetAssessments extends StandardExceptionHandlingTests {
+        
+        public GetAssessments() {
+            super(api -> api.getAssessments(
+                    new Course("Java", "java-wise2021"), new Assignment("123", "", State.IN_REVIEW, true)));
+        }
+        
+    }
+    
     private void fakeLogin(ApiConnection api) {
         UserDto user = new UserDto();
         user.setId("123");

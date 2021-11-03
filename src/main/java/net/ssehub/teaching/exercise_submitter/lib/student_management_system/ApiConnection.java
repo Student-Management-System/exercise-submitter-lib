@@ -1,7 +1,9 @@
 package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
@@ -9,11 +11,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
 import net.ssehub.studentmgmt.backend_api.ApiClient;
+import net.ssehub.studentmgmt.backend_api.api.AssessmentApi;
 import net.ssehub.studentmgmt.backend_api.api.AssignmentApi;
 import net.ssehub.studentmgmt.backend_api.api.AssignmentRegistrationApi;
 import net.ssehub.studentmgmt.backend_api.api.AuthenticationApi;
 import net.ssehub.studentmgmt.backend_api.api.CourseApi;
 import net.ssehub.studentmgmt.backend_api.api.CourseParticipantsApi;
+import net.ssehub.studentmgmt.backend_api.model.AssessmentDto;
 import net.ssehub.studentmgmt.backend_api.model.AssignmentDto.CollaborationEnum;
 import net.ssehub.studentmgmt.backend_api.model.CourseDto;
 import net.ssehub.studentmgmt.backend_api.model.GroupDto;
@@ -23,6 +27,7 @@ import net.ssehub.studentmgmt.backend_api.model.UserDto;
 import net.ssehub.studentmgmt.sparkyservice_api.api.AuthControllerApi;
 import net.ssehub.studentmgmt.sparkyservice_api.model.AuthenticationInfoDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.CredentialsDto;
+import net.ssehub.teaching.exercise_submitter.lib.data.Assessment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
@@ -240,6 +245,59 @@ public class ApiConnection implements IApiConnection {
         }
         
         return isTutor;
+    }
+    
+    @Override
+    public Map<String, Assessment> getAssessments(Course course, Assignment assignment)
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
+        
+        AssessmentApi api = new AssessmentApi(mgmtClient);
+        
+        Map<String, Assessment> result = new HashMap<>();
+        
+        try {
+            List<AssessmentDto> dtos = api.getAssessmentsForAssignment(course.getId(), assignment.getManagementId(),
+                    null, null, null, null, null, null, null);
+            
+            for (AssessmentDto dto : dtos) {
+                
+                String groupname;
+                if (assignment.isGroupWork()) {
+                    groupname = dto.getGroup().getName();
+                } else {
+                    groupname = dto.getParticipant().getUsername();
+                }
+                
+                Assessment assessment = new Assessment();
+                if (dto.getAchievedPoints() != null) {
+                    assessment.setPoints(dto.getAchievedPoints().intValue());
+                    
+                    // only set draft status to false if there are points set
+                    if (!dto.isIsDraft()) {
+                        assessment.setDraft(false);
+                    }
+                }
+                if (dto.getComment() != null) {
+                    assessment.setComment(dto.getComment());
+                }
+                
+                // TODO: store partial assessment with key exercise-submitter-checks
+                
+                result.put(groupname, assessment);
+            }
+            
+        } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
+            if (e.getCode() == 403) {
+                throw new UserNotInCourseException(parseResponseMessage(e.getResponseBody()));
+            }
+            
+            throw handleMgmtException(e);
+            
+        } catch (JsonParseException e) {
+            throw new ApiException("Invalid JSON response", e);
+        }
+        
+        return result;
     }
     
     /**

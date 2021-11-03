@@ -10,7 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -19,13 +22,17 @@ import org.junit.jupiter.api.Test;
 
 import com.google.gson.JsonSyntaxException;
 
+import net.ssehub.studentmgmt.backend_api.ApiClient;
+import net.ssehub.studentmgmt.backend_api.api.AssessmentApi;
+import net.ssehub.studentmgmt.backend_api.model.AssessmentCreateDto;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker.AssignmentState;
 import net.ssehub.studentmgmt.docker.StuMgmtDocker.Collaboration;
+import net.ssehub.teaching.exercise_submitter.lib.data.Assessment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
-import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiConnectionTest.DummyHttpServer;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
+import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiConnectionTest.DummyHttpServer;
 
 public class ApiConnectionIT {
 
@@ -36,8 +43,8 @@ public class ApiConnectionIT {
         docker = new StuMgmtDocker();
         docker.createUser("adam", "123456");
 
-        docker.createUser("student1", "Bunny123");
-        docker.createUser("student2", "abcdefgh");
+        String student1Id = docker.createUser("student1", "Bunny123");
+        String student2Id = docker.createUser("student2", "abcdefgh");
         docker.createUser("notInCourse", "abcdefgh");
 
         String javaCourseId = docker.createCourse("java", "wise2021", "Programmierpraktikum: Java", "adam");
@@ -57,13 +64,50 @@ public class ApiConnectionIT {
         docker.createAssignment(allStatesCourse, "assignment03", AssignmentState.REVIEWED, Collaboration.SINGLE);
         docker.createAssignment(allStatesCourse, "assignment04", AssignmentState.INVISIBLE, Collaboration.SINGLE);
         docker.createAssignment(allStatesCourse, "assignment05", AssignmentState.CLOSED, Collaboration.SINGLE);
+        
+        String assessmentsCourse = docker.createCourse("assessments", "sose20", "Assessments", "adam");
+        docker.enrollStudent(assessmentsCourse, "student1");
+        docker.enrollStudent(assessmentsCourse, "student2");
+        
+        String group01Id = docker.createGroup(assessmentsCourse, "Group01", "student1");
+        docker.createGroup(assessmentsCourse, "Group02", "student2");
+        
+        docker.createAssignment(assessmentsCourse, "0Assessments", AssignmentState.IN_REVIEW, Collaboration.SINGLE);
+        String a1 = docker.createAssignment(
+                assessmentsCourse, "1Assessment", AssignmentState.IN_REVIEW, Collaboration.SINGLE);
+        String a2 = docker.createAssignment(
+                assessmentsCourse, "2Assessments", AssignmentState.IN_REVIEW, Collaboration.SINGLE);
+        String a3 = docker.createAssignment(
+                assessmentsCourse, "1GroupAssessment", AssignmentState.SUBMISSION, Collaboration.GROUP);
+        docker.changeAssignmentState(assessmentsCourse, a3, AssignmentState.IN_REVIEW);
+        
+        createAssessment(assessmentsCourse, a1, new AssessmentCreateDto()
+                .assignmentId(a1).userId(student1Id).isDraft(true).comment("some comment"));
+        
+        createAssessment(assessmentsCourse, a2, new AssessmentCreateDto()
+                .assignmentId(a2).userId(student1Id).isDraft(true));
+        createAssessment(assessmentsCourse, a2, new AssessmentCreateDto()
+                .assignmentId(a2).userId(student2Id).isDraft(false).comment("other comment")
+                .achievedPoints(BigDecimal.valueOf(5)));
+        
+        createAssessment(assessmentsCourse, a3, new AssessmentCreateDto()
+                .assignmentId(a3).groupId(group01Id).isDraft(true).comment("group comment"));
     }
 
     @AfterAll
     public static void tearDownServers() {
         docker.close();
     }
-
+    
+    private static void createAssessment(String courseId, String assignmentId, AssessmentCreateDto assessment) {
+        ApiClient client = new ApiClient();
+        client.setBasePath(docker.getStuMgmtUrl());
+        client.setAccessToken(docker.getAuthToken("adam"));
+        AssessmentApi api = new AssessmentApi(client);
+        
+        assertDoesNotThrow(() -> api.createAssessment(assessment, courseId, assignmentId));
+    }
+    
     @Nested
     public class Login {
         
@@ -344,6 +388,127 @@ public class ApiConnectionIT {
                 () -> api.hasTutorRights(new Course("NotExisting", "notexisting")));
         }
         
+    }
+    
+    @Nested
+    public class GetAssessments {
+        
+        @Test
+        public void notLoggedInThrows() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            AuthenticationException e = assertThrows(AuthenticationException.class,
+                () -> api.getAssessments(
+                        new Course("Java", "assessments-sose20"), new Assignment("123", "", State.IN_REVIEW, true)));
+            assertEquals("Not logged in: Authorization header is missing.", e.getMessage());
+        }
+        
+        @Test
+        public void notExistingCourseThrows() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("adam", "123456"));
+            
+            assertThrows(UserNotInCourseException.class, () -> api.getAssessments(
+                    new Course("NotExisting", "notexisting"),
+                    new Assignment("001", "1Assessment", State.SUBMISSION, false)));
+        }
+        
+        @Test
+        public void notExistingAssignmentReturnsEmpty() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("adam", "123456"));
+            
+            Course course = assertDoesNotThrow(() -> api.getCourse("assessments-sose20"));
+            
+            assertEquals(Collections.emptyMap(), assertDoesNotThrow(() -> api.getAssessments(course,
+                    new Assignment("12345678-1234-1234-1234-123456789abc", "doesntexist", State.SUBMISSION, false))));
+        }
+        
+        @Test
+        public void notInCourseThrows() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("notInCourse", "abcdefgh"));
+            
+            assertThrows(UserNotInCourseException.class, () -> api.getAssessments(
+                    new Course("Java", "assessments-sose20"),
+                    new Assignment("001", "1Assessment", State.SUBMISSION, false)));
+        }
+        
+        @Test
+        public void notATutorThrows() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
+            
+            Course course = assertDoesNotThrow(() -> api.getCourse("assessments-sose20"));
+            
+            assertThrows(UserNotInCourseException.class, () -> api.getAssessments(
+                    course, getAssignmentByName(api, course, "1Assessment")));
+        }
+        
+        @Test
+        public void zeroAssessmentsReturnsEmpty() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("adam", "123456"));
+            
+            Course course = assertDoesNotThrow(() -> api.getCourse("assessments-sose20"));
+            
+            assertEquals(Collections.emptyMap(), assertDoesNotThrow(() -> api.getAssessments(course,
+                    getAssignmentByName(api, course, "0Assessments"))));
+        }
+        
+        @Test
+        public void oneAssessmentsReturnsAssessment() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("adam", "123456"));
+            
+            Course course = assertDoesNotThrow(() -> api.getCourse("assessments-sose20"));
+            
+            Map<String, Assessment> assessments = assertDoesNotThrow(() -> api.getAssessments(course,
+                    getAssignmentByName(api, course, "1Assessment")));
+            
+            assertEquals(Map.of("student1", buildAssessment(true, null, "some comment")), assessments);
+        }
+        
+        @Test
+        public void twoAssessmentsReturnAssessments() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("adam", "123456"));
+            
+            Course course = assertDoesNotThrow(() -> api.getCourse("assessments-sose20"));
+            
+            Map<String, Assessment> assessments = assertDoesNotThrow(() -> api.getAssessments(course,
+                    getAssignmentByName(api, course, "2Assessments")));
+            
+            assertEquals(Map.of(
+                    "student1", buildAssessment(true, null, null),
+                    "student2", buildAssessment(false, 5, "other comment")), assessments);
+        }
+        
+        @Test
+        public void groupAssessmentUsesGroupNameAsKey() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("adam", "123456"));
+            
+            Course course = assertDoesNotThrow(() -> api.getCourse("assessments-sose20"));
+            
+            Map<String, Assessment> assessments = assertDoesNotThrow(() -> api.getAssessments(course,
+                    getAssignmentByName(api, course, "1GroupAssessment")));
+            
+            assertEquals(Map.of("Group01", buildAssessment(true, null, "group comment")), assessments);
+        }
+        
+    }
+    
+    private static Assessment buildAssessment(boolean draft, Integer points, String comment) {
+        Assessment result = new Assessment();
+        if (points != null) {
+            result.setPoints(points);
+        }
+        if (comment != null) {
+            result.setComment(comment);
+        }
+        result.setDraft(draft);
+        
+        return result;
     }
     
     private static Assignment getAssignmentByName(ApiConnection api, Course course, String name) {

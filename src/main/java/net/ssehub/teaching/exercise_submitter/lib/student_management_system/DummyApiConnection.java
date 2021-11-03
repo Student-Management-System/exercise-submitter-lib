@@ -3,7 +3,9 @@ package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+import net.ssehub.teaching.exercise_submitter.lib.data.Assessment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
@@ -106,6 +108,12 @@ public class DummyApiConnection implements IApiConnection {
     public boolean hasTutorRights(Course course)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         return loggedInUser.equals("tutor");
+    }
+    
+    @Override
+    public Map<String, Assessment> getAssessments(Course course, Assignment assignment)
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
+        return Collections.emptyMap();
     }
 
 }

@@ -1,7 +1,9 @@
 package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 
 import java.util.List;
+import java.util.Map;
 
+import net.ssehub.teaching.exercise_submitter.lib.data.Assessment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 
@@ -92,8 +94,32 @@ public interface IApiConnection {
      * @param course The course to check the role in.
      * 
      * @return Whether the currently logged-in user is a tutor in the given course.
+     * 
+     * @throws NetworkException If the network communication fails.
+     * @throws AuthenticationException If the authentication fails.
+     * @throws UserNotInCourseException If the user is not enrolled in the course or the course does not exist.
+     * @throws ApiException If a generic exception occurs.
      */
     public boolean hasTutorRights(Course course)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException;
+    
+    /**
+     * Returns all assessments that have been created for the given assignment. Note that the user must have tutor
+     * rights in the course, see {@link #hasTutorRights(Course)}.
+     * 
+     * @param course The course where the assignment is from.
+     * @param assignment The assignment to get all assessments for.
+     * 
+     * @return A map of all assessments, with the keys being the group names (or usernames for non-group assignments).
+     * 
+     * @throws NetworkException If the network communication fails.
+     * @throws AuthenticationException If the authentication fails.
+     * @throws UserNotInCourseException If the user is not enrolled in the course, the course does not exist, or the
+     *      user is not a tutor in the course.
+     * @throws ApiException If a generic exception occurs.
+     */
+    public Map<String, Assessment> getAssessments(Course course, Assignment assignment)
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException;
+    
         
 }
