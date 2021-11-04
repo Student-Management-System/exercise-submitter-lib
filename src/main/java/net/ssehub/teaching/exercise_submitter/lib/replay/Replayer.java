@@ -219,7 +219,7 @@ public class Replayer implements Closeable {
      */
     public boolean isSameContent(File directory, Version version) throws IOException, ReplayException {
         File result = replay(version);
-
+        // TODO: ignore eclipse project files, as the submitter does not upload them
         return pathContentEqual(directory.toPath(), result.toPath());
     }
 
