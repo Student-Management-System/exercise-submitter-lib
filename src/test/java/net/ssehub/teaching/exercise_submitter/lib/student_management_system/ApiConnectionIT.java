@@ -14,9 +14,11 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -47,6 +49,14 @@ public class ApiConnectionIT {
         String student2Id = docker.createUser("student2", "abcdefgh");
         docker.createUser("notInCourse", "abcdefgh");
 
+        createJavaCourse();
+        createNotEnrolledCourse();
+        createAllStatesCourse();
+        createAssessmentsCourse(student1Id, student2Id);
+        createGroupsCourse();
+    }
+
+    private static void createJavaCourse() {
         String javaCourseId = docker.createCourse("java", "wise2021", "Programmierpraktikum: Java", "adam");
         docker.enrollStudent(javaCourseId, "student1");
         docker.enrollStudent(javaCourseId, "student2");
@@ -55,16 +65,22 @@ public class ApiConnectionIT {
         
         docker.createAssignment(javaCourseId, "exercise01", AssignmentState.REVIEWED, Collaboration.SINGLE);
         docker.createAssignment(javaCourseId, "exercise02", AssignmentState.SUBMISSION, Collaboration.GROUP);
-
+    }
+    
+    private static void createNotEnrolledCourse() {
         docker.createCourse("notenrolled", "wise2021", "Not Enrolled", "adam");
-        
+    }
+
+    private static void createAllStatesCourse() {
         String allStatesCourse = docker.createCourse("allstates", "wise2021", "All Assignment States", "adam");
         docker.createAssignment(allStatesCourse, "assignment01", AssignmentState.SUBMISSION, Collaboration.SINGLE);
         docker.createAssignment(allStatesCourse, "assignment02", AssignmentState.IN_REVIEW, Collaboration.SINGLE);
         docker.createAssignment(allStatesCourse, "assignment03", AssignmentState.REVIEWED, Collaboration.SINGLE);
         docker.createAssignment(allStatesCourse, "assignment04", AssignmentState.INVISIBLE, Collaboration.SINGLE);
         docker.createAssignment(allStatesCourse, "assignment05", AssignmentState.CLOSED, Collaboration.SINGLE);
-        
+    }
+    
+    private static void createAssessmentsCourse(String student1Id, String student2Id) {
         String assessmentsCourse = docker.createCourse("assessments", "sose20", "Assessments", "adam");
         docker.enrollStudent(assessmentsCourse, "student1");
         docker.enrollStudent(assessmentsCourse, "student2");
@@ -88,10 +104,25 @@ public class ApiConnectionIT {
                 .assignmentId(a2).userId(student1Id).isDraft(true));
         createAssessment(assessmentsCourse, a2, new AssessmentCreateDto()
                 .assignmentId(a2).userId(student2Id).isDraft(false).comment("other comment")
-                .achievedPoints(BigDecimal.valueOf(5)));
+                .achievedPoints(BigDecimal.valueOf(5.5)));
         
         createAssessment(assessmentsCourse, a3, new AssessmentCreateDto()
                 .assignmentId(a3).groupId(group01Id).isDraft(true).comment("group comment"));
+    }
+
+    private static void createGroupsCourse() {
+        String course = docker.createCourse("groups", "sose20", "Different Group Configurations", "adam");
+        docker.enrollStudent(course, "student1");
+        docker.enrollStudent(course, "student2");
+        
+        docker.createAssignment(course, "noGroups", AssignmentState.SUBMISSION, Collaboration.GROUP);
+        
+        docker.createGroup(course, "Group01", "student1");
+        docker.createGroup(course, "Group02", "student2");
+        
+        docker.createAssignment(course, "twoGroups", AssignmentState.SUBMISSION, Collaboration.GROUP);
+        
+        docker.createAssignment(course, "single", AssignmentState.SUBMISSION, Collaboration.SINGLE);
     }
 
     @AfterAll
@@ -391,6 +422,103 @@ public class ApiConnectionIT {
     }
     
     @Nested
+    public class GetAllGroups {
+        
+        @Test
+        public void notLoggedInThrows() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            AuthenticationException e = assertThrows(AuthenticationException.class,
+                () -> api.getAllGroups(
+                        new Course("Java", "groups-sose20"), new Assignment("123", "", State.IN_REVIEW, true)));
+            assertEquals("Not logged in: Authorization header is missing.", e.getMessage());
+        }
+        
+        @Test
+        public void notExistingCourseThrows() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("adam", "123456"));
+            
+            assertThrows(UserNotInCourseException.class, () -> api.getAllGroups(
+                    new Course("NotExisting", "notexisting"),
+                    new Assignment("001", "1Assessment", State.SUBMISSION, false)));
+        }
+        
+        @Test
+        @Disabled("Causes internal server error in the mgmt client")
+        public void notExistingAssignmentThrows() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("adam", "123456"));
+            
+            Course course = assertDoesNotThrow(() -> api.getCourse("groups-sose20"));
+            
+            assertThrows(UserNotInCourseException.class, () -> api.getAllGroups(
+                    course,
+                    new Assignment("12345678-1234-1234-1234-123456789abc", "doesntexist", State.SUBMISSION, false)));
+        }
+        
+        @Test
+        public void notInCourseThrows() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("notInCourse", "abcdefgh"));
+            
+            assertThrows(UserNotInCourseException.class, () -> api.getAllGroups(
+                    new Course("Java", "groups-sose20"),
+                    new Assignment("001", "1Assessment", State.SUBMISSION, false)));
+        }
+        
+        @Test
+        public void notATutorThrows() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("student1", "Bunny123"));
+            
+            Course course = assertDoesNotThrow(() -> api.getCourse("groups-sose20"));
+            
+            assertThrows(UserNotInCourseException.class, () -> api.getAllGroups(
+                    course, getAssignmentByName(api, course, "noGroups")));
+        }
+        
+        @Test
+        public void noGroupsReturnsEmpty() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("adam", "123456"));
+            
+            Course course = assertDoesNotThrow(() -> api.getCourse("groups-sose20"));
+            
+            Set<String> groups = assertDoesNotThrow(
+                () -> api.getAllGroups(course, getAssignmentByName(api, course, "noGroups")));
+            
+            assertEquals(Collections.emptySet(), groups);
+        }
+        
+        @Test
+        public void twoGroupsReturnsSet() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("adam", "123456"));
+            
+            Course course = assertDoesNotThrow(() -> api.getCourse("groups-sose20"));
+            
+            Set<String> groups = assertDoesNotThrow(
+                    () -> api.getAllGroups(course, getAssignmentByName(api, course, "twoGroups")));
+            
+            assertEquals(Set.of("Group01", "Group02"), groups);
+        }
+        
+        @Test
+        public void singleAssignmentReturnsParticipants() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("adam", "123456"));
+            
+            Course course = assertDoesNotThrow(() -> api.getCourse("groups-sose20"));
+            
+            Set<String> groups = assertDoesNotThrow(
+                    () -> api.getAllGroups(course, getAssignmentByName(api, course, "single")));
+            
+            assertEquals(Set.of("student1", "student2"), groups);
+        }
+        
+    }
+    
+    @Nested
     public class GetAssessments {
         
         @Test
@@ -480,7 +608,7 @@ public class ApiConnectionIT {
             
             assertEquals(Map.of(
                     "student1", buildAssessment(true, null, null),
-                    "student2", buildAssessment(false, 5, "other comment")), assessments);
+                    "student2", buildAssessment(false, 5.5, "other comment")), assessments);
         }
         
         @Test
@@ -498,7 +626,7 @@ public class ApiConnectionIT {
         
     }
     
-    private static Assessment buildAssessment(boolean draft, Integer points, String comment) {
+    private static Assessment buildAssessment(boolean draft, Double points, String comment) {
         Assessment result = new Assessment();
         if (points != null) {
             result.setPoints(points);

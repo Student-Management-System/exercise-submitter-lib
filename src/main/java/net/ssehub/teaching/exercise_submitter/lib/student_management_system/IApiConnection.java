@@ -2,6 +2,7 @@ package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.ssehub.teaching.exercise_submitter.lib.data.Assessment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
@@ -101,6 +102,25 @@ public interface IApiConnection {
      * @throws ApiException If a generic exception occurs.
      */
     public boolean hasTutorRights(Course course)
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException;
+    
+    /**
+     * Returns all groups that are registered for the given assignment. If the assignment is not a group work,
+     * it returns all participant names (which can be treated as group names). Note that the user must have tutor
+     * rights in the course (see {@link #hasTutorRights(Course)}).
+     * 
+     * @param course The course that contains the assignment.
+     * @param assignment The assignment to get all group names for.
+     * 
+     * @return All group names of that assignment.
+     * 
+     * @throws NetworkException If the network communication fails.
+     * @throws AuthenticationException If the authentication fails.
+     * @throws UserNotInCourseException If the user is not enrolled in the course or the course does not exist, or the
+     *      user is not a tutor in the course.
+     * @throws ApiException If a generic exception occurs.
+     */
+    public Set<String> getAllGroups(Course course, Assignment assignment)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException;
     
     /**

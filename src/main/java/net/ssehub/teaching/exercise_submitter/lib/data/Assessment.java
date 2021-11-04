@@ -12,7 +12,7 @@ public class Assessment {
 
     private boolean isDraft;
     
-    private Optional<Integer> points;
+    private Optional<Double> points;
     
     private Optional<String> comment;
     
@@ -44,7 +44,7 @@ public class Assessment {
      * 
      * @param points The points of this assessment.
      */
-    public void setPoints(int points) {
+    public void setPoints(double points) {
         this.points = Optional.of(points);
     }
 

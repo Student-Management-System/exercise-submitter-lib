@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.ssehub.teaching.exercise_submitter.lib.data.Assessment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
@@ -108,6 +109,12 @@ public class DummyApiConnection implements IApiConnection {
     public boolean hasTutorRights(Course course)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         return loggedInUser.equals("tutor");
+    }
+    
+    @Override
+    public Set<String> getAllGroups(Course course, Assignment assignment)
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
+        return Set.of("Group01", "Group02");
     }
     
     @Override

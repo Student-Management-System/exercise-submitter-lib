@@ -194,6 +194,16 @@ public class ApiConnectionTest {
     }
     
     @Nested
+    public class GetAllGroups extends StandardExceptionHandlingTests {
+        
+        public GetAllGroups() {
+            super(api -> api.getAllGroups(
+                    new Course("Java", "java-wise2021"), new Assignment("123", "", State.IN_REVIEW, true)));
+        }
+        
+    }
+    
+    @Nested
     public class GetAssessments extends StandardExceptionHandlingTests {
         
         public GetAssessments() {

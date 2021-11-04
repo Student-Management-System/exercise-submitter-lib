@@ -2,8 +2,10 @@ package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
@@ -248,6 +250,44 @@ public class ApiConnection implements IApiConnection {
     }
     
     @Override
+    public Set<String> getAllGroups(Course course, Assignment assignment)
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
+        
+        Set<String> result = new HashSet<>();
+        
+        try {
+            
+            if (assignment.isGroupWork()) {
+                AssignmentRegistrationApi api = new AssignmentRegistrationApi(mgmtClient);
+                
+                api.getRegisteredGroups(course.getId(), assignment.getManagementId(), null, null, null).stream()
+                        .map(GroupDto::getName)
+                        .forEach(result::add);
+                
+            } else {
+                CourseParticipantsApi api = new CourseParticipantsApi(mgmtClient);
+                
+                api.getUsersOfCourse(course.getId(), null, null, List.of("STUDENT"), null, null).stream()
+                        .map(ParticipantDto::getUsername)
+                        .forEach(result::add);
+            }
+            
+            
+        } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
+            if (e.getCode() == 403) {
+                throw new UserNotInCourseException(parseResponseMessage(e.getResponseBody()));
+            }
+            
+            throw handleMgmtException(e);
+            
+        } catch (JsonParseException e) {
+            throw new ApiException("Invalid JSON response", e);
+        }
+        
+        return result;
+    }
+    
+    @Override
     public Map<String, Assessment> getAssessments(Course course, Assignment assignment)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         
@@ -270,7 +310,7 @@ public class ApiConnection implements IApiConnection {
                 
                 Assessment assessment = new Assessment();
                 if (dto.getAchievedPoints() != null) {
-                    assessment.setPoints(dto.getAchievedPoints().intValue());
+                    assessment.setPoints(dto.getAchievedPoints().doubleValue());
                     
                     // only set draft status to false if there are points set
                     if (!dto.isIsDraft()) {
