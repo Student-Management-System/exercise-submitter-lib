@@ -12,6 +12,8 @@ public class Assessment {
 
     private boolean isDraft;
     
+    private Optional<String> managementId;
+    
     private Optional<Double> points;
     
     private Optional<String> comment;
@@ -21,6 +23,7 @@ public class Assessment {
      */
     public Assessment() {
         this.isDraft = true;
+        this.managementId = Optional.empty();
         this.points = Optional.empty();
         this.comment = Optional.empty();
     }
@@ -40,12 +43,30 @@ public class Assessment {
     }
     
     /**
+     * Returns if this assessment is a draft.
+     * 
+     * @return The draft status of this assessment.
+     */
+    public boolean isDraft() {
+        return isDraft;
+    }
+    
+    /**
      * Sets the points of this assessment.
      * 
      * @param points The points of this assessment.
      */
     public void setPoints(double points) {
         this.points = Optional.of(points);
+    }
+    
+    /**
+     * Returns the points awarded by this assessment.
+     * 
+     * @return The points of this assessment.
+     */
+    public Optional<Double> getPoints() {
+        return points;
     }
 
     /**
@@ -55,6 +76,33 @@ public class Assessment {
      */
     public void setComment(String comment) {
         this.comment = Optional.of(comment);
+    }
+
+    /**
+     * Returns the comment of this assignment.
+     * 
+     * @return The comment of this assignment.
+     */
+    public Optional<String> getComment() {
+        return comment;
+    }
+    
+    /**
+     * Sets the ID of this assessment in the student management system.
+     * 
+     * @param managementId The ID of this assessment.
+     */
+    public void setManagementId(String managementId) {
+        this.managementId = Optional.of(managementId);
+    }
+    
+    /**
+     * Returns the ID of this assessment in the student management system.
+     * 
+     * @return The ID; if this is {@link Optional#empty()}, this assessment does not exist in the management system yet.
+     */
+    public Optional<String> getManagementId() {
+        return managementId;
     }
     
     @Override

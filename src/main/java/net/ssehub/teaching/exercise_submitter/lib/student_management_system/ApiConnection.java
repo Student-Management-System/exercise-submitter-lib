@@ -1,6 +1,7 @@
 package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +19,9 @@ import net.ssehub.studentmgmt.backend_api.api.AssignmentRegistrationApi;
 import net.ssehub.studentmgmt.backend_api.api.AuthenticationApi;
 import net.ssehub.studentmgmt.backend_api.api.CourseApi;
 import net.ssehub.studentmgmt.backend_api.api.CourseParticipantsApi;
+import net.ssehub.studentmgmt.backend_api.model.AssessmentCreateDto;
 import net.ssehub.studentmgmt.backend_api.model.AssessmentDto;
+import net.ssehub.studentmgmt.backend_api.model.AssessmentUpdateDto;
 import net.ssehub.studentmgmt.backend_api.model.AssignmentDto.CollaborationEnum;
 import net.ssehub.studentmgmt.backend_api.model.CourseDto;
 import net.ssehub.studentmgmt.backend_api.model.GroupDto;
@@ -299,10 +302,12 @@ public class ApiConnection implements IApiConnection {
             
             List<AssessmentDto> assessment;
             if (assignment.isGroupWork()) {
-                assessment = getAssessmentForGroup(course, assignment, groupName, api);
+                assessment = api.getAssessmentsForAssignment(course.getId(), assignment.getManagementId(),
+                        null, null, null, getGroupId(course, assignment, groupName), null, null, null);
                 
             } else {
-                assessment = getAssessmentForUser(course, assignment, groupName, api);
+                assessment = api.getAssessmentsForAssignment(course.getId(), assignment.getManagementId(),
+                        null, null, null, null, getUsesrId(course, groupName), null, null);
             }
             
             if (!assessment.isEmpty()) {
@@ -325,70 +330,7 @@ public class ApiConnection implements IApiConnection {
         
         return result;
     }
-
-    /**
-     * Retrieves the assessment for the given group.
-     * 
-     * @param course The course of the assignment.
-     * @param assignment The assignment to get the assessment for.
-     * @param groupName The name of the group to get the assessment for.
-     * @param api The API to retrieve the assessment.
-     * 
-     * @return A list with 0 or 1 element.
-     * 
-     * @throws GroupNotFoundException If the group was not found in the assignment.
-     * @throws net.ssehub.studentmgmt.backend_api.ApiException If an API call fails.
-     */
-    private List<AssessmentDto> getAssessmentForGroup(Course course, Assignment assignment, String groupName,
-            AssessmentApi api) throws GroupNotFoundException, net.ssehub.studentmgmt.backend_api.ApiException {
-        
-        List<AssessmentDto> assessment;
-        AssignmentRegistrationApi groupApi = new AssignmentRegistrationApi(mgmtClient);
-        String groupId = groupApi.getRegisteredGroups(course.getId(), assignment.getManagementId(),
-            null, null, groupName).stream()
-                .filter(dto -> dto.getName().equals(groupName))
-                .map(dto -> dto.getId())
-                .findFirst()
-                .orElseThrow(() -> new GroupNotFoundException("Group " + groupName + " not found in assignment "
-                        + assignment.getName()));
-        
-        assessment = api.getAssessmentsForAssignment(course.getId(), assignment.getManagementId(),
-                null, null, null, groupId, null, null, null);
-        
-        return assessment;
-    }
     
-    /**
-     * Retrieves the assessment for the given user.
-     * 
-     * @param course The course of the assignment.
-     * @param assignment The assignment to get the assessment for.
-     * @param userName The name of the user to get the assessment for.
-     * @param api The API to retrieve the assessment.
-     * 
-     * @return A list with 0 or 1 element.
-     * 
-     * @throws GroupNotFoundException If the user was not found in the assignment.
-     * @throws net.ssehub.studentmgmt.backend_api.ApiException If an API call fails.
-     */
-    private List<AssessmentDto> getAssessmentForUser(Course course, Assignment assignment, String userName,
-            AssessmentApi api) throws GroupNotFoundException, net.ssehub.studentmgmt.backend_api.ApiException {
-        
-        List<AssessmentDto> assessment;
-        CourseParticipantsApi userApi = new CourseParticipantsApi(mgmtClient);
-        String userId = userApi.getUsersOfCourse(course.getId(), null, null, null, userName, null).stream()
-                .filter(dto -> dto.getUsername().equals(userName))
-                .map(dto -> dto.getUserId())
-                .findFirst()
-                .orElseThrow(() -> new GroupNotFoundException("User " + userName + " not found in course "
-                        + course.getId()));
-        
-        assessment = api.getAssessmentsForAssignment(course.getId(), assignment.getManagementId(),
-                null, null, null, null, userId, null, null);
-        
-        return assessment;
-    }
-
     /**
      * Converts a DTO to our own {@link Assessment}.
      * 
@@ -398,6 +340,7 @@ public class ApiConnection implements IApiConnection {
      */
     private Assessment assessmentDtoToAssessment(AssessmentDto assessment) {
         Assessment result = new Assessment();
+        result.setManagementId(assessment.getId());
         if (assessment.getAchievedPoints() != null) {
             result.setPoints(assessment.getAchievedPoints().doubleValue());
             
@@ -411,7 +354,105 @@ public class ApiConnection implements IApiConnection {
         }
         return result;
     }
+
+    @Override
+    public void uploadAssessment(Course course, Assignment assignment, String groupName, Assessment assessment)
+            throws NetworkException, AuthenticationException, UserNotInCourseException, GroupNotFoundException,
+            ApiException {
+        
+        try {
+            AssessmentApi api = new AssessmentApi(mgmtClient);
+            
+            if (assessment.getManagementId().isEmpty()) {
+                // create new assessment
+                AssessmentCreateDto dto = new AssessmentCreateDto();
+                dto.setAssignmentId(assignment.getManagementId());
+                dto.setIsDraft(assessment.isDraft());
+                assessment.getComment().ifPresent(dto::setComment);
+                assessment.getPoints().map(BigDecimal::valueOf).ifPresent(dto::setAchievedPoints);
+                if (assignment.isGroupWork()) {
+                    dto.setGroupId(getGroupId(course, assignment, groupName));
+                } else {
+                    dto.setUserId(getUsesrId(course, groupName));
+                }
+                
+                api.createAssessment(dto, course.getId(), assignment.getManagementId());
+                
+            } else {
+                // update assessment
+                AssessmentUpdateDto dto = new AssessmentUpdateDto();
+                dto.setIsDraft(assessment.isDraft());
+                assessment.getComment().ifPresent(dto::setComment);
+                assessment.getPoints().map(BigDecimal::valueOf).ifPresent(dto::setAchievedPoints);
+                
+                api.updateAssessment(dto, course.getId(), assignment.getManagementId(),
+                        assessment.getManagementId().get());
+            }
+            
+        } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
+            if (e.getCode() == 403) {
+                throw new UserNotInCourseException(parseResponseMessage(e.getResponseBody()));
+            } else if (e.getCode() == 404) {
+                throw new UserNotInCourseException(parseResponseMessage(e.getResponseBody()));
+            }
+            
+            throw handleMgmtException(e);
+            
+        } catch (JsonParseException e) {
+            throw new ApiException("Invalid JSON response", e);
+        }
+    }
+
+    /**
+     * Gets the student management system ID of the given group.
+     * 
+     * @param course The course where the assignment is in.
+     * @param assignment The assignment where the group is in.
+     * @param groupName The  name of the group.
+     * 
+     * @return The ID of the group.
+     * 
+     * @throws GroupNotFoundException If the group is not registered for this assignment.
+     * @throws net.ssehub.studentmgmt.backend_api.ApiException If an API call fails.
+     */
+    private String getGroupId(Course course, Assignment assignment, String groupName)
+            throws GroupNotFoundException, net.ssehub.studentmgmt.backend_api.ApiException {
+        
+        AssignmentRegistrationApi groupApi = new AssignmentRegistrationApi(mgmtClient);
+        String groupId = groupApi.getRegisteredGroups(course.getId(), assignment.getManagementId(),
+            null, null, groupName).stream()
+                .filter(dto -> dto.getName().equals(groupName))
+                .map(dto -> dto.getId())
+                .findFirst()
+                .orElseThrow(() -> new GroupNotFoundException("Group " + groupName + " not found in assignment "
+                        + assignment.getName()));
+        return groupId;
+    }
     
+    /**
+     * Gets the student management system ID of the given user.
+     * 
+     * @param course The course where the assignment is in.
+     * @param userName The  name of the user.
+     * 
+     * @return The ID of the group.
+     * 
+     * @throws GroupNotFoundException If the user is not registered in this course.
+     * @throws net.ssehub.studentmgmt.backend_api.ApiException If an API call fails.
+     */
+    private String getUsesrId(Course course, String userName)
+            throws GroupNotFoundException, net.ssehub.studentmgmt.backend_api.ApiException {
+        
+        CourseParticipantsApi userApi = new CourseParticipantsApi(mgmtClient);
+        String userId = userApi.getUsersOfCourse(course.getId(), null, null, null, userName, null).stream()
+                .filter(dto -> dto.getUsername().equals(userName))
+                .map(dto -> dto.getUserId())
+                .findFirst()
+                .orElseThrow(() -> new GroupNotFoundException("User " + userName + " not found in course "
+                        + course.getId()));
+        return userId;
+    }
+
     /**
      * Converts the given exception from the management API to a proper {@link ApiException}.
      * <p>

@@ -122,5 +122,11 @@ public class DummyApiConnection implements IApiConnection {
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         return Optional.empty();
     }
+    
+    @Override
+    public void uploadAssessment(Course course, Assignment assignment, String groupName, Assessment assessment)
+            throws NetworkException, AuthenticationException, UserNotInCourseException, GroupNotFoundException,
+            ApiException {
+    }
 
 }

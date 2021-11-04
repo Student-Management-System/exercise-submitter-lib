@@ -146,5 +146,25 @@ public interface IApiConnection {
             throws NetworkException, AuthenticationException, UserNotInCourseException,
             GroupNotFoundException, ApiException;
     
-        
+    /**
+     * Updates or creates the given assessment. Note that the user must have tutor rights in the course, see
+     * {@link #hasTutorRights(Course)}.
+     * 
+     * @param course The course where the assignment is in.
+     * @param assignment The assignment to upload the assessment for.
+     * @param groupName The group name to create the assessment for. If the assignment is not a group work, use the
+     *      username of the participant.
+     * @param assessment The new assessment to create or update.
+     * 
+     * @throws NetworkException If the network communication fails.
+     * @throws AuthenticationException If the authentication fails.
+     * @throws UserNotInCourseException If the user is not enrolled in the course, the course does not exist, or the
+     *      user is not a tutor in the course.
+     * @throws GroupNotFoundException If the given group (or user) does not exist in the assignment.
+     * @throws ApiException If a generic exception occurs.
+     */
+    public void uploadAssessment(Course course, Assignment assignment, String groupName, Assessment assessment)
+            throws NetworkException, AuthenticationException, UserNotInCourseException,
+            GroupNotFoundException, ApiException;
+    
 }

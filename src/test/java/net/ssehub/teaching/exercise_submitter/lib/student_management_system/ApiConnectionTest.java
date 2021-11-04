@@ -24,6 +24,7 @@ import org.junit.jupiter.api.function.ThrowingConsumer;
 import com.google.gson.JsonSyntaxException;
 
 import net.ssehub.studentmgmt.backend_api.model.UserDto;
+import net.ssehub.teaching.exercise_submitter.lib.data.Assessment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
@@ -209,6 +210,16 @@ public class ApiConnectionTest {
         public GetAssessments() {
             super(api -> api.getAssessment(
                     new Course("Java", "java-wise2021"), new Assignment("123", "", State.IN_REVIEW, true), "group01"));
+        }
+        
+    }
+    
+    @Nested
+    public class UploadAssessment extends StandardExceptionHandlingTests {
+        
+        public UploadAssessment() {
+            super(api -> api.uploadAssessment(new Course("Java", "java-wise2021"),
+                    new Assignment("123", "", State.IN_REVIEW, true), "group01", new Assessment()));
         }
         
     }
