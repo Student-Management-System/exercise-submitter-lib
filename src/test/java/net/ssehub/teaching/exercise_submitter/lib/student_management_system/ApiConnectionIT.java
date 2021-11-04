@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterAll;
@@ -519,14 +519,14 @@ public class ApiConnectionIT {
     }
     
     @Nested
-    public class GetAssessments {
+    public class GetAssessment {
         
         @Test
         public void notLoggedInThrows() {
             ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
             AuthenticationException e = assertThrows(AuthenticationException.class,
-                () -> api.getAssessments(
-                        new Course("Java", "assessments-sose20"), new Assignment("123", "", State.IN_REVIEW, true)));
+                () -> api.getAssessment(new Course("Java", "assessments-sose20"),
+                        new Assignment("123", "", State.IN_REVIEW, true), "student1"));
             assertEquals("Not logged in: Authorization header is missing.", e.getMessage());
         }
         
@@ -535,9 +535,9 @@ public class ApiConnectionIT {
             ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
             assertDoesNotThrow(() -> api.login("adam", "123456"));
             
-            assertThrows(UserNotInCourseException.class, () -> api.getAssessments(
+            assertThrows(UserNotInCourseException.class, () -> api.getAssessment(
                     new Course("NotExisting", "notexisting"),
-                    new Assignment("001", "1Assessment", State.SUBMISSION, false)));
+                    new Assignment("001", "1Assessment", State.SUBMISSION, false), "student1"));
         }
         
         @Test
@@ -547,8 +547,9 @@ public class ApiConnectionIT {
             
             Course course = assertDoesNotThrow(() -> api.getCourse("assessments-sose20"));
             
-            assertEquals(Collections.emptyMap(), assertDoesNotThrow(() -> api.getAssessments(course,
-                    new Assignment("12345678-1234-1234-1234-123456789abc", "doesntexist", State.SUBMISSION, false))));
+            assertEquals(Optional.empty(), assertDoesNotThrow(() -> api.getAssessment(course,
+                    new Assignment("12345678-1234-1234-1234-123456789abc", "doesntexist", State.SUBMISSION, false),
+                    "student1")));
         }
         
         @Test
@@ -556,9 +557,9 @@ public class ApiConnectionIT {
             ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
             assertDoesNotThrow(() -> api.login("notInCourse", "abcdefgh"));
             
-            assertThrows(UserNotInCourseException.class, () -> api.getAssessments(
+            assertThrows(UserNotInCourseException.class, () -> api.getAssessment(
                     new Course("Java", "assessments-sose20"),
-                    new Assignment("001", "1Assessment", State.SUBMISSION, false)));
+                    new Assignment("001", "1Assessment", State.SUBMISSION, false), "student1"));
         }
         
         @Test
@@ -568,8 +569,30 @@ public class ApiConnectionIT {
             
             Course course = assertDoesNotThrow(() -> api.getCourse("assessments-sose20"));
             
-            assertThrows(UserNotInCourseException.class, () -> api.getAssessments(
-                    course, getAssignmentByName(api, course, "1Assessment")));
+            assertThrows(UserNotInCourseException.class, () -> api.getAssessment(
+                    course, getAssignmentByName(api, course, "1Assessment"), "student1"));
+        }
+        
+        @Test
+        public void notExistingUserThrows() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("adam", "123456"));
+            
+            Course course = assertDoesNotThrow(() -> api.getCourse("assessments-sose20"));
+            
+            assertThrows(GroupNotFoundException.class, () -> api.getAssessment(
+                    course, getAssignmentByName(api, course, "1Assessment"), "DoesntExist"));
+        }
+        
+        @Test
+        public void notExistingGroupThrows() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("adam", "123456"));
+            
+            Course course = assertDoesNotThrow(() -> api.getCourse("assessments-sose20"));
+            
+            assertThrows(GroupNotFoundException.class, () -> api.getAssessment(
+                    course, getAssignmentByName(api, course, "1GroupAssessment"), "DoesntExist"));
         }
         
         @Test
@@ -579,8 +602,8 @@ public class ApiConnectionIT {
             
             Course course = assertDoesNotThrow(() -> api.getCourse("assessments-sose20"));
             
-            assertEquals(Collections.emptyMap(), assertDoesNotThrow(() -> api.getAssessments(course,
-                    getAssignmentByName(api, course, "0Assessments"))));
+            assertEquals(Optional.empty(), assertDoesNotThrow(() -> api.getAssessment(course,
+                    getAssignmentByName(api, course, "0Assessments"), "student1")));
         }
         
         @Test
@@ -590,38 +613,36 @@ public class ApiConnectionIT {
             
             Course course = assertDoesNotThrow(() -> api.getCourse("assessments-sose20"));
             
-            Map<String, Assessment> assessments = assertDoesNotThrow(() -> api.getAssessments(course,
-                    getAssignmentByName(api, course, "1Assessment")));
+            Optional<Assessment> assessment = assertDoesNotThrow(() -> api.getAssessment(course,
+                    getAssignmentByName(api, course, "1Assessment"), "student1"));
             
-            assertEquals(Map.of("student1", buildAssessment(true, null, "some comment")), assessments);
+            assertEquals(Optional.of(buildAssessment(true, null, "some comment")), assessment);
         }
         
         @Test
-        public void twoAssessmentsReturnAssessments() {
+        public void assessmentWithPointsAndNonDraft() {
             ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
             assertDoesNotThrow(() -> api.login("adam", "123456"));
             
             Course course = assertDoesNotThrow(() -> api.getCourse("assessments-sose20"));
             
-            Map<String, Assessment> assessments = assertDoesNotThrow(() -> api.getAssessments(course,
-                    getAssignmentByName(api, course, "2Assessments")));
+            Optional<Assessment> assessment = assertDoesNotThrow(() -> api.getAssessment(course,
+                    getAssignmentByName(api, course, "2Assessments"), "student2"));
             
-            assertEquals(Map.of(
-                    "student1", buildAssessment(true, null, null),
-                    "student2", buildAssessment(false, 5.5, "other comment")), assessments);
+            assertEquals(Optional.of(buildAssessment(false, 5.5, "other comment")), assessment);
         }
         
         @Test
-        public void groupAssessmentUsesGroupNameAsKey() {
+        public void groupAssessment() {
             ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
             assertDoesNotThrow(() -> api.login("adam", "123456"));
             
             Course course = assertDoesNotThrow(() -> api.getCourse("assessments-sose20"));
             
-            Map<String, Assessment> assessments = assertDoesNotThrow(() -> api.getAssessments(course,
-                    getAssignmentByName(api, course, "1GroupAssessment")));
+            Optional<Assessment> assessment = assertDoesNotThrow(() -> api.getAssessment(course,
+                    getAssignmentByName(api, course, "1GroupAssessment"), "Group01"));
             
-            assertEquals(Map.of("Group01", buildAssessment(true, null, "group comment")), assessments);
+            assertEquals(Optional.of(buildAssessment(true, null, "group comment")), assessment);
         }
         
     }

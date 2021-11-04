@@ -1,10 +1,9 @@
 package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -288,42 +287,29 @@ public class ApiConnection implements IApiConnection {
     }
     
     @Override
-    public Map<String, Assessment> getAssessments(Course course, Assignment assignment)
-            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
+    public Optional<Assessment> getAssessment(Course course, Assignment assignment, String groupName)
+            throws NetworkException, AuthenticationException, UserNotInCourseException,
+            GroupNotFoundException, ApiException {
         
-        AssessmentApi api = new AssessmentApi(mgmtClient);
         
-        Map<String, Assessment> result = new HashMap<>();
+        Optional<Assessment> result;
         
         try {
-            List<AssessmentDto> dtos = api.getAssessmentsForAssignment(course.getId(), assignment.getManagementId(),
-                    null, null, null, null, null, null, null);
+            AssessmentApi api = new AssessmentApi(mgmtClient);
             
-            for (AssessmentDto dto : dtos) {
+            List<AssessmentDto> assessment;
+            if (assignment.isGroupWork()) {
+                assessment = getAssessmentForGroup(course, assignment, groupName, api);
                 
-                String groupname;
-                if (assignment.isGroupWork()) {
-                    groupname = dto.getGroup().getName();
-                } else {
-                    groupname = dto.getParticipant().getUsername();
-                }
+            } else {
+                assessment = getAssessmentForUser(course, assignment, groupName, api);
+            }
+            
+            if (!assessment.isEmpty()) {
+                result = Optional.of(assessmentDtoToAssessment(assessment.get(0)));
                 
-                Assessment assessment = new Assessment();
-                if (dto.getAchievedPoints() != null) {
-                    assessment.setPoints(dto.getAchievedPoints().doubleValue());
-                    
-                    // only set draft status to false if there are points set
-                    if (!dto.isIsDraft()) {
-                        assessment.setDraft(false);
-                    }
-                }
-                if (dto.getComment() != null) {
-                    assessment.setComment(dto.getComment());
-                }
-                
-                // TODO: store partial assessment with key exercise-submitter-checks
-                
-                result.put(groupname, assessment);
+            } else {
+                result = Optional.empty();
             }
             
         } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
@@ -337,6 +323,92 @@ public class ApiConnection implements IApiConnection {
             throw new ApiException("Invalid JSON response", e);
         }
         
+        return result;
+    }
+
+    /**
+     * Retrieves the assessment for the given group.
+     * 
+     * @param course The course of the assignment.
+     * @param assignment The assignment to get the assessment for.
+     * @param groupName The name of the group to get the assessment for.
+     * @param api The API to retrieve the assessment.
+     * 
+     * @return A list with 0 or 1 element.
+     * 
+     * @throws GroupNotFoundException If the group was not found in the assignment.
+     * @throws net.ssehub.studentmgmt.backend_api.ApiException If an API call fails.
+     */
+    private List<AssessmentDto> getAssessmentForGroup(Course course, Assignment assignment, String groupName,
+            AssessmentApi api) throws GroupNotFoundException, net.ssehub.studentmgmt.backend_api.ApiException {
+        
+        List<AssessmentDto> assessment;
+        AssignmentRegistrationApi groupApi = new AssignmentRegistrationApi(mgmtClient);
+        String groupId = groupApi.getRegisteredGroups(course.getId(), assignment.getManagementId(),
+            null, null, groupName).stream()
+                .filter(dto -> dto.getName().equals(groupName))
+                .map(dto -> dto.getId())
+                .findFirst()
+                .orElseThrow(() -> new GroupNotFoundException("Group " + groupName + " not found in assignment "
+                        + assignment.getName()));
+        
+        assessment = api.getAssessmentsForAssignment(course.getId(), assignment.getManagementId(),
+                null, null, null, groupId, null, null, null);
+        
+        return assessment;
+    }
+    
+    /**
+     * Retrieves the assessment for the given user.
+     * 
+     * @param course The course of the assignment.
+     * @param assignment The assignment to get the assessment for.
+     * @param userName The name of the user to get the assessment for.
+     * @param api The API to retrieve the assessment.
+     * 
+     * @return A list with 0 or 1 element.
+     * 
+     * @throws GroupNotFoundException If the user was not found in the assignment.
+     * @throws net.ssehub.studentmgmt.backend_api.ApiException If an API call fails.
+     */
+    private List<AssessmentDto> getAssessmentForUser(Course course, Assignment assignment, String userName,
+            AssessmentApi api) throws GroupNotFoundException, net.ssehub.studentmgmt.backend_api.ApiException {
+        
+        List<AssessmentDto> assessment;
+        CourseParticipantsApi userApi = new CourseParticipantsApi(mgmtClient);
+        String userId = userApi.getUsersOfCourse(course.getId(), null, null, null, userName, null).stream()
+                .filter(dto -> dto.getUsername().equals(userName))
+                .map(dto -> dto.getUserId())
+                .findFirst()
+                .orElseThrow(() -> new GroupNotFoundException("User " + userName + " not found in course "
+                        + course.getId()));
+        
+        assessment = api.getAssessmentsForAssignment(course.getId(), assignment.getManagementId(),
+                null, null, null, null, userId, null, null);
+        
+        return assessment;
+    }
+
+    /**
+     * Converts a DTO to our own {@link Assessment}.
+     * 
+     * @param assessment The assessment to convert.
+     * 
+     * @return The assessment.
+     */
+    private Assessment assessmentDtoToAssessment(AssessmentDto assessment) {
+        Assessment result = new Assessment();
+        if (assessment.getAchievedPoints() != null) {
+            result.setPoints(assessment.getAchievedPoints().doubleValue());
+            
+            // only set draft status to false if there are points set
+            if (!assessment.isIsDraft()) {
+                result.setDraft(false);
+            }
+        }
+        if (assessment.getComment() != null) {
+            result.setComment(assessment.getComment());
+        }
         return result;
     }
     

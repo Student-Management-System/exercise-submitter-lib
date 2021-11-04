@@ -1,7 +1,7 @@
 package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import net.ssehub.teaching.exercise_submitter.lib.data.Assessment;
@@ -124,22 +124,27 @@ public interface IApiConnection {
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException;
     
     /**
-     * Returns all assessments that have been created for the given assignment. Note that the user must have tutor
-     * rights in the course, see {@link #hasTutorRights(Course)}.
+     * Returns the assessment that have been created for the given assignment and group. Note that the user must have
+     * tutor rights in the course, see {@link #hasTutorRights(Course)}.
      * 
      * @param course The course where the assignment is from.
      * @param assignment The assignment to get all assessments for.
+     * @param groupName The name of the group to get the assessment for. If the assignment is not a group work, use the
+     *      username of the participant.
      * 
-     * @return A map of all assessments, with the keys being the group names (or usernames for non-group assignments).
+     * @return The assessment for the group in the given assignment, or {@link Optional#empty()} if no assessment for
+     *      the group exist.
      * 
      * @throws NetworkException If the network communication fails.
      * @throws AuthenticationException If the authentication fails.
      * @throws UserNotInCourseException If the user is not enrolled in the course, the course does not exist, or the
      *      user is not a tutor in the course.
+     * @throws GroupNotFoundException If the given group (or user) does not exist in the assignment.
      * @throws ApiException If a generic exception occurs.
      */
-    public Map<String, Assessment> getAssessments(Course course, Assignment assignment)
-            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException;
+    public Optional<Assessment> getAssessment(Course course, Assignment assignment, String groupName)
+            throws NetworkException, AuthenticationException, UserNotInCourseException,
+            GroupNotFoundException, ApiException;
     
         
 }

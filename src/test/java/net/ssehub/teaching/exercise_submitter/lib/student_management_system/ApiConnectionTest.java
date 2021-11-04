@@ -207,8 +207,8 @@ public class ApiConnectionTest {
     public class GetAssessments extends StandardExceptionHandlingTests {
         
         public GetAssessments() {
-            super(api -> api.getAssessments(
-                    new Course("Java", "java-wise2021"), new Assignment("123", "", State.IN_REVIEW, true)));
+            super(api -> api.getAssessment(
+                    new Course("Java", "java-wise2021"), new Assignment("123", "", State.IN_REVIEW, true), "group01"));
         }
         
     }

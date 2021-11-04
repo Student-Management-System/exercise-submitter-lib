@@ -3,7 +3,7 @@ package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import net.ssehub.teaching.exercise_submitter.lib.data.Assessment;
@@ -118,9 +118,9 @@ public class DummyApiConnection implements IApiConnection {
     }
     
     @Override
-    public Map<String, Assessment> getAssessments(Course course, Assignment assignment)
+    public Optional<Assessment> getAssessment(Course course, Assignment assignment, String groupName)
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
-        return Collections.emptyMap();
+        return Optional.empty();
     }
 
 }
