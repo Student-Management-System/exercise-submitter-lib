@@ -528,7 +528,7 @@ public class ApiConnectionIT {
             Course course = assertDoesNotThrow(() -> api.getCourse("groups-sose20"));
             
             Set<String> groups = assertDoesNotThrow(
-                    () -> api.getAllGroups(course, getAssignmentByName(api, course, "twoGroups")));
+                () -> api.getAllGroups(course, getAssignmentByName(api, course, "twoGroups")));
             
             assertEquals(Set.of("Group01", "Group02"), groups);
         }
@@ -541,7 +541,7 @@ public class ApiConnectionIT {
             Course course = assertDoesNotThrow(() -> api.getCourse("groups-sose20"));
             
             Set<String> groups = assertDoesNotThrow(
-                    () -> api.getAllGroups(course, getAssignmentByName(api, course, "single")));
+                () -> api.getAllGroups(course, getAssignmentByName(api, course, "single")));
             
             assertEquals(Set.of("student1", "student2"), groups);
         }
