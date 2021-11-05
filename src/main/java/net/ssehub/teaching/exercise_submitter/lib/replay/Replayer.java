@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -39,6 +40,8 @@ public class Replayer implements Closeable {
     private String groupName;
     
     private SubmissionApi api;
+    
+    private Set<Path> temporaryDirectoriesToDelete = new HashSet<>();
     
     private Map<Version, Path> cachedFiles = new HashMap<>();
 
@@ -146,54 +149,31 @@ public class Replayer implements Closeable {
             throw new ReplayException("Failed to retrieve version list", e);
         }
     }
-
+    
     /**
      * Replays the given version to a temporary directory. The directory will be
-     * cleared when this {@link Replayer} is closed.
+     * deleted when this {@link Replayer} is closed.
      *
      * @param version The version to replay. See {@link #getVersions()}.
      *
      * @return A temporary directory with the submission content.
-     * @throws ReplayException
+     * 
+     * @throws ReplayException If replaying the submission fails, either due to IO exceptions or API exceptions.
      */
     public File replay(Version version) throws ReplayException {
         Path resultCheckout = cachedFiles.get(version);
         
         if (resultCheckout == null) {
             try {
-                resultCheckout = Files.createTempDirectory("submission_replay");
-            } catch (IOException e) {
-                throw new ReplayException("Failed to create temporary directory", e);
-            }
-    
-            try {
                 List<FileDto> files = api.getVersion(
                         courseId, assignmentName, groupName, version.getTimestamp().getEpochSecond());
                 
-                for (FileDto dto : files) {
-                    
-                    Path filepath = resultCheckout.resolve(dto.getPath());
-                    Files.createDirectories(filepath.getParent());
-                    
-                    byte[] content = Base64.getDecoder().decode(dto.getContent());
-                    Files.write(filepath, content);
-                }
-                
+                resultCheckout = writeToTempDirectory(files);
                 
             } catch (IOException e) {
-                try {
-                    deleteDirectory(resultCheckout);
-                } catch (IOException e1) {
-                    // ignore
-                }
-                throw new ReplayException("Failed to write file", e);
+                throw new ReplayException("Failed to write submission to temporary directory", e);
                 
             } catch (ApiException e) {
-                try {
-                    deleteDirectory(resultCheckout);
-                } catch (IOException e1) {
-                    // ignore
-                }
                 throw new ReplayException("Failed to retrieve submission version", e);
             }
             
@@ -201,6 +181,70 @@ public class Replayer implements Closeable {
         }
 
         return resultCheckout.toFile();
+    }
+    
+    /**
+     * Replays the latest version to a temporary directory. The directory will be deleted when this {@link Replayer}
+     * is closed.
+     * <p>
+     * Note that contrary to {@link #replay(Version)} this method does not cache the result, i.e. it is fetched each
+     * time from the server (as the latest submission may change at any time).
+     * 
+     * @return A temporary directory with the submission content.
+     * 
+     * @throws ReplayException If replaying the submission fails, either due to IO exceptions or API exceptions.
+     */
+    public File replayLatest() throws ReplayException {
+        Path checkoutResult;
+        try {
+            List<FileDto> files = api.getLatest(courseId, assignmentName, groupName);
+            
+            checkoutResult = writeToTempDirectory(files);
+            
+        } catch (IOException e) {
+            throw new ReplayException("Failed to write submission to temporary directory", e);
+            
+        } catch (ApiException e) {
+            throw new ReplayException("Failed to retrieve submission version", e);
+        }
+        
+        return checkoutResult.toFile();
+    }
+    
+    /**
+     * Creates a temporary directory and writes the given submission files to it.
+     * <p>
+     * The directory will be added to {@link #temporaryDirectoriesToDelete} so that it is delete on {@link #close()}.
+     * 
+     * @param files The files to write to the directory.
+     * 
+     * @return The temporary directory that was written to.
+     * 
+     * @throws IOException
+     */
+    private Path writeToTempDirectory(List<FileDto> files) throws IOException {
+        Path tempDirectory = Files.createTempDirectory("submission_replay");
+        
+        try {
+            for (FileDto dto : files) {
+                
+                Path filepath = tempDirectory.resolve(dto.getPath());
+                Files.createDirectories(filepath.getParent());
+                
+                byte[] content = Base64.getDecoder().decode(dto.getContent());
+                Files.write(filepath, content);
+            }
+        } catch (IOException e) {
+            try {
+                deleteDirectory(tempDirectory);
+            } catch (IOException e1) {
+                // ignore
+            }
+            throw e;
+        }
+        
+        temporaryDirectoriesToDelete.add(tempDirectory);
+        return tempDirectory;
     }
 
     /**
@@ -228,9 +272,10 @@ public class Replayer implements Closeable {
      */
     @Override
     public void close() throws IOException {
-        IOException exception = null;
+        cachedFiles.clear();
         
-        for (Path directory : cachedFiles.values()) {
+        IOException exception = null;
+        for (Path directory : temporaryDirectoriesToDelete) {
             try {
                 deleteDirectory(directory);
             } catch (IOException e) {
@@ -238,7 +283,7 @@ public class Replayer implements Closeable {
             }
         }
         
-        cachedFiles.clear();
+        temporaryDirectoriesToDelete.clear();
         
         if (exception != null) {
             throw exception;

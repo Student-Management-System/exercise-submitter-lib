@@ -322,6 +322,55 @@ public class ReplayerIT {
     }
     
     @Nested
+    public class ReplayLatest {
+        
+        @Test
+        public void invalidTokenThrows() {
+            Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "twoSubmissions", "JP001", "invalid_token");
+            
+            assertThrows(ReplayException.class, () -> replayer.replayLatest());
+        }
+        
+        @Test
+        public void singleFile() throws IOException {
+            try (Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "twoSubmissions", "JP001", docker.getAuthToken("student1"))) {
+                
+                File tempDirectory = assertDoesNotThrow(() -> replayer.replayLatest());
+                
+                File sourceFile = new File(tempDirectory, "Main.java");
+                assertAll(
+                    () -> assertEquals(1, tempDirectory.listFiles().length),
+                    () -> assertTrue(sourceFile.isFile()),
+                    () -> assertEquals("\n"
+                            + "public class Main {\n"
+                            + "    \n"
+                            + "    public static void main(String[] args) {\n"
+                            + "        System.out.println(\"Hello Revision2!\");\n"
+                            + "    }\n"
+                            + "}\n",
+                            Files.readString(sourceFile.toPath(), StandardCharsets.UTF_8))
+                );
+            }
+        }
+        
+        @Test
+        public void closeDeletesTemporaryDirectory() throws IOException {
+            File tempDirectory;
+            
+            try (Replayer replayer = new Replayer(docker.getExerciseSubmitterServerUrl(), courseId,
+                    "twoSubmissions", "JP001", docker.getAuthToken("student1"))) {
+                
+                tempDirectory = assertDoesNotThrow(() -> replayer.replayLatest());
+            }
+            
+            assertFalse(tempDirectory.exists());
+        }
+        
+    }
+    
+    @Nested
     public class IsSameContent {
         
         @Test
