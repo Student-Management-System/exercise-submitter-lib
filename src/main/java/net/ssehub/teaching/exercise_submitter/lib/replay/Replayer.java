@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import net.ssehub.teaching.exercise_submitter.lib.submission.Submitter;
 import net.ssehub.teaching.exercise_submitter.server.api.ApiClient;
 import net.ssehub.teaching.exercise_submitter.server.api.ApiException;
 import net.ssehub.teaching.exercise_submitter.server.api.api.SubmissionApi;
@@ -263,8 +264,7 @@ public class Replayer implements Closeable {
      */
     public boolean isSameContent(File directory, Version version) throws IOException, ReplayException {
         File result = replay(version);
-        // TODO: ignore eclipse project files, as the submitter does not upload them
-        return pathContentEqual(directory.toPath(), result.toPath());
+        return directoryContentEqual(directory.toPath(), result.toPath());
     }
 
     /**
@@ -291,8 +291,10 @@ public class Replayer implements Closeable {
     }
 
     /**
-     * Checks if the two paths have equal content. If paths are files, their content is compared. If paths are
-     * directories, they must have the same files with equal content (recursive {@link #pathContentEqual(Path, Path)}).
+     * Checks if the two directories have equal files. Recurses into all sub-directories. Files are equal if they
+     * exist in both directories and have the same content.
+     * <p>
+     * This method ignores files that are ignored by the {@link Submitter}, see {@link Submitter#WANTED_FILES}.
      * <p>
      * Package visibility for test cases.
      * 
@@ -303,29 +305,36 @@ public class Replayer implements Closeable {
      * 
      * @throws IOException If reading files or directories fails.
      */
-    static boolean pathContentEqual(Path path1, Path path2) throws IOException {
+    static boolean directoryContentEqual(Path path1, Path path2) throws IOException {
         boolean result = false;
         
-        if (Files.isRegularFile(path1) && Files.isRegularFile(path2)) {
-            result = Arrays.equals(Files.readAllBytes(path1), Files.readAllBytes(path2));
-            
-        } else if (Files.isDirectory(path1) && Files.isDirectory(path2)) {
-            Set<Path> content1 = Files.list(path1)
+        if (Files.isDirectory(path1) && Files.isDirectory(path2)) {
+            Set<Path> content1 = Files.walk(path1)
+                    .filter(p -> Files.isRegularFile(p))
                     .map(p -> path1.relativize(p))
+                    .filter(Submitter.WANTED_FILES)
                     .collect(Collectors.toSet());
-            Set<Path> content2 = Files.list(path2)
+            Set<Path> content2 = Files.walk(path2)
+                    .filter(p -> Files.isRegularFile(p))
                     .map(p -> path2.relativize(p))
+                    .filter(Submitter.WANTED_FILES)
                     .collect(Collectors.toSet());
             
             if (content1.equals(content2)) {
                 try {
                     result = content1.stream()
                             .map(nested -> {
-                                try {
-                                    return pathContentEqual(path1.resolve(nested), path2.resolve(nested));
-                                } catch (IOException e) {
-                                    throw new UncheckedIOException(e);
+                                Path nested1 = path1.resolve(nested);
+                                Path nested2 = path2.resolve(nested);
+                                
+                                boolean equal;
+                                if (Files.isDirectory(nested1)) {
+                                    equal = Files.isDirectory(nested2);
+                                } else {
+                                    equal = fileContentEqual(nested1, nested2);
                                 }
+                                
+                                return equal;
                             })
                             .reduce(Boolean::logicalAnd)
                             .orElse(true);
@@ -336,6 +345,27 @@ public class Replayer implements Closeable {
         }
         
         return result;
+    }
+    
+    /**
+     * Checks if two given files are files and have the same content.
+     * <p>
+     * Package visibility for test cases.
+     * 
+     * @param file1 The first file.
+     * @param file2 The second file.
+     * 
+     * @return Whether both paths are files and have the same content.
+     * 
+     * @throws UncheckedIOException If reading the files fails.
+     */
+    static boolean fileContentEqual(Path file1, Path file2) throws UncheckedIOException {
+        try {
+            boolean bothFiles = Files.isRegularFile(file1) && Files.isRegularFile(file2);
+            return bothFiles && Arrays.equals(Files.readAllBytes(file1), Files.readAllBytes(file2));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
     
     /**

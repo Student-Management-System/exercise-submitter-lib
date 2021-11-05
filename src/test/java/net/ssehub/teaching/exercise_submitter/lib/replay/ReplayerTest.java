@@ -14,69 +14,95 @@ public class ReplayerTest {
     private static final Path TESTDATA = Path.of("src", "test", "resources", "ReplayerTest");
     
     @Nested
-    public class PathContentEqual {
+    public class FileContentEqual {
         
         @Test
         public void fileAndDirectoryNotEqual() {
             Path directory = TESTDATA.resolve(Path.of("Version1"));
             Path file = TESTDATA.resolve(Path.of("textfile.txt"));
-            assertFalse(assertDoesNotThrow(() -> Replayer.pathContentEqual(file, directory)));
+            assertFalse(assertDoesNotThrow(() -> Replayer.fileContentEqual(file, directory)));
         }
         
         @Test
         public void directoryAndFileNotEqual() {
             Path directory = TESTDATA.resolve(Path.of("Version1"));
             Path file = TESTDATA.resolve(Path.of("textfile.txt"));
-            assertFalse(assertDoesNotThrow(() -> Replayer.pathContentEqual(directory, file)));
+            assertFalse(assertDoesNotThrow(() -> Replayer.fileContentEqual(directory, file)));
         }
         
         @Test
         public void filesSameContentEqual() {
             Path file1 = TESTDATA.resolve(Path.of("textfile.txt"));
             Path file2 = TESTDATA.resolve(Path.of("identical_textfile.txt"));
-            assertTrue(assertDoesNotThrow(() -> Replayer.pathContentEqual(file1, file2)));
+            assertTrue(assertDoesNotThrow(() -> Replayer.fileContentEqual(file1, file2)));
         }
         
         @Test
         public void filesDifferentContentNotEqual() {
             Path file1 = TESTDATA.resolve(Path.of("textfile.txt"));
             Path file2 = TESTDATA.resolve(Path.of("different_textfile.txt"));
-            assertFalse(assertDoesNotThrow(() -> Replayer.pathContentEqual(file1, file2)));
+            assertFalse(assertDoesNotThrow(() -> Replayer.fileContentEqual(file1, file2)));
+        }
+        
+    }
+    
+    @Nested
+    public class PathContentEqual {
+        
+        @Test
+        public void fileAndDirectoryNotEqual() {
+            Path directory = TESTDATA.resolve(Path.of("Version1"));
+            Path file = TESTDATA.resolve(Path.of("textfile.txt"));
+            assertFalse(assertDoesNotThrow(() -> Replayer.directoryContentEqual(file, directory)));
         }
         
         @Test
-        public void directoriesDifferentFilesNotEqual() {
+        public void directoryAndFileNotEqual() {
+            Path directory = TESTDATA.resolve(Path.of("Version1"));
+            Path file = TESTDATA.resolve(Path.of("textfile.txt"));
+            assertFalse(assertDoesNotThrow(() -> Replayer.directoryContentEqual(directory, file)));
+        }
+        
+        @Test
+        public void differentFilesNotEqual() {
             Path directory1 = TESTDATA.resolve(Path.of("Version1"));
             Path directory2 = TESTDATA.resolve(Path.of("TwoFiles"));
-            assertFalse(assertDoesNotThrow(() -> Replayer.pathContentEqual(directory1, directory2)));
+            assertFalse(assertDoesNotThrow(() -> Replayer.directoryContentEqual(directory1, directory2)));
         }
         
         @Test
-        public void directoriesSameFilesButDifferentContentNotEqual() {
+        public void sameFilesButDifferentContentNotEqual() {
             Path directory1 = TESTDATA.resolve(Path.of("Version1"));
             Path directory2 = TESTDATA.resolve(Path.of("Version2"));
-            assertFalse(assertDoesNotThrow(() -> Replayer.pathContentEqual(directory1, directory2)));
+            assertFalse(assertDoesNotThrow(() -> Replayer.directoryContentEqual(directory1, directory2)));
         }
         
         @Test
-        public void directoriesSameFilesEqual() {
+        public void sameFilesEqual() {
             Path directory1 = TESTDATA.resolve(Path.of("Version1"));
             Path directory2 = TESTDATA.resolve(Path.of("Version1"));
-            assertTrue(assertDoesNotThrow(() -> Replayer.pathContentEqual(directory1, directory2)));
+            assertTrue(assertDoesNotThrow(() -> Replayer.directoryContentEqual(directory1, directory2)));
         }
         
         @Test
-        public void directoriesSameFilesInSubDirEqual() {
+        public void sameFilesInSubDirEqual() {
             Path directory1 = TESTDATA.resolve(Path.of("SubDirectory"));
             Path directory2 = TESTDATA.resolve(Path.of("SubDirectory"));
-            assertTrue(assertDoesNotThrow(() -> Replayer.pathContentEqual(directory1, directory2)));
+            assertTrue(assertDoesNotThrow(() -> Replayer.directoryContentEqual(directory1, directory2)));
         }
         
         @Test
-        public void directoriesFilesWithDifferentContentInSubDirNotEqual() {
+        public void filesWithDifferentContentInSubDirNotEqual() {
             Path directory1 = TESTDATA.resolve(Path.of("SubDirectory"));
             Path directory2 = TESTDATA.resolve(Path.of("SubDirectoryDifferentContent"));
-            assertFalse(assertDoesNotThrow(() -> Replayer.pathContentEqual(directory1, directory2)));
+            assertFalse(assertDoesNotThrow(() -> Replayer.directoryContentEqual(directory1, directory2)));
+        }
+        
+        @Test
+        public void unwantedFilesIgnored() {
+            Path directory1 = TESTDATA.resolve(Path.of("EclipseStructure"));
+            Path directory2 = TESTDATA.resolve(Path.of("EclipseStructureWithoutEclipseFiles"));
+            assertTrue(assertDoesNotThrow(() -> Replayer.directoryContentEqual(directory1, directory2)));
         }
         
     }

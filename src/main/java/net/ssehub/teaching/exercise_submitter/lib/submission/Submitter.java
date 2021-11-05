@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import net.ssehub.teaching.exercise_submitter.lib.submission.Problem.Severity;
@@ -27,6 +28,30 @@ import net.ssehub.teaching.exercise_submitter.server.api.model.SubmissionResultD
  */
 public class Submitter {
 
+    /**
+     * A {@link Predicate} that filters all unwanted files from a submission directory.
+     * <p>
+     * Parameter should be the relative path of the file inside the submission directory to check.
+     * <p>
+     * Returns <code>false</code> if the file is unwanted and should be filtered, <code>true</code> otherwise.
+     */
+    public static final Predicate<Path> WANTED_FILES;
+    
+    static {
+        Predicate<Path> notClassFile = p -> !p.getFileName().toString().endsWith(".class");
+        
+        Predicate<Path> notClasspathFile = p -> !p.equals(Path.of(".classpath"));
+        Predicate<Path> notProjectFile = p -> !p.equals(Path.of(".project"));
+        Predicate<Path> notCheckstyleFile = p -> !p.equals(Path.of(".checkstyle"));
+        Predicate<Path> notInSettingsDir = p -> !p.startsWith(".settings");
+        
+        WANTED_FILES = notClassFile
+                .and(notClasspathFile)
+                .and(notProjectFile)
+                .and(notCheckstyleFile)
+                .and(notInSettingsDir);
+    }
+    
     private String courseId;
     
     private String assignmentName;
@@ -154,15 +179,7 @@ public class Submitter {
                     .filter(p -> Files.isRegularFile(p))
                     .map(p -> submissionDir.relativize(p))
                     
-                    // remove class files
-                    .filter(p -> !p.getFileName().toString().endsWith(".class"))
-                    
-                    // remove unwanted eclipse project files
-                    .filter(p -> !p.equals(Path.of(".classpath")))
-                    .filter(p -> !p.equals(Path.of(".project")))
-                    .filter(p -> !p.equals(Path.of(".checkstyle")))
-                    .filter(p -> !p.startsWith(".settings"))
-                    
+                    .filter(WANTED_FILES)
                     .map(filepath -> pathToFileDto(filepath, submissionDir))
                     
                     .collect(Collectors.toList());
@@ -183,5 +200,5 @@ public class Submitter {
         
         return dtoToSubmissionResult(dto);
     }
-
+    
 }
