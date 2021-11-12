@@ -359,7 +359,7 @@ public class ApiConnection implements IApiConnection {
             result.setComment(assessment.getComment());
         }
         if (assessment.getPartialAssessments() != null) {
-            if (assessment.getPartialAssessments().get(0) != null) {
+            if (assessment.getPartialAssessments().size() > 0) {
                 if (assessment.getPartialAssessments().get(0).getMarkers() != null) {
                     List<Problem> problems = new ArrayList<>();
                     for (MarkerDto marker : assessment.getPartialAssessments().get(0).getMarkers()) {
