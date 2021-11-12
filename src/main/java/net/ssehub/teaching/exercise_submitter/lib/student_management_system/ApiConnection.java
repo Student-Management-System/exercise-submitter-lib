@@ -1,7 +1,9 @@
 package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +27,8 @@ import net.ssehub.studentmgmt.backend_api.model.AssessmentUpdateDto;
 import net.ssehub.studentmgmt.backend_api.model.AssignmentDto.CollaborationEnum;
 import net.ssehub.studentmgmt.backend_api.model.CourseDto;
 import net.ssehub.studentmgmt.backend_api.model.GroupDto;
+import net.ssehub.studentmgmt.backend_api.model.MarkerDto;
+import net.ssehub.studentmgmt.backend_api.model.MarkerDto.SeverityEnum;
 import net.ssehub.studentmgmt.backend_api.model.ParticipantDto;
 import net.ssehub.studentmgmt.backend_api.model.ParticipantDto.RoleEnum;
 import net.ssehub.studentmgmt.backend_api.model.UserDto;
@@ -35,6 +39,8 @@ import net.ssehub.teaching.exercise_submitter.lib.data.Assessment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
+import net.ssehub.teaching.exercise_submitter.lib.submission.Problem;
+import net.ssehub.teaching.exercise_submitter.lib.submission.Problem.Severity;
 
 /**
  * Provides communication to the student-management system.
@@ -351,6 +357,23 @@ public class ApiConnection implements IApiConnection {
         }
         if (assessment.getComment() != null) {
             result.setComment(assessment.getComment());
+        }
+        if (assessment.getPartialAssessments() != null) {
+            if (assessment.getPartialAssessments().get(0) != null) {
+                if (assessment.getPartialAssessments().get(0).getMarkers() != null) {
+                    List<Problem> problems = new ArrayList<>();
+                    for (MarkerDto marker : assessment.getPartialAssessments().get(0).getMarkers()) {
+                        Severity sev = marker.getSeverity() == SeverityEnum.ERROR ? Severity.ERROR : Severity.WARNING;
+                        Problem problem = new Problem("Server", marker.getComment(), sev);
+                        problem.setColumn(marker.getStartColumn().toBigInteger().intValueExact());
+                        problem.setFile(new File(marker.getPath()));
+                        problem.setLine(marker.getStartLineNumber().toBigInteger().intValueExact());
+                        problems.add(problem);
+                        
+                    }
+                    result.setProblems(problems);
+                }
+            }
         }
         return result;
     }

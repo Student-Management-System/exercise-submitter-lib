@@ -1,12 +1,18 @@
 package net.ssehub.teaching.exercise_submitter.lib.data;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
+import net.ssehub.studentmgmt.backend_api.model.AssessmentDto;
+import net.ssehub.teaching.exercise_submitter.lib.submission.Problem;
 
 /**
  * An assessment of the submission of a group.
  * 
  * @author Adam
+ * @author lukas
  */
 public class Assessment {
 
@@ -18,6 +24,8 @@ public class Assessment {
     
     private Optional<String> comment;
     
+    private List<Problem> problemlist;
+    
     /**
      * Creates a new assessment in draft status.
      */
@@ -26,6 +34,7 @@ public class Assessment {
         this.managementId = Optional.empty();
         this.points = Optional.empty();
         this.comment = Optional.empty();
+        this.problemlist = new ArrayList<>();
     }
 
     /**
@@ -105,11 +114,40 @@ public class Assessment {
         return managementId;
     }
     
+    /**
+     * Gets the problemlist.
+     *
+     * @return the problemlist
+     */
+    public List<Problem> getProblemlist() {
+        return problemlist;
+    }
+
+    /**
+     * Sets the problems.
+     *
+     * @param problems the new problems
+     */
+    public void setProblems(List<Problem> problems) {
+        this.problemlist = problems;
+    }
+    
+    /**
+     * Hash code.
+     *
+     * @return the int
+     */
     @Override
     public int hashCode() {
         return Objects.hash(comment, isDraft, points);
     }
 
+    /**
+     * Equals.
+     *
+     * @param obj the obj
+     * @return true, if successful
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -123,6 +161,11 @@ public class Assessment {
                 && Objects.equals(points, other.points);
     }
 
+    /**
+     * To string.
+     *
+     * @return the string
+     */
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -135,5 +178,6 @@ public class Assessment {
         builder.append("]");
         return builder.toString();
     }
+    
     
 }
