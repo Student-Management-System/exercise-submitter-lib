@@ -177,9 +177,15 @@ public class ExerciseSubmitterManager {
             result = cachedReplayer.get();
             
         } else {
-            result = new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
-                    getGroupName(assignment), mgmtConnection.getToken());
-            result.setTutorRights(hasTutorRights());
+            boolean tutorrights = hasTutorRights();
+            if (tutorrights) {
+                result = new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
+                        "Tutor", mgmtConnection.getToken());
+            } else {
+                result = new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
+                        getGroupName(assignment), mgmtConnection.getToken());
+            }
+            result.setTutorRights(tutorrights);
             
             cachedReplayer = Optional.of(result);
             cachedReplayerAssignment = Optional.of(assignment);

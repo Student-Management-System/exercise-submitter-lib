@@ -188,43 +188,6 @@ public class Replayer implements Closeable {
         return resultCheckout.toFile();
     }
     /**
-     * Replays the given version to a temporary directory from a group. Tutor rights are needed. The directory will be
-     * deleted when this {@link Replayer} is closed. 
-     *
-     * @param version The version to replay. See {@link #getVersions()}.
-     * @param groupName the groupName from the version that should be downloaded.
-     *
-     * @return A temporary directory with the submission content.
-     * 
-     * @throws ReplayException If replaying the submission fails, either due to IO exceptions or API exceptions.
-     */
-    public File replay(Version version, String groupName) throws ReplayException {
-        if (!tutorRights) {
-            throw new ReplayException("No tutor rights");
-        }
-        Path resultCheckout = cachedFiles.get(version);
-        
-        if (resultCheckout == null) {
-            try {
-                List<FileDto> files = api.getVersion(
-                        courseId, assignmentName, groupName, version.getTimestamp().getEpochSecond());
-                
-                resultCheckout = writeToTempDirectory(files);
-                
-            } catch (IOException e) {
-                throw new ReplayException("Failed to write submission to temporary directory", e);
-                
-            } catch (ApiException e) {
-                throw new ReplayException("Failed to retrieve submission version", e);
-            }
-            
-            cachedFiles.put(version, resultCheckout);
-        }
-
-        return resultCheckout.toFile();
-    }
-    
-    /**
      * Replays the latest version to a temporary directory. The directory will be deleted when this {@link Replayer}
      * is closed.
      * <p>
@@ -236,6 +199,38 @@ public class Replayer implements Closeable {
      * @throws ReplayException If replaying the submission fails, either due to IO exceptions or API exceptions.
      */
     public File replayLatest() throws ReplayException {
+        Path checkoutResult;
+        try {
+            List<FileDto> files = api.getLatest(courseId, assignmentName, groupName);
+            
+            checkoutResult = writeToTempDirectory(files);
+            
+        } catch (IOException e) {
+            throw new ReplayException("Failed to write submission to temporary directory", e);
+            
+        } catch (ApiException e) {
+            throw new ReplayException("Failed to retrieve submission version", e);
+        }
+        
+        return checkoutResult.toFile();
+    }
+    
+    /**
+     * Replays the latest version to a temporary directory. The directory will be deleted when this {@link Replayer}
+     * is closed. For Tutors only.
+     * <p>
+     * Note that contrary to {@link #replay(Version)} this method does not cache the result, i.e. it is fetched each
+     * time from the server (as the latest submission may change at any time).
+     * 
+     * @return A temporary directory with the submission content.
+     * @param groupName
+     * 
+     * @throws ReplayException If replaying the submission fails, either due to IO exceptions or API exceptions.
+     */
+    public File replayLatest(String groupName) throws ReplayException {
+        if (!tutorRights) {
+            throw new ReplayException("No Tutor rights");
+        }
         Path checkoutResult;
         try {
             List<FileDto> files = api.getLatest(courseId, assignmentName, groupName);
