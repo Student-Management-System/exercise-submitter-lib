@@ -179,6 +179,7 @@ public class ExerciseSubmitterManager {
         } else {
             result = new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
                     getGroupName(assignment), mgmtConnection.getToken());
+            result.setTutorRights(hasTutorRights());
             
             cachedReplayer = Optional.of(result);
             cachedReplayerAssignment = Optional.of(assignment);
@@ -239,6 +240,18 @@ public class ExerciseSubmitterManager {
             groupName = mgmtConnection.getUsername();
         }
         return groupName;
+    }
+    /**
+     * Checks if user has tutro rights.
+     * @return boolean
+     * @throws UserNotInCourseException
+     * @throws NetworkException
+     * @throws AuthenticationException
+     * @throws ApiException
+     */
+    private boolean hasTutorRights() throws UserNotInCourseException, NetworkException,
+        AuthenticationException, ApiException {
+        return this.mgmtConnection.hasTutorRights(course);
     }
     
 }

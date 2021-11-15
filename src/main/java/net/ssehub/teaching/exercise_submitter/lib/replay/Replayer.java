@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+
 import net.ssehub.teaching.exercise_submitter.lib.submission.Submitter;
 import net.ssehub.teaching.exercise_submitter.server.api.ApiClient;
 import net.ssehub.teaching.exercise_submitter.server.api.ApiException;
@@ -45,6 +46,8 @@ public class Replayer implements Closeable {
     private Set<Path> temporaryDirectoriesToDelete = new HashSet<>();
     
     private Map<Version, Path> cachedFiles = new HashMap<>();
+    
+    private boolean tutorRights = false;
 
     /**
      * Creates a new replayer for the given assignment.
@@ -65,6 +68,7 @@ public class Replayer implements Closeable {
         this.courseId = courseId;
         this.assignmentName = assignmentName;
         this.groupName = groupName;
+        
     }
     
     /**
@@ -162,6 +166,42 @@ public class Replayer implements Closeable {
      * @throws ReplayException If replaying the submission fails, either due to IO exceptions or API exceptions.
      */
     public File replay(Version version) throws ReplayException {
+        Path resultCheckout = cachedFiles.get(version);
+        
+        if (resultCheckout == null) {
+            try {
+                List<FileDto> files = api.getVersion(
+                        courseId, assignmentName, groupName, version.getTimestamp().getEpochSecond());
+                
+                resultCheckout = writeToTempDirectory(files);
+                
+            } catch (IOException e) {
+                throw new ReplayException("Failed to write submission to temporary directory", e);
+                
+            } catch (ApiException e) {
+                throw new ReplayException("Failed to retrieve submission version", e);
+            }
+            
+            cachedFiles.put(version, resultCheckout);
+        }
+
+        return resultCheckout.toFile();
+    }
+    /**
+     * Replays the given version to a temporary directory from a group. Tutor rights are needed. The directory will be
+     * deleted when this {@link Replayer} is closed. 
+     *
+     * @param version The version to replay. See {@link #getVersions()}.
+     * @param groupName the groupName from the version that should be downloaded.
+     *
+     * @return A temporary directory with the submission content.
+     * 
+     * @throws ReplayException If replaying the submission fails, either due to IO exceptions or API exceptions.
+     */
+    public File replay(Version version, String groupName) throws ReplayException {
+        if (!tutorRights) {
+            throw new ReplayException("No tutor rights");
+        }
         Path resultCheckout = cachedFiles.get(version);
         
         if (resultCheckout == null) {
@@ -389,5 +429,15 @@ public class Replayer implements Closeable {
             }
         });
     }
+    /**
+     * Sets if tutorrights are available.
+     * @param tutorrights
+     */
+    public void setTutorRights(boolean tutorrights) {
+        this.tutorRights = tutorrights;
+    }
+            
+    
+   
 
 }
