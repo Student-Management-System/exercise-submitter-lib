@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import net.ssehub.studentmgmt.backend_api.model.AssessmentDto;
 import net.ssehub.teaching.exercise_submitter.lib.submission.Problem;
 
 /**
