@@ -8,14 +8,19 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -23,11 +28,17 @@ import org.junit.jupiter.api.function.ThrowingConsumer;
 
 import com.google.gson.JsonSyntaxException;
 
+import net.ssehub.studentmgmt.backend_api.model.AssessmentDto;
+import net.ssehub.studentmgmt.backend_api.model.MarkerDto;
+import net.ssehub.studentmgmt.backend_api.model.PartialAssessmentDto;
+import net.ssehub.studentmgmt.backend_api.model.MarkerDto.SeverityEnum;
 import net.ssehub.studentmgmt.backend_api.model.UserDto;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assessment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
+import net.ssehub.teaching.exercise_submitter.lib.submission.Problem;
+import net.ssehub.teaching.exercise_submitter.lib.submission.Problem.Severity;
 
 public class ApiConnectionTest {
     
@@ -291,6 +302,296 @@ public class ApiConnectionTest {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+        
+    }
+    
+    @Nested
+    public class AssessmentDtoToAssessment {
+        
+        @Test
+        public void managementId() {
+            AssessmentDto dto = new AssessmentDto().id("some-id-123").isDraft(true);
+            
+            Assessment assessment = ApiConnection.assessmentDtoToAssessment(dto);
+            
+            assertEquals(Optional.of("some-id-123"), assessment.getManagementId());
+        }
+        
+        @Test
+        public void noComment() {
+            AssessmentDto dto = new AssessmentDto().id("some-id-123").isDraft(true);
+            
+            Assessment assessment = ApiConnection.assessmentDtoToAssessment(dto);
+            
+            assertEquals(Optional.empty(), assessment.getComment());
+        }
+        
+        @Test
+        public void comment() {
+            AssessmentDto dto = new AssessmentDto().id("some-id-123").isDraft(true).comment("some comment");
+            
+            Assessment assessment = ApiConnection.assessmentDtoToAssessment(dto);
+            
+            assertEquals(Optional.of("some comment"), assessment.getComment());
+        }
+        
+        @Test
+        public void noPoints() {
+            AssessmentDto dto = new AssessmentDto().id("some-id-123").isDraft(true);
+            
+            Assessment assessment = ApiConnection.assessmentDtoToAssessment(dto);
+            
+            assertEquals(Optional.empty(), assessment.getPoints());
+        }
+        
+        @Test
+        public void points() {
+            AssessmentDto dto = new AssessmentDto().id("some-id-123").isDraft(true)
+                    .achievedPoints(BigDecimal.valueOf(1.23));
+            
+            Assessment assessment = ApiConnection.assessmentDtoToAssessment(dto);
+            
+            assertEquals(Optional.of(1.23), assessment.getPoints());
+        }
+        
+        @Test
+        public void draftTrue() {
+            AssessmentDto dto = new AssessmentDto().id("some-id-123").isDraft(true);
+            
+            Assessment assessment = ApiConnection.assessmentDtoToAssessment(dto);
+            
+            assertEquals(true, assessment.isDraft());
+        }
+        
+        @Test
+        public void draftFalseButNoPointsIsDraft() {
+            AssessmentDto dto = new AssessmentDto().id("some-id-123").isDraft(false);
+            
+            Assessment assessment = ApiConnection.assessmentDtoToAssessment(dto);
+            
+            assertEquals(true, assessment.isDraft());
+        }
+        
+        @Test
+        public void draftFalse() {
+            AssessmentDto dto = new AssessmentDto().id("some-id-123").isDraft(false)
+                    .achievedPoints(BigDecimal.valueOf(10));
+            
+            Assessment assessment = ApiConnection.assessmentDtoToAssessment(dto);
+            
+            assertEquals(false, assessment.isDraft());
+        }
+        
+        @Test
+        public void problemsNull() {
+            AssessmentDto dto = new AssessmentDto().id("some-id-123").isDraft(true);
+            
+            Assessment assessment = ApiConnection.assessmentDtoToAssessment(dto);
+            
+            assertEquals(Collections.emptyList(), assessment.getProblems());
+        }
+        
+        @Test
+        public void problemsEmpty() {
+            AssessmentDto dto = new AssessmentDto().id("some-id-123").isDraft(true);
+            dto.addPartialAssessmentsItem(new PartialAssessmentDto().key("exercise-submitter-checks")
+                    .markers(Collections.emptyList()));
+            
+            Assessment assessment = ApiConnection.assessmentDtoToAssessment(dto);
+            
+            assertEquals(Collections.emptyList(), assessment.getProblems());
+        }
+        
+        @Test
+        public void problemsDifferentPartialAssessmentKeyIgnored() {
+            AssessmentDto dto = new AssessmentDto().id("some-id-123").isDraft(true);
+            dto.addPartialAssessmentsItem(new PartialAssessmentDto().key("wrong-key")
+                    .markers(Arrays.asList(
+                            new MarkerDto().comment("(some check) some comment").severity(SeverityEnum.ERROR))));
+            
+            Assessment assessment = ApiConnection.assessmentDtoToAssessment(dto);
+            
+            assertEquals(Collections.emptyList(), assessment.getProblems());
+        }
+        
+        @Test
+        public void oneProblem() {
+            AssessmentDto dto = new AssessmentDto().id("some-id-123").isDraft(true);
+            dto.addPartialAssessmentsItem(new PartialAssessmentDto().key("exercise-submitter-checks")
+                    .markers(Arrays.asList(
+                            new MarkerDto().comment("(some check) some comment").severity(SeverityEnum.ERROR))));
+            
+            Assessment assessment = ApiConnection.assessmentDtoToAssessment(dto);
+            
+            assertEquals(Arrays.asList(new Problem("some check", "some comment", Severity.ERROR)),
+                    assessment.getProblems());
+        }
+        
+    }
+    
+    @Nested
+    public class MarkerDtoToProblem {
+        
+        @Test
+        public void checkName() {
+            MarkerDto dto = new MarkerDto().comment("(some check) some message").severity(SeverityEnum.ERROR);
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals("some check", problem.getCheckName());
+        }
+        
+        @Test
+        public void unknownCheckName() {
+            MarkerDto dto = new MarkerDto().comment("only some message").severity(SeverityEnum.ERROR);
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals("unknown", problem.getCheckName());
+        }
+        
+        @Test
+        public void unknownCheckNameMissingParenthesis() {
+            MarkerDto dto = new MarkerDto().comment("(only some message").severity(SeverityEnum.ERROR);
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals("unknown", problem.getCheckName());
+        }
+        
+        @Test
+        public void message() {
+            MarkerDto dto = new MarkerDto().comment("(some check) some message").severity(SeverityEnum.ERROR);
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals("some message", problem.getMessage());
+        }
+        
+        @Test
+        public void emptyMessage() {
+            MarkerDto dto = new MarkerDto().comment("(some check)").severity(SeverityEnum.ERROR);
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals("", problem.getMessage());
+        }
+        
+        @Test
+        public void onlyMessage() {
+            MarkerDto dto = new MarkerDto().comment("only some message").severity(SeverityEnum.ERROR);
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals("only some message", problem.getMessage());
+        }
+        
+        @Test
+        public void severityError() {
+            MarkerDto dto = new MarkerDto().comment("(some check) some message").severity(SeverityEnum.ERROR);
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals(Severity.ERROR, problem.getSeverity());
+        }
+        
+        @Test
+        public void severityWarning() {
+            MarkerDto dto = new MarkerDto().comment("(some check) some message").severity(SeverityEnum.WARNING);
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals(Severity.WARNING, problem.getSeverity());
+        }
+        
+        @Test
+        public void severityInfoConvertedToWarning() {
+            MarkerDto dto = new MarkerDto().comment("(some check) some message").severity(SeverityEnum.INFO);
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals(Severity.WARNING, problem.getSeverity());
+        }
+        
+        @Test
+        public void noFile() {
+            MarkerDto dto = new MarkerDto().comment("(some check) some message").severity(SeverityEnum.ERROR);
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals(Optional.empty(), problem.getFile());
+        }
+        
+        @Test
+        public void file() {
+            MarkerDto dto = new MarkerDto().comment("(some check) some message").severity(SeverityEnum.ERROR)
+                    .path("some/file.txt");
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals(Optional.of(new File("some/file.txt")), problem.getFile());
+        }
+        
+        @Test
+        public void noLine() {
+            MarkerDto dto = new MarkerDto().comment("(some check) some message").severity(SeverityEnum.ERROR)
+                    .path("some/file.txt");
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals(Optional.empty(), problem.getLine());
+        }
+        
+        @Test
+        public void line() {
+            MarkerDto dto = new MarkerDto().comment("(some check) some message").severity(SeverityEnum.ERROR)
+                    .path("some/file.txt").startLineNumber(BigDecimal.valueOf(123));
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals(Optional.of(123), problem.getLine());
+        }
+        
+        @Test
+        public void noLineWithoutFile() {
+            MarkerDto dto = new MarkerDto().comment("(some check) some message").severity(SeverityEnum.ERROR)
+                    .startLineNumber(BigDecimal.valueOf(123));
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals(Optional.empty(), problem.getLine());
+        }
+        
+        @Test
+        public void noColumn() {
+            MarkerDto dto = new MarkerDto().comment("(some check) some message").severity(SeverityEnum.ERROR)
+                    .path("some/file.txt").startLineNumber(BigDecimal.valueOf(123));
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals(Optional.empty(), problem.getColumn());
+        }
+        
+        @Test
+        public void column() {
+            MarkerDto dto = new MarkerDto().comment("(some check) some message").severity(SeverityEnum.ERROR)
+                    .path("some/file.txt").startLineNumber(BigDecimal.valueOf(123))
+                    .startColumn(BigDecimal.valueOf(432));
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals(Optional.of(432), problem.getColumn());
+        }
+        
+        @Test
+        public void noLineWithoutLine() {
+            MarkerDto dto = new MarkerDto().comment("(some check) some message").severity(SeverityEnum.ERROR)
+                    .path("some/file.txt").startColumn(BigDecimal.valueOf(432));
+            
+            Problem problem = ApiConnection.markerDtoToProblem(dto);
+            
+            assertEquals(Optional.empty(), problem.getColumn());
         }
         
     }

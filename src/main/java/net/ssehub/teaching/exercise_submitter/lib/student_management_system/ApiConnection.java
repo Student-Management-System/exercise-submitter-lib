@@ -3,7 +3,6 @@ package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -339,12 +338,14 @@ public class ApiConnection implements IApiConnection {
     
     /**
      * Converts a DTO to our own {@link Assessment}.
+     * <p>
+     * Package visibility for test cases.
      * 
      * @param assessment The assessment to convert.
      * 
      * @return The assessment.
      */
-    private Assessment assessmentDtoToAssessment(AssessmentDto assessment) {
+    static Assessment assessmentDtoToAssessment(AssessmentDto assessment) {
         Assessment result = new Assessment();
         result.setManagementId(assessment.getId());
         if (assessment.getAchievedPoints() != null) {
@@ -358,24 +359,56 @@ public class ApiConnection implements IApiConnection {
         if (assessment.getComment() != null) {
             result.setComment(assessment.getComment());
         }
+        
         if (assessment.getPartialAssessments() != null) {
-            if (assessment.getPartialAssessments().size() > 0) {
-                if (assessment.getPartialAssessments().get(0).getMarkers() != null) {
-                    List<Problem> problems = new ArrayList<>();
-                    for (MarkerDto marker : assessment.getPartialAssessments().get(0).getMarkers()) {
-                        Severity sev = marker.getSeverity() == SeverityEnum.ERROR ? Severity.ERROR : Severity.WARNING;
-                        Problem problem = new Problem("Server", marker.getComment(), sev);
-                        problem.setColumn(marker.getStartColumn().toBigInteger().intValueExact());
-                        problem.setFile(new File(marker.getPath()));
-                        problem.setLine(marker.getStartLineNumber().toBigInteger().intValueExact());
-                        problems.add(problem);
-                        
-                    }
-                    result.setProblems(problems);
+            assessment.getPartialAssessments().stream()
+                .filter(p -> p.getKey().equals("exercise-submitter-checks"))
+                .flatMap(p -> p.getMarkers().stream())
+                .map(ApiConnection::markerDtoToProblem)
+                .forEach(result::addProblem);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Converts a DTO to our own {@link Problem}.
+     * <p>
+     * Package visibility for test cases.
+     * 
+     * @param marker The DTO to convert.
+     * 
+     * @return A problem with the data from the DTO.
+     */
+    static Problem markerDtoToProblem(MarkerDto marker) {
+        String checkName = "unknown";
+        String comment = marker.getComment();
+        
+        if (comment.startsWith("(")) {
+            int endParenthesis = comment.indexOf(')');
+            if (endParenthesis != -1) {
+                checkName = comment.substring(1, endParenthesis);
+                comment = comment.substring(endParenthesis + 1).trim();
+            }
+        }
+        
+        Severity severity = marker.getSeverity() == SeverityEnum.ERROR ? Severity.ERROR : Severity.WARNING;
+        
+        Problem problem = new Problem(checkName, comment, severity);
+        
+        if (marker.getPath() != null) {
+            problem.setFile(new File(marker.getPath()));
+            
+            if (marker.getStartLineNumber() != null) {
+                problem.setLine(marker.getStartLineNumber().intValue());
+                
+                if (marker.getStartColumn() != null) {
+                    problem.setColumn(marker.getStartColumn().intValue());
                 }
             }
         }
-        return result;
+        
+        return problem;
     }
 
     @Override

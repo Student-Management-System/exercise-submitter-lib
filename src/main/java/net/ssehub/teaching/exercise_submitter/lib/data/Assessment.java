@@ -1,6 +1,6 @@
 package net.ssehub.teaching.exercise_submitter.lib.data;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -23,7 +23,7 @@ public class Assessment {
     
     private Optional<String> comment;
     
-    private List<Problem> problemlist;
+    private List<Problem> problems;
     
     /**
      * Creates a new assessment in draft status.
@@ -33,7 +33,7 @@ public class Assessment {
         this.managementId = Optional.empty();
         this.points = Optional.empty();
         this.comment = Optional.empty();
-        this.problemlist = new ArrayList<>();
+        this.problems = new LinkedList<>();
     }
 
     /**
@@ -114,39 +114,28 @@ public class Assessment {
     }
     
     /**
-     * Gets the problemlist.
+     * Returns an unmodifiable view on the {@link Problem}s associated with this assessment.
      *
-     * @return the problemlist
+     * @return The list of problems for this assessment.
      */
-    public List<Problem> getProblemlist() {
-        return problemlist;
+    public List<Problem> getProblems() {
+        return problems;
     }
 
     /**
-     * Sets the problems.
-     *
-     * @param problems the new problems
+     * Adds a {@link Problem} to this assessment.
+     * 
+     * @param problem The problem to add.
      */
-    public void setProblems(List<Problem> problems) {
-        this.problemlist = problems;
+    public void addProblem(Problem problem) {
+        this.problems.add(problem);
     }
     
-    /**
-     * Hash code.
-     *
-     * @return the int
-     */
     @Override
     public int hashCode() {
         return Objects.hash(comment, isDraft, points);
     }
 
-    /**
-     * Equals.
-     *
-     * @param obj the obj
-     * @return true, if successful
-     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -160,11 +149,6 @@ public class Assessment {
                 && Objects.equals(points, other.points);
     }
 
-    /**
-     * To string.
-     *
-     * @return the string
-     */
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -177,6 +161,5 @@ public class Assessment {
         builder.append("]");
         return builder.toString();
     }
-    
     
 }
