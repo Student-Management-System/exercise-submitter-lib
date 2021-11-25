@@ -152,16 +152,19 @@ public class ExerciseSubmitterManager {
     }
     
     /**
-     * Creates a {@link Replayer} for the given assignment.
+     * Creates a {@link Replayer} for the given assignment. The group of the currently logged-in user is used.
      *
-     * @param assignment The assignment to submit to.
+     * @param assignment The assignment to replay.
+     * 
      * @return A {@link Replayer} for the given {@link Assignment}.
+     * 
      * @throws IllegalArgumentException If the given {@link Assignment} is not replayable.
      * @throws NetworkException the network exception
      * @throws AuthenticationException the authentication exception
      * @throws UserNotInCourseException the user not in course exception
      * @throws GroupNotFoundException the group not found exception
      * @throws ApiException If the group name of a group assignment cannot be retrieved.
+     * 
      * @see #isReplayable(Assignment)
      */
     public Replayer getReplayer(Assignment assignment)
@@ -177,22 +180,28 @@ public class ExerciseSubmitterManager {
             result = cachedReplayer.get();
             
         } else {
-            boolean tutorrights = hasTutorRights();
-            if (tutorrights) {
-                result = new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
-                        "Tutor", mgmtConnection.getToken());
-            } else {
-                result = new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
-                        getGroupName(assignment), mgmtConnection.getToken());
-            }
-            result.setTutorRights(tutorrights);
+            result = new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
+                    getGroupName(assignment), mgmtConnection.getToken());
             
             cachedReplayer = Optional.of(result);
             cachedReplayerAssignment = Optional.of(assignment);
         }
         
         return result;
-     
+    }
+    
+    /**
+     * Creates a {@link Replayer} for the given assignment and group name. This method should be used by tutors instead
+     * of {@link #getReplayer(Assignment)}, as tutors can have access to arbitrary groups.
+     * 
+     * @param assignment The assignment to replay.
+     * @param groupName The name of the group in the assignment to replay.
+     * 
+     * @return A {@link Replayer} for the given {@link Assignment} and group.
+     */
+    public Replayer getReplayer(Assignment assignment, String groupName) {
+        return new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(), groupName,
+                mgmtConnection.getToken());
     }
     
     /**
@@ -246,18 +255,6 @@ public class ExerciseSubmitterManager {
             groupName = mgmtConnection.getUsername();
         }
         return groupName;
-    }
-    /**
-     * Checks if user has tutro rights.
-     * @return boolean
-     * @throws UserNotInCourseException
-     * @throws NetworkException
-     * @throws AuthenticationException
-     * @throws ApiException
-     */
-    private boolean hasTutorRights() throws UserNotInCourseException, NetworkException,
-        AuthenticationException, ApiException {
-        return this.mgmtConnection.hasTutorRights(course);
     }
     
 }
