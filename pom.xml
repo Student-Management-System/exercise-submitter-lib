@@ -129,7 +129,7 @@
 		<dependency>
 			<groupId>net.ssehub.studentmgmt</groupId>
 			<artifactId>backend_api</artifactId>
-			<version>1.1.1</version>
+			<version>1.1.2-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>net.ssehub.teaching.exercise_submitter</groupId>

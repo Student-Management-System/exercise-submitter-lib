@@ -105,6 +105,8 @@ public class SubmitterIT {
         assignmentids.put("compilationProblemInResult",
                 docker.createAssignment(courseId, "compilationProblemInResult",
                         AssignmentState.SUBMISSION, Collaboration.GROUP));
+        docker.setAssignmentToolConfigString(courseId, assignmentids.get("compilationProblemInResult"),
+                "exercise-submitter-checks", "[\"check\":\"javac\"]");
         
         assignmentids.put("authFailure",
                 docker.createAssignment(courseId, "authFailure",
