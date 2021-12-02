@@ -428,6 +428,16 @@ public class ApiConnectionTest {
                     assessment.getProblems());
         }
         
+        @Test
+        public void markersNull() {
+            AssessmentDto dto = new AssessmentDto().id("some-id-123").isDraft(true);
+            dto.addPartialAssessmentsItem(new PartialAssessmentDto().key("exercise-submitter-checks"));
+            
+            Assessment assessment = ApiConnection.assessmentDtoToAssessment(dto);
+            
+            assertEquals(Collections.emptyList(), assessment.getProblems());
+        }
+        
     }
     
     @Nested

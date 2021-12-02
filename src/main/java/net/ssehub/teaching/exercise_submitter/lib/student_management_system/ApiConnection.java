@@ -363,6 +363,7 @@ public class ApiConnection implements IApiConnection {
         if (assessment.getPartialAssessments() != null) {
             assessment.getPartialAssessments().stream()
                 .filter(p -> p.getKey().equals("exercise-submitter-checks"))
+                .filter(p -> p.getMarkers() != null)
                 .flatMap(p -> p.getMarkers().stream())
                 .map(ApiConnection::markerDtoToProblem)
                 .forEach(result::addProblem);
