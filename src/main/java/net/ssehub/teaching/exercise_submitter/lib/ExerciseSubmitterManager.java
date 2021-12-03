@@ -87,9 +87,11 @@ public class ExerciseSubmitterManager {
      * @return A list of all assignments.
      * @throws NetworkException If the network communication fails.
      * @throws AuthenticationException If the authentication fails.
+     * @throws UserNotInCourseException If the user is not enrolled in the course.
      * @throws ApiException If a generic API exception occurs.
      */
-    public List<Assignment> getAllAssignments() throws NetworkException, AuthenticationException, ApiException {
+    public List<Assignment> getAllAssignments()
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         return mgmtConnection.getAssignments(course);
     }
     
@@ -99,11 +101,12 @@ public class ExerciseSubmitterManager {
      * @return A list of all assignments that can be submitted.
      * @throws NetworkException If the network communication fails.
      * @throws AuthenticationException If the authentication fails.
+     * @throws UserNotInCourseException If the user is not enrolled in the course.
      * @throws ApiException If a generic API exception occurs.
      * @see #isSubmittable(Assignment)
      */
     public List<Assignment> getAllSubmittableAssignments()
-            throws NetworkException, AuthenticationException, ApiException {
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         
         return mgmtConnection.getAssignments(course).stream()
                 .filter(this::isSubmittable)
@@ -116,11 +119,12 @@ public class ExerciseSubmitterManager {
      * @return A list of all assignments that can be replayed.
      * @throws NetworkException If the network communication fails.
      * @throws AuthenticationException If the authentication fails.
+     * @throws UserNotInCourseException If the user is not enrolled in the course.
      * @throws ApiException If a generic API exception occurs.
      * @see #isReplayable(Assignment)
      */
     public List<Assignment> getAllReplayableAssignments()
-            throws NetworkException, AuthenticationException, ApiException {
+            throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         
         return mgmtConnection.getAssignments(course).stream()
                 .filter(this::isReplayable)
