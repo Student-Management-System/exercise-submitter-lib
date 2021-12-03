@@ -47,6 +47,7 @@ public class ApiConnectionIT {
 
         String student1Id = docker.createUser("student1", "Bunny123");
         String student2Id = docker.createUser("student2", "abcdefgh");
+        docker.createUser("student3", "abcdefgh");
         docker.createUser("notInCourse", "abcdefgh");
 
         createJavaCourse();
@@ -61,6 +62,7 @@ public class ApiConnectionIT {
         String javaCourseId = docker.createCourse("java", "wise2021", "Programmierpraktikum: Java", "adam");
         docker.enrollStudent(javaCourseId, "student1");
         docker.enrollStudent(javaCourseId, "student2");
+        docker.enrollStudent(javaCourseId, "student3");
         
         docker.createGroup(javaCourseId, "AwesomeGroup", "student1", "student2");
         
@@ -395,6 +397,17 @@ public class ApiConnectionIT {
             
             Course course = assertDoesNotThrow(() -> api.getCourse("java-wise2021"));
             Assignment exercise01 = getAssignmentByName(api, course, "exercise01");
+            
+            assertThrows(GroupNotFoundException.class, () -> api.getGroupName(course, exercise01));
+        }
+        
+        @Test
+        public void notInAnyGroupThrows() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            assertDoesNotThrow(() -> api.login("student3", "abcdefgh"));
+            
+            Course course = assertDoesNotThrow(() -> api.getCourse("java-wise2021"));
+            Assignment exercise01 = getAssignmentByName(api, course, "exercise02");
             
             assertThrows(GroupNotFoundException.class, () -> api.getGroupName(course, exercise01));
         }
