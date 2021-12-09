@@ -166,5 +166,13 @@ public interface IApiConnection {
     public void uploadAssessment(Course course, Assignment assignment, String groupName, Assessment assessment)
             throws NetworkException, AuthenticationException, UserNotInCourseException,
             GroupNotFoundException, ApiException;
+
+    
+    /**
+     * Returns all Courses registered in the stuMgmt System.
+     * @return the List of the Courses, empty if no Courses are created,
+     * @throws ApiException
+     */
+    public List<Course> getAllCourses() throws ApiException;
     
 }

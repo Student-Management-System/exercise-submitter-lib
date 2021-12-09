@@ -1,5 +1,6 @@
 package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -127,6 +128,11 @@ public class DummyApiConnection implements IApiConnection {
     public void uploadAssessment(Course course, Assignment assignment, String groupName, Assessment assessment)
             throws NetworkException, AuthenticationException, UserNotInCourseException, GroupNotFoundException,
             ApiException {
+    }
+
+    @Override
+    public List<Course> getAllCourses() throws ApiException {
+        return new ArrayList<Course>();
     }
 
 }
