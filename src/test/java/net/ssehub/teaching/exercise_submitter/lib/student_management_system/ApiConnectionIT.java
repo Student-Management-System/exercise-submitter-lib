@@ -285,6 +285,27 @@ public class ApiConnectionIT {
     }
     
     @Nested
+    public class GetAllCourses {
+        
+        @Test
+        public void getAllCourses() {
+            ApiConnection api = new ApiConnection(docker.getAuthUrl(), docker.getStuMgmtUrl());
+            // no login required
+            
+            Set<Course> courses = assertDoesNotThrow(() -> api.getAllCourses());
+            
+            assertEquals(Set.of(
+                    new Course("Programmierpraktikum: Java", "java-wise2021"),
+                    new Course("Not Enrolled", "notenrolled-wise2021"),
+                    new Course("All Assignment States", "allstates-wise2021"),
+                    new Course("Assessments", "assessments-sose20"),
+                    new Course("Different Group Configurations", "groups-sose20"),
+                    new Course("New Assessments", "assessmentupdate-sose20")), courses);
+        }
+        
+    }
+    
+    @Nested
     public class GetAssignments {
         
         @Test

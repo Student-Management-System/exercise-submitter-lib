@@ -57,6 +57,18 @@ public interface IApiConnection {
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException;
     
     /**
+     * Returns all courses in the student management system. Does not require {@link #login(String, String)} to be
+     * called first (i.e. no authentication needed).
+     * 
+     * @return All courses in the student management system.
+     * 
+     * @throws NetworkException If the network communication fails.
+     * @throws AuthenticationException If the authentication fails.
+     * @throws ApiException If a generic exception occurs.
+     */
+    public Set<Course> getAllCourses() throws NetworkException, AuthenticationException, ApiException;
+
+    /**
      * Gets all {@link Assignment}s for the given {@link Course}.
      * 
      * @param course The {@link Course} to get all assignments of.
@@ -166,13 +178,5 @@ public interface IApiConnection {
     public void uploadAssessment(Course course, Assignment assignment, String groupName, Assessment assessment)
             throws NetworkException, AuthenticationException, UserNotInCourseException,
             GroupNotFoundException, ApiException;
-
-    
-    /**
-     * Returns all Courses registered in the stuMgmt System.
-     * @return the List of the Courses, empty if no Courses are created,
-     * @throws ApiException
-     */
-    public List<Course> getAllCourses() throws ApiException;
     
 }

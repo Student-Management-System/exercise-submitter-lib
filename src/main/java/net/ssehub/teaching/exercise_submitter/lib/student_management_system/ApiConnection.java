@@ -3,7 +3,6 @@ package net.ssehub.teaching.exercise_submitter.lib.student_management_system;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -139,6 +138,30 @@ public class ApiConnection implements IApiConnection {
         }
         
         return course;
+    }
+
+    @Override
+    public Set<Course> getAllCourses() throws NetworkException, AuthenticationException, ApiException {
+        
+        Set<Course> courses = new HashSet<>();
+        
+        try {
+            CourseApi api = new CourseApi(mgmtClient);
+            List<CourseDto> dtos = api.getCourses(null, null, null, null, null);
+            
+            for (CourseDto dto : dtos) {
+                Course course = new Course(dto.getTitle(), dto.getId());
+                courses.add(course);
+            }
+            
+        } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
+            throw handleMgmtException(e);
+            
+        } catch (JsonParseException e) {
+            throw new ApiException("Invalid JSON response", e);
+        }
+        
+        return courses;
     }
 
     @Override
@@ -335,32 +358,6 @@ public class ApiConnection implements IApiConnection {
         }
         
         return result;
-    }
-    
-    @Override
-    public List<Course> getAllCourses() throws ApiException {
-        
-        List<Course> courseList = new ArrayList<Course>();
-        
-        try {
-            CourseApi api = new CourseApi(mgmtClient);
-            List <CourseDto> listCourseDto = api.getCourses(null, null, null, null, null);
-            
-            for (CourseDto dto : listCourseDto) {
-                Course course = new Course(dto.getTitle(), dto.getId());
-                courseList.add(course);
-            }
-            
-        } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
-           
-            throw handleMgmtException(e);
-            
-        } catch (JsonParseException e) {
-            throw new ApiException("Invalid JSON response", e);
-        }       
-        return courseList;
-        
-        
     }
     
     /**

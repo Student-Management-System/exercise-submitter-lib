@@ -1,6 +1,6 @@
 package net.ssehub.teaching.exercise_submitter.lib.data;
 
-
+import java.util.Objects;
 
 /**
  * Represents a course.
@@ -42,14 +42,26 @@ public class Course {
         return id;
     }
 
-    /**
-     * To string.
-     *
-     * @return the string
-     */
     @Override
     public String toString() {
         return name;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof Course)) {
+            return false;
+        }
+        Course other = (Course) obj;
+        return Objects.equals(id, other.id) && Objects.equals(name, other.name);
     }
     
 }

@@ -163,6 +163,14 @@ public class ApiConnectionTest {
     }
     
     @Nested
+    public class GetAllCourses extends StandardExceptionHandlingTests {
+        
+        public GetAllCourses() {
+            super(api -> api.getAllCourses());
+        }
+    }
+    
+    @Nested
     public class GetAssignments extends StandardExceptionHandlingTests {
         
         public GetAssignments() {
