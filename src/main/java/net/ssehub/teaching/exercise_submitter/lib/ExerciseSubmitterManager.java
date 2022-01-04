@@ -10,7 +10,6 @@ import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 import net.ssehub.teaching.exercise_submitter.lib.replay.Replayer;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.ApiException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.AuthenticationException;
-import net.ssehub.teaching.exercise_submitter.lib.student_management_system.CourseNotSelectedException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.GroupNotFoundException;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.IApiConnection;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.NetworkException;
@@ -28,7 +27,7 @@ import net.ssehub.teaching.exercise_submitter.lib.submission.Submitter;
  */
 public class ExerciseSubmitterManager {
     
-    private Optional<Course> course = Optional.empty();
+    private Course course;
     
     private IApiConnection mgmtConnection;
     
@@ -57,10 +56,7 @@ public class ExerciseSubmitterManager {
         
         this.mgmtConnection = apiConnection;
         this.mgmtConnection.login(username, password);
-        if (courseId != null) {
-            this.course = Optional.ofNullable(this.mgmtConnection.getCourse(courseId));
-            
-        }
+        this.course = mgmtConnection.getCourse(courseId);
         this.exerciseSubmitterServerUrl = exerciseSubmitterServerUrl;
         
         this.cachedReplayer = Optional.empty();
@@ -82,13 +78,7 @@ public class ExerciseSubmitterManager {
      * @return The course of this manager.
      */
     public Course getCourse() {
-        Course returnCourse;
-        if (course.isPresent()) {
-            returnCourse = course.get();
-        } else {
-            returnCourse = new Course("Not Selected", "");
-        }
-        return returnCourse;
+        return course;
     }
     
     /**
@@ -102,7 +92,7 @@ public class ExerciseSubmitterManager {
      */
     public List<Assignment> getAllAssignments()
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
-        return mgmtConnection.getAssignments(course.orElseThrow(CourseNotSelectedException::new));
+        return mgmtConnection.getAssignments(course);
     }
     
     /**
@@ -118,7 +108,7 @@ public class ExerciseSubmitterManager {
     public List<Assignment> getAllSubmittableAssignments()
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         
-        return mgmtConnection.getAssignments(course.orElseThrow(CourseNotSelectedException::new)).stream()
+        return mgmtConnection.getAssignments(course).stream()
                 .filter(this::isSubmittable)
                 .collect(Collectors.toList());
     }
@@ -136,7 +126,7 @@ public class ExerciseSubmitterManager {
     public List<Assignment> getAllReplayableAssignments()
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         
-        return mgmtConnection.getAssignments(course.orElseThrow(CourseNotSelectedException::new)).stream()
+        return mgmtConnection.getAssignments(course).stream()
                 .filter(this::isReplayable)
                 .collect(Collectors.toList());
     }
@@ -161,8 +151,7 @@ public class ExerciseSubmitterManager {
             throw new IllegalArgumentException("Assignment " + assignment.getName() + " is not in submittable");
         }
         
-        return new Submitter(exerciseSubmitterServerUrl, 
-                course.orElseThrow(CourseNotSelectedException::new).getId(), assignment.getName(),
+        return new Submitter(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
                 getGroupName(assignment), mgmtConnection.getToken());
     }
     
@@ -195,8 +184,7 @@ public class ExerciseSubmitterManager {
             result = cachedReplayer.get();
             
         } else {
-            result = new Replayer(exerciseSubmitterServerUrl,
-                    course.orElseThrow(CourseNotSelectedException::new).getId(), assignment.getName(),
+            result = new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(),
                     getGroupName(assignment), mgmtConnection.getToken());
             
             cachedReplayer = Optional.of(result);
@@ -214,11 +202,9 @@ public class ExerciseSubmitterManager {
      * @param groupName The name of the group in the assignment to replay.
      * 
      * @return A {@link Replayer} for the given {@link Assignment} and group.
-     * @throws CourseNotSelectedException 
      */
-    public Replayer getReplayer(Assignment assignment, String groupName) throws CourseNotSelectedException {
-        return new Replayer(exerciseSubmitterServerUrl, 
-                course.orElseThrow(CourseNotSelectedException::new).getId(), assignment.getName(), groupName,
+    public Replayer getReplayer(Assignment assignment, String groupName) {
+        return new Replayer(exerciseSubmitterServerUrl, course.getId(), assignment.getName(), groupName,
                 mgmtConnection.getToken());
     }
     
@@ -268,18 +254,11 @@ public class ExerciseSubmitterManager {
         String groupName;
         if (assignment.isGroupWork()) {
             
-            groupName = mgmtConnection.getGroupName(course.orElseThrow(CourseNotSelectedException::new), assignment);
+            groupName = mgmtConnection.getGroupName(course, assignment);
         } else {
             groupName = mgmtConnection.getUsername();
         }
         return groupName;
-    }
-    /**
-     * Sets the course current course.
-     * @param course
-     */
-    public void setCourse(Course course) {
-        this.course = Optional.ofNullable(course);
     }
     
 }
