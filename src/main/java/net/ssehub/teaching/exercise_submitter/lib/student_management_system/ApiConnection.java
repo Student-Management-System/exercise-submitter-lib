@@ -347,11 +347,16 @@ public class ApiConnection implements IApiConnection {
             }
             
         } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
-            if (e.getCode() == 403) {
-                throw new UserNotInCourseException(parseResponseMessage(e.getResponseBody()));
+            if (e.getCode() == 404) {
+                result = Optional.empty();
+                
+            } else {
+                if (e.getCode() == 403) {
+                    throw new UserNotInCourseException(parseResponseMessage(e.getResponseBody()));
+                }
+                
+                throw handleMgmtException(e);
             }
-            
-            throw handleMgmtException(e);
             
         } catch (JsonParseException e) {
             throw new ApiException("Invalid JSON response", e);
