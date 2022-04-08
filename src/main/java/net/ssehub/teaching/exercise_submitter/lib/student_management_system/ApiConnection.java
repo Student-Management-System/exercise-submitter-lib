@@ -196,7 +196,7 @@ public class ApiConnection implements IApiConnection {
                             break;
                         }
                         
-                        boolean groupwork = assignment.getCollaboration() != CollaborationEnum.SINGLE ? true : false;
+                        boolean groupwork = assignment.getCollaboration() != CollaborationEnum.SINGLE;
                         
                         return new Assignment(assignment.getId(), assignment.getName(), state, groupwork);
                     })
