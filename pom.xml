@@ -4,7 +4,7 @@
 
 	<groupId>net.ssehub.teaching.exercise_submitter</groupId>
 	<artifactId>exercise-submitter-lib</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 
 	<organization>
 		<name>Software Systems Engineering, University of Hildesheim</name>
@@ -136,12 +136,12 @@
 		<dependency>
 			<groupId>net.ssehub.studentmgmt</groupId>
 			<artifactId>backend_api</artifactId>
-			<version>1.1.2-SNAPSHOT</version>
+			<version>2.7.2</version>
 		</dependency>
 		<dependency>
 			<groupId>net.ssehub.teaching.exercise_submitter</groupId>
 			<artifactId>exercise-submitter-server-api</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>
@@ -159,7 +159,7 @@
 		<dependency>
 			<groupId>net.ssehub.studentmgmt</groupId>
 			<artifactId>stu-mgmt-testing-docker</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0.0</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
