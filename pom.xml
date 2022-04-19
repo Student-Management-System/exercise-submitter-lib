@@ -4,7 +4,7 @@
 
 	<groupId>net.ssehub.teaching.exercise_submitter</groupId>
 	<artifactId>exercise-submitter-lib</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1-SNAPSHOT</version>
 
 	<organization>
 		<name>Software Systems Engineering, University of Hildesheim</name>
