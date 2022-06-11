@@ -36,6 +36,7 @@ import net.ssehub.studentmgmt.sparkyservice_api.model.AuthenticationInfoDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.CredentialsDto;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assessment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
+import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.MaxPoints;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 import net.ssehub.teaching.exercise_submitter.lib.submission.Problem;
@@ -198,7 +199,9 @@ public class ApiConnection implements IApiConnection {
                         
                         boolean groupwork = assignment.getCollaboration() != CollaborationEnum.SINGLE;
                         
-                        return new Assignment(assignment.getId(), assignment.getName(), state, groupwork);
+                        return new Assignment(assignment.getId(), assignment.getName(), state, groupwork,
+                                new MaxPoints(assignment.getPoints().doubleValue(), 
+                                        assignment.getBonusPoints().doubleValue()));
                     })
                     .collect(Collectors.toList());
             

@@ -12,6 +12,7 @@ import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
+import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.MaxPoints;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
 import net.ssehub.teaching.exercise_submitter.lib.replay.Replayer;
 import net.ssehub.teaching.exercise_submitter.lib.student_management_system.DummyApiConnection;
@@ -177,8 +178,8 @@ public class ExerciseSubmitterManagerTest {
                 .build());
         
         assertEquals(Arrays.asList(
-                new Assignment("004", "Test02", State.SUBMISSION, false),
-                new Assignment("005", "Homework03", State.SUBMISSION, true)
+                new Assignment("004", "Test02", State.SUBMISSION, false, new MaxPoints(12, 0)),
+                new Assignment("005", "Homework03", State.SUBMISSION, true, new MaxPoints(10, 2))
         ), assertDoesNotThrow(() -> manager.getAllSubmittableAssignments()));
     }
     
@@ -192,9 +193,9 @@ public class ExerciseSubmitterManagerTest {
                 .build());
         
         assertEquals(Arrays.asList(
-                new Assignment("001", "Homework01", State.REVIEWED, true),
-                new Assignment("004", "Test02", State.SUBMISSION, false),
-                new Assignment("005", "Homework03", State.SUBMISSION, true)
+                new Assignment("001", "Homework01", State.REVIEWED, true, new MaxPoints(6, 0)),
+                new Assignment("004", "Test02", State.SUBMISSION, false, new MaxPoints(12, 0)),
+                new Assignment("005", "Homework03", State.SUBMISSION, true, new MaxPoints(10, 2))
                 ), assertDoesNotThrow(() -> manager.getAllReplayableAssignments()));
     }
     

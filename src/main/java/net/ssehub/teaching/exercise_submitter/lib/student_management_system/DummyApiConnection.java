@@ -8,6 +8,7 @@ import java.util.Set;
 
 import net.ssehub.teaching.exercise_submitter.lib.data.Assessment;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
+import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.MaxPoints;
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
 import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 
@@ -19,11 +20,11 @@ import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 public class DummyApiConnection implements IApiConnection {
 
     public static final List<Assignment> DUMMY_ASSIGNMENTS = Arrays.asList(
-            new Assignment("001", "Homework01", State.REVIEWED, true),
-            new Assignment("002", "Homework02", State.IN_REVIEW, true),
-            new Assignment("003", "Test01", State.IN_REVIEW, false),
-            new Assignment("004", "Test02", State.SUBMISSION, false),
-            new Assignment("005", "Homework03", State.SUBMISSION, true)
+            new Assignment("001", "Homework01", State.REVIEWED, true, new MaxPoints(6, 0)),
+            new Assignment("002", "Homework02", State.IN_REVIEW, true, new MaxPoints(8, 0)),
+            new Assignment("003", "Test01", State.IN_REVIEW, false, new MaxPoints(5, 0)),
+            new Assignment("004", "Test02", State.SUBMISSION, false, new MaxPoints(12, 0)),
+            new Assignment("005", "Homework03", State.SUBMISSION, true, new MaxPoints(10, 2))
             );
     
     private Course course = new Course("Programmierpraktikum I: Java", "java-wise2021");
