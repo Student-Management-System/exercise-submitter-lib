@@ -19,8 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterFactory;
 import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager;
-import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
-import net.ssehub.teaching.exercise_submitter.lib.data.Assignment.State;
+import net.ssehub.teaching.exercise_submitter.lib.student_management_system.DummyApiConnection;
 import net.ssehub.teaching.exercise_submitter.lib.submission.Problem.Severity;
 import net.ssehub.teaching.exercise_submitter.server.api.model.CheckMessageDto;
 import net.ssehub.teaching.exercise_submitter.server.api.model.CheckMessageDto.TypeEnum;
@@ -48,7 +47,7 @@ public class SubmitterTest {
             
             ExerciseSubmitterManager manager = assertDoesNotThrow(() -> factory.build());
             Submitter submitter = assertDoesNotThrow(
-                () -> manager.getSubmitter(new Assignment("005", "Homework03", State.SUBMISSION, true)));
+                () -> manager.getSubmitter(DummyApiConnection.DUMMY_ASSIGNMENTS.get(4)));
             
             assertThrows(IllegalArgumentException.class, () -> submitter.submit(new File("main.java")));
         }
