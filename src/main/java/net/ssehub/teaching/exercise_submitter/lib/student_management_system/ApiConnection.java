@@ -199,9 +199,14 @@ public class ApiConnection implements IApiConnection {
                         
                         boolean groupwork = assignment.getCollaboration() != CollaborationEnum.SINGLE;
                         
+                        double points = assignment.getPoints().doubleValue();
+                        double bonusPoints = 0;
+                        if (assignment.getBonusPoints() != null) {
+                            bonusPoints = assignment.getBonusPoints().doubleValue();
+                        }
+                        
                         return new Assignment(assignment.getId(), assignment.getName(), state, groupwork,
-                                new MaxPoints(assignment.getPoints().doubleValue(), 
-                                        assignment.getBonusPoints().doubleValue()));
+                                new MaxPoints(points, bonusPoints));
                     })
                     .collect(Collectors.toList());
             
