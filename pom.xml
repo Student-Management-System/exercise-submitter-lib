@@ -81,7 +81,6 @@
 				<version>3.2.1</version>
 				<configuration>
 					<configLocation>sse-checkstyle.xml</configLocation>
-					<encoding>UTF-8</encoding>
 					<failOnViolation>true</failOnViolation>
 					<includeResources>false</includeResources>
 					<includeTestResources>false</includeTestResources>
