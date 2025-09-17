@@ -274,4 +274,14 @@ public class ExerciseSubmitterManager {
     throws NetworkException, AuthenticationException, ApiException {
         return this.mgmtConnection.getAllCourses();
     }
+
+    /**
+     * Set the course of the manager to the course of the given courseId.
+     *
+     * @param courseId Id of the course in the system.
+     * @throws ApiException a generic api exception.
+     */
+    public void setCourse(String courseId) throws ApiException {
+        this.course = mgmtConnection.getCourse(courseId);
+    }
 }

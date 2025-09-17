@@ -409,4 +409,24 @@ public class SubmitterIT {
         assertEquals(expectedCourses.size(), actualCourses.size());
         assertTrue(actualCourses.containsAll(expectedCourses));
     }
+
+    @Test
+    public void setNewCourse() {
+        String id = docker.createCourse("tc", "sose21", "testCourse", "adam");
+        docker.enrollStudent(id, "student1");
+        Course expectedCourse = new Course("testCourse", id);
+
+        ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
+                .withUsername("student1")
+                .withPassword("123456")
+                .withCourse(courseId)
+                .withAuthUrl(docker.getAuthUrl())
+                .withExerciseSubmitterServerUrl(docker.getExerciseSubmitterServerUrl())
+                .withMgmtUrl(docker.getStuMgmtUrl())
+                .build());
+
+        assertDoesNotThrow(() -> manager.setCourse(id));
+        Course actualCourse = manager.getCourse();
+        assertEquals(expectedCourse, actualCourse);
+    }
 }
