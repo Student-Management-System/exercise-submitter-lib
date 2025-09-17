@@ -2,6 +2,7 @@ package net.ssehub.teaching.exercise_submitter.lib;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import net.ssehub.teaching.exercise_submitter.lib.data.Assignment;
@@ -260,5 +261,17 @@ public class ExerciseSubmitterManager {
         }
         return groupName;
     }
-    
+
+    /**
+     * Returns all courses in the system. Does not require login(String, String) to be called first.
+     *
+     * @return Set of all Courses in the management system.
+     * @throws NetworkException the network exception
+     * @throws AuthenticationException the authentication exception
+     * @throws ApiException a generic api exception
+     */
+    public Set<Course> getAllCourses()
+    throws NetworkException, AuthenticationException, ApiException {
+        return this.mgmtConnection.getAllCourses();
+    }
 }

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -22,8 +23,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
+import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterFactory;
+import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterManager;
+import net.ssehub.teaching.exercise_submitter.lib.data.Course;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -380,4 +385,28 @@ public class SubmitterIT {
         return new String(Base64.getDecoder().decode(base64), StandardCharsets.UTF_8);
     }
 
+    @Test
+    public void getAllGroups() {
+        String id1 = docker.createCourse("tc1", "sose21", "testCourse1", "adam");
+        String id2 = docker.createCourse("tc2", "sose21", "testCourse2", "adam");
+        String id3 = docker.createCourse("tc3", "sose21", "testCourse3", "adam");
+        Set<Course> expectedCourses = new HashSet<>();
+        expectedCourses.add(new Course("Programmierpraktikum: Java", courseId));
+        expectedCourses.add(new Course("testCourse1", id1));
+        expectedCourses.add(new Course("testCourse2", id2));
+        expectedCourses.add(new Course("testCourse3", id3));
+
+        ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
+                .withUsername("student1")
+                .withPassword("123456")
+                .withCourse(courseId)
+                .withAuthUrl(docker.getAuthUrl())
+                .withExerciseSubmitterServerUrl(docker.getExerciseSubmitterServerUrl())
+                .withMgmtUrl(docker.getStuMgmtUrl())
+                .build());
+
+        Set<Course> actualCourses = assertDoesNotThrow(manager::getAllCourses);
+        assertEquals(expectedCourses.size(), actualCourses.size());
+        assertTrue(actualCourses.containsAll(expectedCourses));
+    }
 }
