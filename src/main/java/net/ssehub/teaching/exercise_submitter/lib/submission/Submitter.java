@@ -36,7 +36,8 @@ public class Submitter {
      * Returns <code>false</code> if the file is unwanted and should be filtered, <code>true</code> otherwise.
      */
     public static final Predicate<Path> WANTED_FILES;
-    
+
+    // Todo: Make configurable (through standalone/plugin)
     static {
         Predicate<Path> notClassFile = p -> !p.getFileName().toString().endsWith(".class");
         
@@ -174,14 +175,15 @@ public class Submitter {
         }
         
         List<FileDto> files;
+        List<Path> filePaths;
         try {
-            files = Files.walk(submissionDir)
-                    .filter(p -> Files.isRegularFile(p))
-                    .map(p -> submissionDir.relativize(p))
-                    
+            filePaths = Files.walk(submissionDir)
+                    .filter(Files::isRegularFile)
+                    .map(submissionDir::relativize)
                     .filter(WANTED_FILES)
+                    .toList();
+            files = filePaths.stream()
                     .map(filepath -> pathToFileDto(filepath, submissionDir))
-                    
                     .collect(Collectors.toList());
             
         } catch (IOException e) {
@@ -197,8 +199,9 @@ public class Submitter {
         } catch (ApiException e) {
             throw new SubmissionException("Failed to upload submission", e);
         }
-        
-        return dtoToSubmissionResult(dto);
+        SubmissionResult submissionResult = dtoToSubmissionResult(dto);
+        submissionResult.setSubmissionFiles(filePaths);
+        return submissionResult;
     }
     
 }

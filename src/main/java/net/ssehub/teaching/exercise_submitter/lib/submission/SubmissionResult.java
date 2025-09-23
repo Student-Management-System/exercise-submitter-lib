@@ -1,5 +1,6 @@
 package net.ssehub.teaching.exercise_submitter.lib.submission;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
@@ -13,6 +14,8 @@ public class SubmissionResult {
     private boolean accepted;
     
     private List<Problem> problems;
+
+    private List<Path> submissionFiles;
 
     /**
      * Creates a new {@link SubmissionResult}.
@@ -71,5 +74,12 @@ public class SubmissionResult {
         builder.append("]");
         return builder.toString();
     }
-    
+
+    public List<Path> getSubmissionFiles() {
+        return submissionFiles;
+    }
+
+    void  setSubmissionFiles(List<Path> submissionFiles) {
+        this.submissionFiles = submissionFiles;
+    }
 }
