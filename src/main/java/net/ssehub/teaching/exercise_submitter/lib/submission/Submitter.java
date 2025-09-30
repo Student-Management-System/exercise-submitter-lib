@@ -154,9 +154,9 @@ public class Submitter {
         
         return new SubmissionResult(dto.isAccepted(), problems);
     }
-    
+
     /**
-     * Submits the given directory.
+     * Submits the given directory. Uses a given standard filter defined in WANTED_FILES.
      *
      * @param directory The directory that contains the solution to be submitted.
      *
@@ -167,28 +167,43 @@ public class Submitter {
      */
     public SubmissionResult submit(File directory)
             throws SubmissionException, IllegalArgumentException {
+        return submit(directory, WANTED_FILES);
+    }
 
+    /**
+     * Submits the given directory with a filter.
+     *
+     * @param directory The directory that contains the solution to be submitted.
+     * @param fileFilter Predicate to filter out files that should not be submitted.
+     *
+     * @return The result of the submission.
+     *
+     * @throws SubmissionException      If the submission fails.
+     * @throws IllegalArgumentException If the given directory is not a directory.
+     */
+    public SubmissionResult submit(File directory, Predicate<Path> fileFilter)
+        throws SubmissionException, IllegalArgumentException {
         Path submissionDir = directory.toPath();
-        
+
         if (!Files.isDirectory(submissionDir)) {
             throw new IllegalArgumentException(directory + " is not a directory");
         }
-        
+
         List<FileDto> files;
         List<Path> filePaths;
         try {
             filePaths = Files.walk(submissionDir)
                     .filter(Files::isRegularFile)
                     .map(submissionDir::relativize)
-                    .filter(WANTED_FILES)
+                    .filter(fileFilter)
                     .toList();
             files = filePaths.stream()
                     .map(filepath -> pathToFileDto(filepath, submissionDir))
                     .collect(Collectors.toList());
-            
+
         } catch (IOException e) {
             throw new SubmissionException("Failed to list submission directory content", e.getCause());
-            
+
         } catch (UncheckedIOException e) {
             throw new SubmissionException("Failed to read file content", e.getCause());
         }
