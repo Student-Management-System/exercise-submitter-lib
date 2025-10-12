@@ -271,7 +271,7 @@ public class ExerciseSubmitterManager {
      * @throws ApiException a generic api exception
      */
     public Set<Course> getAllCourses()
-    throws NetworkException, AuthenticationException, ApiException {
+        throws NetworkException, AuthenticationException, ApiException {
         return this.mgmtConnection.getAllCourses();
     }
 

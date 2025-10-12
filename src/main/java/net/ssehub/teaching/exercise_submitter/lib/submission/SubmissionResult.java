@@ -75,10 +75,20 @@ public class SubmissionResult {
         return builder.toString();
     }
 
+    /**
+     * Get the files that were actually submitted.
+     *
+     * @return list of file paths that were submitted.
+     */
     public List<Path> getSubmissionFiles() {
         return submissionFiles;
     }
 
+    /**
+     * Set the files that were actually submitted.
+     *
+     * @param submissionFiles list of file paths that were submitted.
+     */
     void  setSubmissionFiles(List<Path> submissionFiles) {
         this.submissionFiles = submissionFiles;
     }
