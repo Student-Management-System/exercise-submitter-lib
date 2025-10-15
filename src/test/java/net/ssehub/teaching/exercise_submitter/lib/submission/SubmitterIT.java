@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import net.ssehub.teaching.exercise_submitter.lib.ExerciseSubmitterFactory;
@@ -89,7 +90,11 @@ public class SubmitterIT {
         assignmentids.put("eclipseProjectFilesAndClassFilesIgnored",
                 docker.createAssignment(courseId, "eclipseProjectFilesAndClassFilesIgnored",
                         AssignmentState.SUBMISSION, Collaboration.GROUP));
-        
+
+        assignmentids.put("eclipseProjectFilesAndClassFilesIgnoredWithCustomFilter",
+                docker.createAssignment(courseId, "eclipseProjectFilesAndClassFilesIgnoredWithCustomFilter",
+                        AssignmentState.SUBMISSION, Collaboration.GROUP));
+
         assignmentids.put("existingFileOverwritten",
                 docker.createAssignment(courseId, "existingFileOverwritten",
                         AssignmentState.SUBMISSION, Collaboration.GROUP));
@@ -177,7 +182,33 @@ public class SubmitterIT {
         
         assertEquals(Set.of("src/test/Main.java", "src/test/Test.java"), filepaths);
     }
-    
+
+    @Test
+    public void eclipseProjectFilesAndClassFilesIgnoredWithCustomFilter() {
+        // setup
+        String homeworkname = "eclipseProjectFilesAndClassFilesIgnoredWithCustomFilter";
+        Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
+                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
+        Predicate<Path> filter = path -> !path.startsWith(".settings")
+                && !path.getFileName().toString().endsWith(".class")
+                && !path.getFileName().toString().endsWith(".classpath")
+                && !path.getFileName().toString().endsWith(".project");
+
+        // execute
+        SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(ECLIPSE_DIR, filter));
+
+        // check result
+        SubmissionResult exptectedEmptyResult = new SubmissionResult(true, Collections.emptyList());
+
+        assertEquals(exptectedEmptyResult, result);
+
+        // check files on server
+        List<FileDto> onServer = getLatestSubmission(homeworkname, "JP001");
+        Set<String> filepaths = onServer.stream().map(FileDto::getPath).collect(Collectors.toSet());
+
+        assertEquals(Set.of("src/test/Main.java", "src/test/Test.java"), filepaths);
+    }
+
     @Test
     public void existingFileOverwritten() throws InterruptedException {
         // setup
