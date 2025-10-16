@@ -133,9 +133,12 @@ public class ExerciseSubmitterFactory {
         } else {
             apiConnection = new DummyApiConnection();
         }
-        
-        return new ExerciseSubmitterManager(username, password, courseId, apiConnection, exerciseSubmitterServerUrl);
-    }
-    
 
+        if (courseId != null) {
+            return new ExerciseSubmitterManager(username, password, courseId, apiConnection,
+                    exerciseSubmitterServerUrl);
+        } else {
+            return new ExerciseSubmitterManager(username, password, apiConnection, exerciseSubmitterServerUrl);
+        }
+    }
 }
