@@ -59,7 +59,10 @@ public class SubmitterIT {
     
     private static final File COMPILATION_ERROR_DIR = new File(TESTDATA, "CompilationError");
 
-    private static String courseId;
+    private static String courseId1;
+    private static String courseId2;
+    private static String courseId3;
+    private static String courseId4;
 
     private static Map<String, String> assignmentids = new HashMap<>();
 
@@ -72,55 +75,59 @@ public class SubmitterIT {
         docker.createUser("student3", "123456");
         docker.createUser("student4", "123456");
 
-        courseId = docker.createCourse("java", "wise2021", "Programmierpraktikum: Java", "adam");
-        docker.enableExerciseSubmissionServer(courseId);
+        courseId1 = docker.createCourse("java", "wise2021", "Programmierpraktikum: Java", "adam");
+        courseId2 = docker.createCourse("tc1", "sose21", "testCourse2", "adam");
+        courseId3 = docker.createCourse("tc2", "sose21", "testCourse3", "adam");
+        courseId4 = docker.createCourse("tc3", "sose21", "testCourse4", "adam");
+        docker.enableExerciseSubmissionServer(courseId1);
 
-        docker.enrollStudent(courseId, "student1");
-        docker.enrollStudent(courseId, "student2");
-        docker.enrollStudent(courseId, "student3");
-        docker.enrollStudent(courseId, "student4");
+        docker.enrollStudent(courseId1, "student1");
+        docker.enrollStudent(courseId2, "student1");
+        docker.enrollStudent(courseId1, "student2");
+        docker.enrollStudent(courseId1, "student3");
+        docker.enrollStudent(courseId1, "student4");
 
-        docker.createGroup(courseId, "JP001", "student1", "student3");
-        docker.createGroup(courseId, "JP002", "student2", "student4");
+        docker.createGroup(courseId1, "JP001", "student1", "student3");
+        docker.createGroup(courseId1, "JP002", "student2", "student4");
 
         assignmentids.put("submitSingleFile",
-                docker.createAssignment(courseId, "submitSingleFile",
+                docker.createAssignment(courseId1, "submitSingleFile",
                         AssignmentState.SUBMISSION, Collaboration.GROUP));
         
         assignmentids.put("eclipseProjectFilesAndClassFilesIgnored",
-                docker.createAssignment(courseId, "eclipseProjectFilesAndClassFilesIgnored",
+                docker.createAssignment(courseId1, "eclipseProjectFilesAndClassFilesIgnored",
                         AssignmentState.SUBMISSION, Collaboration.GROUP));
 
         assignmentids.put("eclipseProjectFilesAndClassFilesIgnoredWithCustomFilter",
-                docker.createAssignment(courseId, "eclipseProjectFilesAndClassFilesIgnoredWithCustomFilter",
+                docker.createAssignment(courseId1, "eclipseProjectFilesAndClassFilesIgnoredWithCustomFilter",
                         AssignmentState.SUBMISSION, Collaboration.GROUP));
 
         assignmentids.put("existingFileOverwritten",
-                docker.createAssignment(courseId, "existingFileOverwritten",
+                docker.createAssignment(courseId1, "existingFileOverwritten",
                         AssignmentState.SUBMISSION, Collaboration.GROUP));
         
         
         assignmentids.put("newFileAddedToExistingSubmission",
-                docker.createAssignment(courseId, "newFileAddedToExistingSubmission",
+                docker.createAssignment(courseId1, "newFileAddedToExistingSubmission",
                         AssignmentState.SUBMISSION, Collaboration.GROUP));
         
         assignmentids.put("existingFileDeleted",
-                docker.createAssignment(courseId, "existingFileDeleted",
+                docker.createAssignment(courseId1, "existingFileDeleted",
                         AssignmentState.SUBMISSION, Collaboration.GROUP));
         
         assignmentids.put("tooLargeFileRejected",
-                docker.createAssignment(courseId, "tooLargeFileRejected",
+                docker.createAssignment(courseId1, "tooLargeFileRejected",
                         AssignmentState.SUBMISSION, Collaboration.GROUP));
         
         assignmentids.put("compilationProblemInResult",
-                docker.createAssignment(courseId, "compilationProblemInResult",
+                docker.createAssignment(courseId1, "compilationProblemInResult",
                         AssignmentState.SUBMISSION, Collaboration.GROUP));
-        docker.setAssignmentToolConfigString(courseId, assignmentids.get("compilationProblemInResult"),
+        docker.setAssignmentToolConfigString(courseId1, assignmentids.get("compilationProblemInResult"),
                 "exercise-submitter-checks",
                 "[{\"check\":\"javac\"},{\"check\":\"checkstyle\",\"rules\":\"checkstyle.xml\"}]");
         
         assignmentids.put("authFailure",
-                docker.createAssignment(courseId, "authFailure",
+                docker.createAssignment(courseId1, "authFailure",
                         AssignmentState.SUBMISSION, Collaboration.GROUP));
     }
 
@@ -134,7 +141,7 @@ public class SubmitterIT {
         // setup
         String homeworkname = "submitSingleFile";
         Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
+                courseId1, homeworkname, "JP001", docker.getAuthToken("student1"));
 
         // execute
         SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(SINGLE_FILE_DIR));
@@ -166,7 +173,7 @@ public class SubmitterIT {
         // setup
         String homeworkname = "eclipseProjectFilesAndClassFilesIgnored";
         Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
+                courseId1, homeworkname, "JP001", docker.getAuthToken("student1"));
 
         // execute
         SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(ECLIPSE_DIR));
@@ -188,7 +195,7 @@ public class SubmitterIT {
         // setup
         String homeworkname = "eclipseProjectFilesAndClassFilesIgnoredWithCustomFilter";
         Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
+                courseId1, homeworkname, "JP001", docker.getAuthToken("student1"));
         Predicate<Path> filter = path -> !path.startsWith(".settings")
                 && !path.getFileName().toString().endsWith(".class")
                 && !path.getFileName().toString().endsWith(".classpath")
@@ -214,7 +221,7 @@ public class SubmitterIT {
         // setup
         String homeworkname = "existingFileOverwritten";
         Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
+                courseId1, homeworkname, "JP001", docker.getAuthToken("student1"));
         
         // submit pre-existing file
         assertDoesNotThrow(() -> submitter.submit(SINGLE_FILE_DIR));
@@ -250,7 +257,7 @@ public class SubmitterIT {
         // setup
         String homeworkname = "newFileAddedToExistingSubmission";
         Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
+                courseId1, homeworkname, "JP001", docker.getAuthToken("student1"));
         
         // submit pre-existing file
         assertDoesNotThrow(() -> submitter.submit(SINGLE_FILE_DIR));
@@ -276,7 +283,7 @@ public class SubmitterIT {
         // setup
         String homeworkname = "existingFileDeleted";
         Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
+                courseId1, homeworkname, "JP001", docker.getAuthToken("student1"));
         
         // submit pre-existing file
         assertDoesNotThrow(() -> submitter.submit(TWO_FILE_DIR));
@@ -319,7 +326,7 @@ public class SubmitterIT {
             
             String homeworkname = "tooLargeFileRejected";
             Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
-                    courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
+                    courseId1, homeworkname, "JP001", docker.getAuthToken("student1"));
             
             // execute
             SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(tempDir));
@@ -353,7 +360,7 @@ public class SubmitterIT {
         // setup
         String homeworkname = "compilationProblemInResult";
         Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", docker.getAuthToken("student1"));
+                courseId1, homeworkname, "JP001", docker.getAuthToken("student1"));
         
         // execute
         SubmissionResult result = assertDoesNotThrow(() -> submitter.submit(COMPILATION_ERROR_DIR));
@@ -390,7 +397,7 @@ public class SubmitterIT {
         // setup
         String homeworkname = "authFailure";
         Submitter submitter = new Submitter(docker.getExerciseSubmitterServerUrl(),
-                courseId, homeworkname, "JP001", "invalid_token");
+                courseId1, homeworkname, "JP001", "invalid_token");
 
         // execute
         SubmissionException e = assertThrows(SubmissionException.class, () -> submitter.submit(SINGLE_FILE_DIR));
@@ -409,7 +416,7 @@ public class SubmitterIT {
         
         SubmissionApi api = new SubmissionApi(client);
         
-        return assertDoesNotThrow(() -> api.getLatest(courseId, assignment, group));
+        return assertDoesNotThrow(() -> api.getLatest(courseId1, assignment, group));
     }
     
     private static String decodeToUtf8(String base64) {
@@ -417,20 +424,17 @@ public class SubmitterIT {
     }
 
     @Test
-    public void getAllGroups() {
-        String id1 = docker.createCourse("tc1", "sose21", "testCourse1", "adam");
-        String id2 = docker.createCourse("tc2", "sose21", "testCourse2", "adam");
-        String id3 = docker.createCourse("tc3", "sose21", "testCourse3", "adam");
+    public void getAllCourses() {
         Set<Course> expectedCourses = new HashSet<>();
-        expectedCourses.add(new Course("Programmierpraktikum: Java", courseId));
-        expectedCourses.add(new Course("testCourse1", id1));
-        expectedCourses.add(new Course("testCourse2", id2));
-        expectedCourses.add(new Course("testCourse3", id3));
+        expectedCourses.add(new Course("Programmierpraktikum: Java", courseId1));
+        expectedCourses.add(new Course("testCourse2", courseId2));
+        expectedCourses.add(new Course("testCourse3", courseId3));
+        expectedCourses.add(new Course("testCourse4", courseId4));
 
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
                 .withUsername("student1")
                 .withPassword("123456")
-                .withCourse(courseId)
+                .withCourse(courseId1)
                 .withAuthUrl(docker.getAuthUrl())
                 .withExerciseSubmitterServerUrl(docker.getExerciseSubmitterServerUrl())
                 .withMgmtUrl(docker.getStuMgmtUrl())
@@ -443,20 +447,18 @@ public class SubmitterIT {
 
     @Test
     public void setNewCourse() {
-        String id = docker.createCourse("tc", "sose21", "testCourse", "adam");
-        docker.enrollStudent(id, "student1");
-        Course expectedCourse = new Course("testCourse", id);
+        Course expectedCourse = new Course("testCourse2", courseId2);
 
         ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
                 .withUsername("student1")
                 .withPassword("123456")
-                .withCourse(courseId)
+                .withCourse(courseId1)
                 .withAuthUrl(docker.getAuthUrl())
                 .withExerciseSubmitterServerUrl(docker.getExerciseSubmitterServerUrl())
                 .withMgmtUrl(docker.getStuMgmtUrl())
                 .build());
 
-        assertDoesNotThrow(() -> manager.setCourse(id));
+        assertDoesNotThrow(() -> manager.setCourse(courseId2));
         Course actualCourse = manager.getCourse();
         assertEquals(expectedCourse, actualCourse);
     }
