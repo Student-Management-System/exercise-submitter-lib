@@ -63,6 +63,28 @@ public class ExerciseSubmitterManager {
         this.cachedReplayer = Optional.empty();
         this.cachedReplayerAssignment = Optional.empty();
     }
+
+    /**
+     * Creates a new connection to the student management system with the given username and password, but without
+     * a courseId.
+     *
+     * @param username The username.
+     * @param password The password.
+     * @param apiConnection The {@link IApiConnection} to use.
+     * @param exerciseSubmitterServerUrl The URL to the API of the exercise-submitter-server.
+     * @throws NetworkException If the network communication fails.
+     * @throws AuthenticationException If the authentication fails.
+     * @throws ApiException If a generic API exception occurs.
+     */
+    ExerciseSubmitterManager(String username, String password, IApiConnection apiConnection,
+                             String exerciseSubmitterServerUrl)
+        throws NetworkException, AuthenticationException, ApiException {
+        this.mgmtConnection = apiConnection;
+        this.mgmtConnection.login(username, password);
+        this.exerciseSubmitterServerUrl = exerciseSubmitterServerUrl;
+        this.cachedReplayer = Optional.empty();
+        this.cachedReplayerAssignment = Optional.empty();
+    }
     
     /**
      * Returns the API connection to the student management system.
