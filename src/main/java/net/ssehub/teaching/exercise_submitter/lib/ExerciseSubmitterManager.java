@@ -95,7 +95,17 @@ public class ExerciseSubmitterManager {
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         return mgmtConnection.getAssignments(course);
     }
-    
+
+    /**
+     * Set the course of the manager to the course of the given courseId.
+     *
+     * @param courseId ID of the course in the system.
+     * @throws ApiException a generic api exception.
+     */
+    public void setCourse(String courseId) throws ApiException {
+        this.course = mgmtConnection.getCourse(courseId);
+    }
+
     /**
      * Returns all assignments that can be submitted.
      *
@@ -273,15 +283,5 @@ public class ExerciseSubmitterManager {
     public Set<Course> getAllCourses()
         throws NetworkException, AuthenticationException, ApiException {
         return this.mgmtConnection.getAllCourses();
-    }
-
-    /**
-     * Set the course of the manager to the course of the given courseId.
-     *
-     * @param courseId Id of the course in the system.
-     * @throws ApiException a generic api exception.
-     */
-    public void setCourse(String courseId) throws ApiException {
-        this.course = mgmtConnection.getCourse(courseId);
     }
 }
