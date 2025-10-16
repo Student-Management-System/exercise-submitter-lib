@@ -446,6 +446,27 @@ public class SubmitterIT {
     }
 
     @Test
+    public void getAllCoursesWithoutCourseId() {
+        Set<Course> expectedCourses = new HashSet<>();
+        expectedCourses.add(new Course("Programmierpraktikum: Java", courseId1));
+        expectedCourses.add(new Course("testCourse2", courseId2));
+        expectedCourses.add(new Course("testCourse3", courseId3));
+        expectedCourses.add(new Course("testCourse4", courseId4));
+
+        ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
+                .withUsername("student1")
+                .withPassword("123456")
+                .withAuthUrl(docker.getAuthUrl())
+                .withExerciseSubmitterServerUrl(docker.getExerciseSubmitterServerUrl())
+                .withMgmtUrl(docker.getStuMgmtUrl())
+                .build());
+
+        Set<Course> actualCourses = assertDoesNotThrow(manager::getAllCourses);
+        assertEquals(expectedCourses.size(), actualCourses.size());
+        assertTrue(actualCourses.containsAll(expectedCourses));
+    }
+
+    @Test
     public void setNewCourse() {
         Course expectedCourse = new Course("testCourse2", courseId2);
 
