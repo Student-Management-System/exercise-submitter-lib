@@ -59,6 +59,7 @@ public class SubmitterIT {
     
     private static final File COMPILATION_ERROR_DIR = new File(TESTDATA, "CompilationError");
 
+    private static String userId;
     private static String courseId1;
     private static String courseId2;
     private static String courseId3;
@@ -70,7 +71,7 @@ public class SubmitterIT {
     public static void setupServers() {
         docker = new StuMgmtDocker();
         docker.createUser("adam", "123456");
-        docker.createUser("student1", "123456");
+        userId = docker.createUser("student1", "123456");
         docker.createUser("student2", "123456");
         docker.createUser("student3", "123456");
         docker.createUser("student4", "123456");
@@ -462,6 +463,25 @@ public class SubmitterIT {
                 .build());
 
         Set<Course> actualCourses = assertDoesNotThrow(manager::getAllCourses);
+        assertEquals(expectedCourses.size(), actualCourses.size());
+        assertTrue(actualCourses.containsAll(expectedCourses));
+    }
+
+    @Test
+    public void getCoursesOfUser() {
+        Set<Course> expectedCourses = new HashSet<>();
+        expectedCourses.add(new Course("Programmierpraktikum: Java", courseId1));
+        expectedCourses.add(new Course("testCourse2", courseId2));
+
+        ExerciseSubmitterManager manager = assertDoesNotThrow(() -> new ExerciseSubmitterFactory()
+                .withUsername("student1")
+                .withPassword("123456")
+                .withAuthUrl(docker.getAuthUrl())
+                .withExerciseSubmitterServerUrl(docker.getExerciseSubmitterServerUrl())
+                .withMgmtUrl(docker.getStuMgmtUrl())
+                .build());
+
+        Set<Course> actualCourses = assertDoesNotThrow(() -> manager.getCoursesOfUser(userId));
         assertEquals(expectedCourses.size(), actualCourses.size());
         assertTrue(actualCourses.containsAll(expectedCourses));
     }
