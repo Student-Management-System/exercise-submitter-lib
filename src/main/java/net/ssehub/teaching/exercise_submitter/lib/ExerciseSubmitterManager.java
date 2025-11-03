@@ -104,6 +104,30 @@ public class ExerciseSubmitterManager {
         return course;
     }
     
+
+    /**
+     * Set the course of the manager to the course of the given courseId.
+     *
+     * @param courseId ID of the course in the system.
+     * @throws ApiException a generic api exception.
+     */
+    public void setCourse(String courseId) throws ApiException {
+        this.course = mgmtConnection.getCourse(courseId);
+    }
+
+    /**
+     * Returns all courses in the system. Does not require login(String, String) to be called first.
+     *
+     * @return Set of all Courses in the management system.
+     * @throws NetworkException the network exception
+     * @throws AuthenticationException the authentication exception
+     * @throws ApiException a generic api exception
+     */
+    public Set<Course> getAllCourses()
+            throws NetworkException, AuthenticationException, ApiException {
+        return this.mgmtConnection.getAllCourses();
+    }
+
     /**
      * Returns all assignments (all states).
      *
@@ -116,16 +140,6 @@ public class ExerciseSubmitterManager {
     public List<Assignment> getAllAssignments()
             throws NetworkException, AuthenticationException, UserNotInCourseException, ApiException {
         return mgmtConnection.getAssignments(course);
-    }
-
-    /**
-     * Set the course of the manager to the course of the given courseId.
-     *
-     * @param courseId ID of the course in the system.
-     * @throws ApiException a generic api exception.
-     */
-    public void setCourse(String courseId) throws ApiException {
-        this.course = mgmtConnection.getCourse(courseId);
     }
 
     /**
@@ -292,18 +306,5 @@ public class ExerciseSubmitterManager {
             groupName = mgmtConnection.getUsername();
         }
         return groupName;
-    }
-
-    /**
-     * Returns all courses in the system. Does not require login(String, String) to be called first.
-     *
-     * @return Set of all Courses in the management system.
-     * @throws NetworkException the network exception
-     * @throws AuthenticationException the authentication exception
-     * @throws ApiException a generic api exception
-     */
-    public Set<Course> getAllCourses()
-        throws NetworkException, AuthenticationException, ApiException {
-        return this.mgmtConnection.getAllCourses();
     }
 }
