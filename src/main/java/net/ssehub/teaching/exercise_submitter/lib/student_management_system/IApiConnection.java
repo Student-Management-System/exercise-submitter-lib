@@ -69,6 +69,16 @@ public interface IApiConnection {
     public Set<Course> getAllCourses() throws NetworkException, AuthenticationException, ApiException;
 
     /**
+     * Returns all courses in which the current user is enrolled. Does require {@link #login(String, String)} to be
+     * called first (i.e. authentication needed).
+     *
+     * @return All courses in which the current user is enrolled.
+     *
+     * @throws ApiException If a generic exception occurs.
+     */
+    public Set<Course> getCoursesOfUser(String userId) throws NetworkException, AuthenticationException, ApiException;
+
+    /**
      * Gets all {@link Assignment}s for the given {@link Course}.
      * 
      * @param course The {@link Course} to get all assignments of.

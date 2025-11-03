@@ -19,6 +19,7 @@ import net.ssehub.studentmgmt.backend_api.api.AssignmentApi;
 import net.ssehub.studentmgmt.backend_api.api.AssignmentRegistrationApi;
 import net.ssehub.studentmgmt.backend_api.api.AuthenticationApi;
 import net.ssehub.studentmgmt.backend_api.api.CourseApi;
+import net.ssehub.studentmgmt.backend_api.api.UserApi;
 import net.ssehub.studentmgmt.backend_api.api.CourseParticipantsApi;
 import net.ssehub.studentmgmt.backend_api.model.AssessmentCreateDto;
 import net.ssehub.studentmgmt.backend_api.model.AssessmentDto;
@@ -162,6 +163,25 @@ public class ApiConnection implements IApiConnection {
             throw new ApiException("Invalid JSON response", e);
         }
         
+        return courses;
+    }
+
+    @Override
+    public Set<Course> getCoursesOfUser(String userId) throws NetworkException, AuthenticationException, ApiException {
+        Set<Course> courses = new HashSet<>();
+
+        try {
+            UserApi api = new UserApi(this.mgmtClient);
+            List<CourseDto> courseDtos = api.getCoursesOfUser(userId);
+
+            for (CourseDto courseDto : courseDtos) {
+                Course course = new Course(courseDto.getTitle(), courseDto.getId());
+                courses.add(course);
+            }
+        } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
+            throw handleMgmtException(e);
+        }
+
         return courses;
     }
 

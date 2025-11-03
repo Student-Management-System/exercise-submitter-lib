@@ -135,4 +135,8 @@ public class DummyApiConnection implements IApiConnection {
         return Set.of(course);
     }
 
+    @Override
+    public Set<Course> getCoursesOfUser(String userId) throws ApiException {
+        return Set.of(course);
+    }
 }
