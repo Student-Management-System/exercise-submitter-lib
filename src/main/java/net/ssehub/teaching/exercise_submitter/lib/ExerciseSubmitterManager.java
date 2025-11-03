@@ -103,7 +103,6 @@ public class ExerciseSubmitterManager {
     public Course getCourse() {
         return course;
     }
-    
 
     /**
      * Set the course of the manager to the course of the given courseId.
@@ -126,6 +125,18 @@ public class ExerciseSubmitterManager {
     public Set<Course> getAllCourses()
             throws NetworkException, AuthenticationException, ApiException {
         return this.mgmtConnection.getAllCourses();
+    }
+
+    /**
+     * Returns all courses in which the user is enrolled. Does require login(String, String) to be called first.
+     *
+     * @return Set of all Courses in which the user is enrolled.
+     * @throws NetworkException the network exception
+     * @throws AuthenticationException the authentication exception
+     * @throws ApiException a generic api exception
+     */
+    public Set<Course> getCoursesOfUser(String userId) throws ApiException {
+        return this.mgmtConnection.getCoursesOfUser(userId);
     }
 
     /**
