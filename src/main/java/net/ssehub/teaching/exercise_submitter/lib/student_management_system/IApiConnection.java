@@ -72,6 +72,7 @@ public interface IApiConnection {
      * Returns all courses in which the current user is enrolled. Does require {@link #login(String, String)} to be
      * called first (i.e. authentication needed).
      *
+     * @param userId String ID of the user.
      * @return All courses in which the current user is enrolled.
      *
      * @throws ApiException If a generic exception occurs.

@@ -130,6 +130,7 @@ public class ExerciseSubmitterManager {
     /**
      * Returns all courses in which the user is enrolled. Does require login(String, String) to be called first.
      *
+     * @param userId String ID of the user.
      * @return Set of all Courses in which the user is enrolled.
      * @throws NetworkException the network exception
      * @throws AuthenticationException the authentication exception
