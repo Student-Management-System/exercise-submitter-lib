@@ -167,12 +167,12 @@ public class ApiConnection implements IApiConnection {
     }
 
     @Override
-    public Set<Course> getCoursesOfUser(String userId) throws NetworkException, AuthenticationException, ApiException {
+    public Set<Course> getCoursesOfUser() throws NetworkException, AuthenticationException, ApiException {
         Set<Course> courses = new HashSet<>();
 
         try {
             UserApi api = new UserApi(this.mgmtClient);
-            List<CourseDto> courseDtos = api.getCoursesOfUser(userId);
+            List<CourseDto> courseDtos = api.getCoursesOfUser(this.loggedInUser.getId());
 
             for (CourseDto courseDto : courseDtos) {
                 Course course = new Course(courseDto.getTitle(), courseDto.getId());

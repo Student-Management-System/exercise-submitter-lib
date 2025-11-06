@@ -481,7 +481,7 @@ public class SubmitterIT {
                 .withMgmtUrl(docker.getStuMgmtUrl())
                 .build());
 
-        Set<Course> actualCourses = assertDoesNotThrow(() -> manager.getCoursesOfUser(userId));
+        Set<Course> actualCourses = assertDoesNotThrow(manager::getCoursesOfUser);
         assertEquals(expectedCourses.size(), actualCourses.size());
         assertTrue(actualCourses.containsAll(expectedCourses));
     }
